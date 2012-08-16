@@ -382,14 +382,6 @@ function theme_picture($variables) {
     unset($variables['height']);
   }
 
-  // Use path or uri untill D7 uses one in all places.
-  if (!isset($variables['path']) || empty($variables['path'])) {
-    $variables['path'] = ($variables['uri']);
-  }
-  if (!isset($variables['uri']) || empty($variables['uri'])) {
-    $variables['uri'] = ($variables['path']);
-  }
-
   $images = array();
   $output = array();
 
