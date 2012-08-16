@@ -143,18 +143,6 @@ function picture_mapping_validate($mapping) {
 }
 
 /**
- * Add javascript for older browser support
- */
-function picture_add_js() {
-  static $added = FALSE;
-  if (!$added) {
-    $added = TRUE;
-    drupal_add_js(drupal_get_path('module', 'picture') . '/picturefill/matchmedia.js', array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT));
-    drupal_add_js(drupal_get_path('module', 'picture') . '/picturefill/picturefill.js', array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT));
-  }
-}
-
-/**
  * Implements hook_theme().
  */
 function picture_theme() {
@@ -335,6 +323,10 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
     }
     $element[$delta] = array(
       '#theme' => 'picture_formatter',
+      '#attached' => array('js' => array(
+        drupal_add_js(drupal_get_path('module', 'picture') . '/picturefill/matchmedia.js', array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT)),
+        drupal_add_js(drupal_get_path('module', 'picture') . '/picturefill/picturefill.js', array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT)),
+      )),
       '#item' => $item,
       '#image_style' => $fallback_image_style,
       '#breakpoints' => $breakpoint_styles,
@@ -378,8 +370,6 @@ function theme_picture_formatter($variables) {
  * Theme a picture element.
  */
 function theme_picture($variables) {
-  picture_add_js();
-
   // Make sure that width and height are proper values
   // If they exists we'll output them
   // @see http://www.w3.org/community/respimg/2012/06/18/florians-compromise/
