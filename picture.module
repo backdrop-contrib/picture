@@ -1,0 +1,480 @@
+<?php
+
+define('PICTURE_CLASS', 'resp-img-picture');
+define('PICTURE_SEPARATOR', '__');
+define('PICTURE_STYLE_PREFIX', 'resp__img__');
+
+/**
+ * Implements hook_permission().
+ */
+function picture_permission() {
+  return array(
+    'administer pictures' => array(
+      'title' => t('Administer Pictures'),
+      'description' => t('Administer Pictures'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function picture_menu() {
+  $items = array();
+
+  $items['admin/config/media/picture'] = array(
+    'title' => 'Picture',
+    'description' => 'Manage Pictures',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('picture_admin_breakpoints'),
+    'access arguments' => array('administer pictures'),
+    'file' => 'picture.admin.inc',
+  );
+
+  $items['admin/config/media/picture/groups'] = array(
+    'title' => 'Groups',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 10,
+  );
+
+  $items['admin/config/media/picture/groups/global'] = array(
+    'title' => 'Map breakpoints and image styles',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -1,
+  );
+
+  $breakpoint_groups = breakpoints_breakpoint_group_load_all();
+  foreach ($breakpoint_groups as $breakpoint_group_name => $breakpoint_group) {
+    if (!empty($breakpoint_group->machine_name)) {
+      $items['admin/config/media/picture/groups/' . $breakpoint_group->machine_name] = array(
+        'title' => $breakpoint_group->name,
+        'page arguments' => array('picture_admin_breakpoints', $breakpoint_group->machine_name),
+        'type' => MENU_LOCAL_TASK,
+        'access arguments' => array('administer pictures'),
+        'file' => 'picture.admin.inc',
+        'weight' => 15,
+      );
+    }
+  }
+
+  return $items;
+}
+
+/**
+ * Empty picture object.
+ */
+function picture_empty_object() {
+  return (object)picture_empty_array();
+}
+
+/**
+ * Empty picture array.
+ */
+function picture_empty_array() {
+  return array(
+    'machine_name' => '',
+    'breakpoint_group' => '',
+    'mapping' => array(),
+  );
+}
+
+/**
+ * Load mapping.
+ */
+function picture_mapping_load($name) {
+  return picture_mapping_load_by_fullkey('picture.mappings.' . $name);
+}
+
+/**
+ * Load a single mapping using the full config key.
+ */
+function picture_mapping_load_by_fullkey($name) {
+  $config = config($name);
+  if ($config->isNew()) {
+    return FALSE;
+  }
+  $data = $config->get();
+  $data += picture_empty_array();
+  return (object)$data;
+}
+
+/**
+ * Load all picture mappings.
+ */
+function picture_mapping_load_all() {
+  $picture_mappings = array();
+  $name = 'picture.mappings.';
+  $picture_mappings_names = config_get_storage_names_with_prefix($name);
+  foreach ($picture_mappings_names as $picture_mappings_name) {
+    $picture_mappings[$picture_mappings_name] = picture_mapping_load_by_fullkey($picture_mappings_name);
+  }
+  return $picture_mappings;
+}
+
+/**
+ * Save a mapping.
+ */
+function picture_mapping_save(&$mapping) {
+  $name = $mapping->machine_name;
+  $config = config($name);
+  $config->set('machine_name', $mapping->machine_name);
+  $config->set('breakpoint_group', $mapping->breakpoint_group);
+  $config->set('mapping', $mapping->mapping);
+  $config->save();
+
+  $data = $config->get();
+  $data += picture_empty_array();
+  return (object)$data;
+}
+
+/**
+ * Validate mappings.
+ */
+function picture_mapping_validate($mapping) {
+  if (!is_object($mapping)) {
+    return FALSE;
+  }
+  foreach (array('machine_name', 'breakpoint_group', 'mapping') as $property) {
+    if (!property_exists($mapping, $property)) {
+      return FALSE;
+    }
+  }
+  return TRUE;
+}
+
+/**
+ * Add javascript for older browser support
+ */
+function picture_add_js() {
+  static $added = FALSE;
+  if (!$added) {
+    $added = TRUE;
+    drupal_add_js(drupal_get_path('module', 'picture') . '/picturefill/matchmedia.js', array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT));
+    drupal_add_js(drupal_get_path('module', 'picture') . '/picturefill/picturefill.js', array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT));
+  }
+}
+
+/**
+ * Implements hook_theme().
+ */
+function picture_theme() {
+  return array(
+    'picture' => array(
+      'variables' => array(
+        'style_name' => NULL,
+        'path' => NULL,
+        'width' => NULL,
+        'height' => NULL,
+        'alt' => '',
+        'title' => NULL,
+        'attributes' => array(),
+        'breakpoints' => array(),
+      ),
+    ),
+    'picture_formatter' => array(
+      'variables' => array(
+        'item' => NULL,
+        'path' => NULL,
+        'image_style' => NULL,
+        'breakpoints' => array(),
+      ),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function picture_field_formatter_info() {
+  $formatters = array(
+    'picture' => array(
+      'label' => t('Picture'),
+      'field types' => array('image'),
+      'settings' => array('picture_group' => '', 'fallback_image_style' => '', 'image_link' => ''),
+    ),
+  );
+
+  return $formatters;
+}
+
+/**
+ * Implements hook_field_formatter_settings_form().
+ */
+function picture_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $picture_group_options = array();
+  $picture_mappings = picture_mapping_load_all();
+  if ($picture_mappings && !empty($picture_mappings)) {
+    foreach ($picture_mappings as $machine_name => $picture_mapping) {
+      $breakpoint_group = breakpoints_breakpoint_group_load($picture_mapping->breakpoint_group);
+      if ($breakpoint_group) {
+        $picture_group_options[$machine_name] = $breakpoint_group->name;
+      }
+    }
+  }
+
+  $element['picture_group'] = array(
+    '#title' => t('Picture group'),
+    '#type' => 'select',
+    '#default_value' => $settings['picture_group'],
+    '#required' => TRUE,
+    '#options' => $picture_group_options,
+  );
+
+  $image_styles = image_style_options(FALSE);
+  $element['fallback_image_style'] = array(
+    '#title' => t('Fallback image style'),
+    '#type' => 'select',
+    '#default_value' => $settings['fallback_image_style'],
+    '#empty_option' => t('Automatic'),
+    '#options' => $image_styles,
+  );
+
+  $link_types = array(
+    'content' => t('Content'),
+    'file' => t('File'),
+  );
+  $element['image_link'] = array(
+    '#title' => t('Link image to'),
+    '#type' => 'select',
+    '#default_value' => $settings['image_link'],
+    '#empty_option' => t('Nothing'),
+    '#options' => $link_types,
+  );
+
+  return $element;
+}
+
+/**
+ * Implements hook_field_formatter_settings_summary().
+ */
+function picture_field_formatter_settings_summary($field, $instance, $view_mode) {
+  $display = $instance['display'][$view_mode];
+  $settings = $display['settings'];
+
+  $summary = array();
+
+  $picture_mapping = picture_mapping_load_by_fullkey($settings['picture_group']);
+  $breakpoint_group = breakpoints_breakpoint_group_load($picture_mapping->breakpoint_group);
+  if ($breakpoint_group) {
+    $summary[] = t('Picture group: @picture_group', array('@picture_group' => $breakpoint_group->name));
+  }
+  else {
+    $summary[] = t("Picture group doesn't exists");
+  }
+
+  $image_styles = image_style_options(FALSE);
+  unset($image_styles['']);
+  if (isset($image_styles[$settings['fallback_image_style']])) {
+    $summary[] = t('Fallback Image style: @style', array('@style' => $image_styles[$settings['fallback_image_style']]));
+  }
+  else {
+    $summary[] = t('Automatic fallback');
+  }
+
+  $link_types = array(
+    'content' => t('Linked to content'),
+    'file' => t('Linked to file'),
+  );
+  // Display this setting only if image is linked.
+  if (isset($link_types[$settings['image_link']])) {
+    $summary[] = $link_types[$settings['image_link']];
+  }
+
+  return implode('<br />', $summary);
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function picture_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $element = array();
+
+  // Check if the formatter involves a link.
+  if ($display['settings']['image_link'] == 'content') {
+    $uri = entity_uri($entity_type, $entity);
+  }
+  elseif ($display['settings']['image_link'] == 'file') {
+    $link_file = TRUE;
+  }
+
+  $breakpoint_styles = array();
+  $fallback_image_style = '';
+  $group_name = $display['settings']['picture_group'];
+  $mappings = picture_mapping_load_by_fullkey($group_name);
+  if ($mappings) {
+    foreach ($mappings->mapping as $breakpoint_name => $multipliers) {
+      if (!empty($multipliers)) {
+        foreach ($multipliers as $multiplier => $image_style) {
+          if (!empty($image_style)) {
+            if (empty($fallback_image_style)) {
+              $fallback_image_style = $image_style;
+            }
+            if (!isset($breakpoint_styles[$breakpoint_name])) {
+              $breakpoint_styles[$breakpoint_name] = array();
+            }
+            $breakpoint_styles[$breakpoint_name][$multiplier] = $image_style;
+          }
+        }
+      }
+    }
+  }
+
+  if (isset($display['settings']['fallback_image_style']) && !empty($display['settings']['fallback_image_style'])) {
+    $fallback_image_style = $display['settings']['fallback_image_style'];
+  }
+
+  foreach ($items as $delta => $item) {
+    if (isset($link_file)) {
+      $uri = array(
+        'path' => file_create_url($item['uri']),
+        'options' => array(),
+      );
+    }
+    $element[$delta] = array(
+      '#theme' => 'picture_formatter',
+      '#item' => $item,
+      '#image_style' => $fallback_image_style,
+      '#breakpoints' => $breakpoint_styles,
+      '#path' => isset($uri) ? $uri : '',
+    );
+  }
+
+  return $element;
+}
+
+function theme_picture_formatter($variables) {
+  if (!isset($variables['breakpoints']) || empty($variables['breakpoints'])) {
+    return theme('image_formatter', $variables);
+  }
+
+  $item = $variables['item'];
+
+  // Do not output an empty 'title' attribute.
+  if (isset($item['title']) && drupal_strlen($item['title']) == 0) {
+    unset($item['title']);
+  }
+
+  $item['style_name'] = $variables['image_style'];
+  $item['breakpoints'] = $variables['breakpoints'];
+
+  if (!isset($item['path']) && isset($variables['uri'])) {
+    $item['path'] = $variables['uri'];
+  }
+  $output = theme('picture', $item);
+
+  if (isset($variables['path']['path'])) {
+    $path = $variables['path']['path'];
+    $options = isset($variables['path']['options']) ? $variables['path']['options'] : array();
+    $options['html'] = TRUE;
+    $output = l($output, $path, $options);
+  }
+  return $output;
+}
+
+/**
+ * Theme a picture element.
+ */
+function theme_picture($variables) {
+  picture_add_js();
+
+  // Make sure that width and height are proper values
+  // If they exists we'll output them
+  // @see http://www.w3.org/community/respimg/2012/06/18/florians-compromise/
+  if (isset($variables['width']) && empty($variables['width'])) {
+    unset($variables['width']);
+    unset($variables['height']);
+  }
+  elseif (isset($variables['height']) && empty($variables['height'])) {
+    unset($variables['width']);
+    unset($variables['height']);
+  }
+
+  // Use path or uri untill D7 uses one in all places.
+  if (!isset($variables['path']) || empty($variables['path'])) {
+    $variables['path'] = ($variables['uri']);
+  }
+  if (!isset($variables['uri']) || empty($variables['uri'])) {
+    $variables['uri'] = ($variables['path']);
+  }
+
+  $images = array();
+  $output = array();
+
+  // Fallback image.
+  $img = theme('image_style', $variables);
+  $img = str_replace('<img', '', $img);
+  $img = str_replace('/>', '', $img);
+  $images[] = array(
+    'image' => $img,
+  );
+
+  // All breakpoints and multipliers.
+  foreach ($variables['breakpoints'] as $breakpoint_name => $multipliers) {
+    $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint_name);
+    if ($breakpoint) {
+      $new_images = array();
+      foreach ($multipliers as $multiplier => $image_style) {
+        $new_image = $variables;
+        // Add classes to ease styling
+        $new_image['style_name'] = $image_style;
+        $new_image['#multiplier'] = $multiplier;
+        $new_images[] = $new_image;
+      }
+      $img = theme('image_style', $new_images[0]);
+      $img = str_replace('<img', '', $img);
+      $img = str_replace('/>', '', $img);
+
+      // Only one image, output as src.
+      if (count($new_images) == 1) {
+        $images[] = array(
+          'image' => $img,
+          'media' => $breakpoint->breakpoint,
+        );
+      }
+      else {
+        // Mutliple images, output as srcset.
+        $srcset = array();
+        foreach ($new_images as $new_image) {
+          $srcset[] = image_style_url($new_image['style_name'], $new_image['uri']) . ' ' . $new_image['#multiplier'];
+        }
+        $img = preg_replace('/src="[^"]*"/', '', $img);
+        $images[] = array(
+          'srcset' => implode(', ', $srcset),
+          'media' => $breakpoint->breakpoint,
+          'image' => $img,
+        );
+      }
+    }
+  }
+
+  if (!empty($images)) {
+    $output[] = '<picture class="' . PICTURE_CLASS . '" alt="' . check_plain($variables['alt']) . '" title="' . check_plain($variables['title']) . '">';
+
+    // add variants to the output
+    foreach ($images as $image) {
+      if (isset($image['media']) && !empty($image['media'])) {
+        if (!isset($image['srcset'])) {
+          $output[] = '<!-- <source media="' . $image['media'] . '" ' . $image['image'] . ' /> -->';
+          $output[] = '<source media="' . $image['media'] . '" ' . $image['image'] . ' />';
+        }
+        else {
+          $output[] = '<!-- <source media="' . $image['media'] . '" srcset="' . $image['srcset'] . '" ' . $image['image'] . ' /> -->';
+          $output[] = '<source media="' . $image['media'] . '" srcset="' . $image['srcset'] . '" ' . $image['image'] . ' />';
+        }
+      }
+      else {
+        $output[] = '<!-- <source ' . $image['image'] . ' /> -->';
+        $output[] = '<source ' . $image['image'] . ' />';
+      }
+    }
+
+    // output the default image as fallback
+    // $output .= '<img src="' . image_style_url($variables['style_name'], $variables['uri']) . '" alt="' . check_plain($variables['alt']) . '" />';
+    $output[] = '<noscript><img ' . $images[0]['image'] . '/></noscript>';
+    $output[] = '</picture>';
+    return implode("\n", $output);
+  }
+}
