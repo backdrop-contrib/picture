@@ -324,8 +324,8 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
     $element[$delta] = array(
       '#theme' => 'picture_formatter',
       '#attached' => array('js' => array(
-        drupal_add_js(drupal_get_path('module', 'picture') . '/picturefill/matchmedia.js', array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT)),
-        drupal_add_js(drupal_get_path('module', 'picture') . '/picturefill/picturefill.js', array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT)),
+        drupal_get_path('module', 'picture') . '/picturefill/matchmedia.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+        drupal_get_path('module', 'picture') . '/picturefill/picturefill.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
       )),
       '#item' => $item,
       '#image_style' => $fallback_image_style,
