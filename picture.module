@@ -61,6 +61,28 @@ function picture_menu() {
 }
 
 /**
+ * Implements hook_library_info().
+ */
+function picture_library_info() {
+  $libraries['matchmedia'] = array(
+    'title' => t('Matchmedia'),
+    'website' => 'https://github.com/attiks/picturefill-proposal',
+    'version' => '0.1',
+    'js' => array(
+      drupal_get_path('module', 'picture') . '/picturefill/matchmedia.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+    ),
+  );
+  $libraries['picturefill'] = array(
+    'title' => t('Picturefill'),
+    'website' => 'https://github.com/attiks/picturefill-proposal',
+    'version' => '0.1',
+    'js' => array(
+      drupal_get_path('module', 'picture') . '/picturefill/picturefill.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+    ),
+  );
+}
+
+/**
  * Empty picture object.
  */
 function picture_empty_object() {
@@ -323,9 +345,9 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
     }
     $element[$delta] = array(
       '#theme' => 'picture_formatter',
-      '#attached' => array('js' => array(
-        drupal_get_path('module', 'picture') . '/picturefill/matchmedia.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
-        drupal_get_path('module', 'picture') . '/picturefill/picturefill.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+      '#attached' => array('library' => array(
+        array('picture', 'matchmedia'),
+        array('picture', 'picturefill'),
       )),
       '#item' => $item,
       '#image_style' => $fallback_image_style,
