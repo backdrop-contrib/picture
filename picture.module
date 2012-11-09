@@ -135,6 +135,13 @@ function picture_library() {
       drupal_get_path('module', 'picture') . '/picturefill/picturefill.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
     ),
   );
+  $libraries['picture.ajax'] = array(
+    'title' => t('Ajax support for picture'),
+    'version' => VERSION,
+    'js' => array(
+      drupal_get_path('module', 'picture') . '/picture.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+    ),
+  );
   return $libraries;
 }
 
@@ -379,6 +386,7 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
       '#attached' => array('library' => array(
         array('picture', 'matchmedia'),
         array('picture', 'picturefill'),
+        array('picture', 'picture.ajax'),
       )),
       '#item' => $item,
       '#image_style' => $fallback_image_style,
