@@ -13,11 +13,11 @@ function picture_admin_breakpoints($form, &$form_state, $breakpoint_group_name =
   if ($breakpoint_group_name == '' || $breakpoint_group_name == 'global') {
     return picture_admin_breakpoints_overview_page();
   }
-  $machine_name = 'picture.mappings.' . $breakpoint_group_name;
+  $machine_name = $breakpoint_group_name;
   $form = array();
 
   $mappings = picture_mapping_load($breakpoint_group_name);
-  $mappings = $mappings ? $mappings : new stdclass();
+  $mappings = $mappings ? $mappings : new stdClass();
 
   $form['picture_mapping'] = array(
     '#type' => 'container',
@@ -110,4 +110,75 @@ function picture_admin_breakpoints_overview_page() {
 function picture_admin_breakpoints_submit($form, &$form_state) {
   $mapping = (object)$form_state['values']['picture_mapping'];
   picture_mapping_save($mapping);
+}
+
+function picture_admin_export_form($form, &$form_state, $mappings_name) {
+  // Create the export code textarea.
+  ctools_include('export');
+  $mapping = picture_mapping_load($mappings_name);
+  if (!$mapping) {
+    $mapping = new stdClass();
+  }
+  $export = ctools_export_object('picture_mapping', $mapping);
+  $form['mapping_export'] = array(
+    '#type' => 'textarea',
+    '#title' => t('Mapping code'),
+    '#rows' => count(explode("\n", $export)),
+    '#default_value' => $export,
+    '#weight' => -1,
+    '#description' => t('<strong>Warning!</strong> Only import these mappings if the breakpoint group below has been imported on that site already, or if they were manually created there.'),
+  );
+
+  // Also export the group it belongs to.
+  module_load_include('inc', 'breakpoints', 'breakpoints.admin');
+  $form += drupal_get_form('breakpoints_admin_breakpoint_group_export_form', $mapping->breakpoint_group);
+  $form['export']['#description'] = t('If you want to import this mapping on an other site,
+    you\'ll need to import the breakpoint group with its breakpoints as well,
+    if it doesn\'t already exist on that site.');
+  return $form;
+}
+
+function picture_admin_import_form($form, &$form_state) {
+  $form['import'] = array(
+    '#type' => 'textarea',
+    '#rows' => 10,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Import')
+  );
+  return $form;
+}
+
+
+/**
+ * Validate a mapping import.
+ */
+function picture_admin_import_form_validate($form, &$form_state) {
+  ctools_include('export');
+  $code = $form_state['values']['import'];
+  $mapping = ctools_export_crud_import('picture_mapping', $code);
+  if (!picture_mapping_validate($mapping)) {
+    form_set_error('import', t('Not a valid mapping object'));
+    return;
+  }
+  if (picture_mapping_load($mapping->machine_name)) {
+    form_set_error('import', t('A mapping with machine name %name already exists', array('%name' => $mapping->machine_name)));
+    return;
+  }
+  form_set_value($form['import'], $mapping, $form_state);
+}
+
+/**
+ * Import mapping.
+ */
+function picture_admin_import_form_submit($form, &$form_state) {
+  $mapping = $form_state['values']['import'];
+  if (picture_mapping_save($mapping)) {
+    drupal_set_message(t('Mapping %mapping saved.', array('%mapping' => $mapping->machine_name)));
+    $form_state['redirect'] = 'admin/config/media/picture/';
+  }
+  else {
+    drupal_set_message(t('Something went wrong, we could not save the mapping'), 'error');
+  }
 }

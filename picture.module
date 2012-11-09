@@ -1,8 +1,7 @@
 <?php
 
-define('PICTURE_CLASS', 'resp-img-picture');
+define('PICTURE_CLASS', 'picture');
 define('PICTURE_SEPARATOR', '__');
-define('PICTURE_STYLE_PREFIX', 'resp__img__');
 
 /**
  * Implements hook_permission().
@@ -43,6 +42,15 @@ function picture_menu() {
     'weight' => -1,
   );
 
+  $items['admin/config/media/picture/groups/import'] = array(
+    'title' => 'Import mappings',
+    'page arguments' => array('picture_admin_import_form'),
+    'type' => MENU_LOCAL_TASK,
+    'access arguments' => array('administer responsive images and styles'),
+    'file' => 'picture.admin.inc',
+    'weight' => 999,
+  );
+
   $breakpoint_groups = breakpoints_breakpoint_group_load_all();
   foreach ($breakpoint_groups as $breakpoint_group_name => $breakpoint_group) {
     if (!empty($breakpoint_group->machine_name)) {
@@ -54,6 +62,16 @@ function picture_menu() {
         'file' => 'picture.admin.inc',
         'weight' => 15,
       );
+      $items['admin/config/media/picture/groups/' . $breakpoint_group->machine_name . '/export'] = array(
+        'title' => 'Export ' . check_plain($breakpoint_group->name) . ' mappings',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('picture_admin_export_form', 'mappings.' . $breakpoint_group->machine_name),
+        'type' => MENU_LOCAL_ACTION,
+        'access arguments' => array('administer responsive images and styles', 'mappings.' . $breakpoint_group->machine_name),
+        'access callback' => 'picture_mappings_export_access',
+        'file' => 'picture.admin.inc',
+        'weight' => 15,
+      );
     }
   }
 
@@ -61,9 +79,46 @@ function picture_menu() {
 }
 
 /**
- * Implements hook_library_info().
+ * Access callback.
  */
-function picture_library_info() {
+function picture_mappings_export_access($perm, $mapping_name) {
+  return picture_mapping_load($mapping_name) && user_access($perm);
+}
+
+/**
+ * Load mappings.
+ */
+function picture_mapping_load($name = NULL) {
+  ctools_include('export');
+  if ($name) {
+    $mappings = ctools_export_load_object('picture_mapping', 'names', array($name));
+    $mapping = isset($mappings[$name]) ? $mappings[$name] : FALSE;
+    return $mapping;
+  }
+  return ctools_export_load_object('picture_mapping');
+}
+
+/**
+ * Load all mappings.
+ */
+function picture_mapping_load_all() {
+  ctools_include('export');
+  return ctools_export_load_object('picture_mapping');
+}
+
+/**
+ * Save mappings.
+ */
+function picture_mapping_save(&$mapping) {
+  ctools_include('export');
+  $update = isset($mapping->id) ? array('id') : array();
+  return drupal_write_record('picture_mapping', $mapping, $update);
+}
+
+/**
+ * Implements hook_library().
+ */
+function picture_library() {
   $libraries['matchmedia'] = array(
     'title' => t('Matchmedia'),
     'website' => 'https://github.com/attiks/picturefill-proposal',
@@ -80,6 +135,7 @@ function picture_library_info() {
       drupal_get_path('module', 'picture') . '/picturefill/picturefill.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
     ),
   );
+  return $libraries;
 }
 
 /**
@@ -101,52 +157,19 @@ function picture_empty_array() {
 }
 
 /**
- * Load mapping.
+ * Implements hook_ctools_plugin_api().
+ *
+ * Lets CTools know which plugin APIs are implemented by picture module.
  */
-function picture_mapping_load($name) {
-  return picture_mapping_load_by_fullkey('picture.mappings.' . $name);
-}
-
-/**
- * Load a single mapping using the full config key.
- */
-function picture_mapping_load_by_fullkey($name) {
-  $config = config($name);
-  if ($config->isNew()) {
-    return FALSE;
+function picture_ctools_plugin_api($owner, $api) {
+  static $api_versions = array(
+    'file_entity' => array(
+      'file_default_displays' => 1,
+    ),
+  );
+  if (isset($api_versions[$owner][$api])) {
+    return array('version' => $api_versions[$owner][$api]);
   }
-  $data = $config->get();
-  $data += picture_empty_array();
-  return (object)$data;
-}
-
-/**
- * Load all picture mappings.
- */
-function picture_mapping_load_all() {
-  $picture_mappings = array();
-  $name = 'picture.mappings.';
-  $picture_mappings_names = config_get_storage_names_with_prefix($name);
-  foreach ($picture_mappings_names as $picture_mappings_name) {
-    $picture_mappings[$picture_mappings_name] = picture_mapping_load_by_fullkey($picture_mappings_name);
-  }
-  return $picture_mappings;
-}
-
-/**
- * Save a mapping.
- */
-function picture_mapping_save(&$mapping) {
-  $name = $mapping->machine_name;
-  $config = config($name);
-  $config->set('machine_name', $mapping->machine_name);
-  $config->set('breakpoint_group', $mapping->breakpoint_group);
-  $config->set('mapping', $mapping->mapping);
-  $config->save();
-
-  $data = $config->get();
-  $data += picture_empty_array();
-  return (object)$data;
 }
 
 /**
@@ -187,6 +210,14 @@ function picture_theme() {
         'path' => NULL,
         'image_style' => NULL,
         'breakpoints' => array(),
+      ),
+    ),
+    'picture_source' => array(
+      'variables' => array(
+        'src' => NULL,
+        'srcset' => NULL,
+        'dimension' => NULL,
+        'media' => NULL,
       ),
     ),
   );
@@ -266,7 +297,7 @@ function picture_field_formatter_settings_summary($field, $instance, $view_mode)
 
   $summary = array();
 
-  $picture_mapping = picture_mapping_load_by_fullkey($settings['picture_group']);
+  $picture_mapping = picture_mapping_load($settings['picture_group']);
   $breakpoint_group = breakpoints_breakpoint_group_load($picture_mapping->breakpoint_group);
   if ($breakpoint_group) {
     $summary[] = t('Picture group: @picture_group', array('@picture_group' => $breakpoint_group->name));
@@ -313,7 +344,7 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
   $breakpoint_styles = array();
   $fallback_image_style = '';
   $group_name = $display['settings']['picture_group'];
-  $mappings = picture_mapping_load_by_fullkey($group_name);
+  $mappings = picture_mapping_load($group_name);
   if ($mappings) {
     foreach ($mappings->mapping as $breakpoint_name => $multipliers) {
       if (!empty($multipliers)) {
@@ -389,7 +420,18 @@ function theme_picture_formatter($variables) {
 }
 
 /**
- * Theme a picture element.
+ * Returns HTML for a picture.
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - uri: Either the path of the image file (relative to base_path()) or a
+ *     full URL.
+ *   - width: The width of the image (if known).
+ *   - height: The height of the image (if known).
+ *   - alt: The alternative text for text-based browsers.
+ *   - breakpoints: An array containing breakpoints.
+ *
+ * @ingroup themeable
  */
 function theme_picture($variables) {
   // Make sure that width and height are proper values
@@ -404,81 +446,127 @@ function theme_picture($variables) {
     unset($variables['height']);
   }
 
-  $images = array();
+  $sources = array();
   $output = array();
 
-  // Fallback image.
-  $img = theme('image_style', $variables);
-  $img = str_replace('<img', '', $img);
-  $img = str_replace('/>', '', $img);
-  $images[] = array(
-    'image' => $img,
+  // Fallback image, output as source with media query.
+  $sources[] = array(
+    'src' => image_style_url($variables['style_name'], $variables['uri']),
+    'dimensions' => picture_get_image_dimensions($variables),
   );
 
   // All breakpoints and multipliers.
   foreach ($variables['breakpoints'] as $breakpoint_name => $multipliers) {
     $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint_name);
     if ($breakpoint) {
-      $new_images = array();
+      $new_sources = array();
       foreach ($multipliers as $multiplier => $image_style) {
-        $new_image = $variables;
-        // Add classes to ease styling
-        $new_image['style_name'] = $image_style;
-        $new_image['#multiplier'] = $multiplier;
-        $new_images[] = $new_image;
+        $new_source = $variables;
+        $new_source['style_name'] = $image_style;
+        $new_source['#multiplier'] = $multiplier;
+        $new_sources[] = $new_source;
       }
-      $img = theme('image_style', $new_images[0]);
-      $img = str_replace('<img', '', $img);
-      $img = str_replace('/>', '', $img);
 
-      // Only one image, output as src.
-      if (count($new_images) == 1) {
-        $images[] = array(
-          'image' => $img,
+      // Only one image, use src.
+      if (count($new_sources) == 1) {
+        $sources[] = array(
+          'src' => image_style_url($new_sources[0]['style_name'], $new_sources[0]['uri']),
+          'dimensions' => picture_get_image_dimensions($new_sources[0]),
           'media' => $breakpoint->breakpoint,
         );
       }
       else {
-        // Mutliple images, output as srcset.
+        // Mutliple images, use srcset.
         $srcset = array();
-        foreach ($new_images as $new_image) {
-          $srcset[] = image_style_url($new_image['style_name'], $new_image['uri']) . ' ' . $new_image['#multiplier'];
+        foreach ($new_sources as $new_source) {
+          $srcset[] = image_style_url($new_source['style_name'], $new_source['uri']) . ' ' . $new_source['#multiplier'];
         }
-        $img = preg_replace('/src="[^"]*"/', '', $img);
-        $images[] = array(
+        $sources[] = array(
           'srcset' => implode(', ', $srcset),
+          'dimensions' => picture_get_image_dimensions($new_sources[0]),
           'media' => $breakpoint->breakpoint,
-          'image' => $img,
         );
       }
     }
   }
 
-  if (!empty($images)) {
-    $output[] = '<picture class="' . PICTURE_CLASS . '" alt="' . check_plain($variables['alt']) . '" title="' . check_plain($variables['title']) . '">';
-
-    // add variants to the output
-    foreach ($images as $image) {
-      if (isset($image['media']) && !empty($image['media'])) {
-        if (!isset($image['srcset'])) {
-          $output[] = '<!-- <source media="' . $image['media'] . '" ' . $image['image'] . ' /> -->';
-          $output[] = '<source media="' . $image['media'] . '" ' . $image['image'] . ' />';
-        }
-        else {
-          $output[] = '<!-- <source media="' . $image['media'] . '" srcset="' . $image['srcset'] . '" ' . $image['image'] . ' /> -->';
-          $output[] = '<source media="' . $image['media'] . '" srcset="' . $image['srcset'] . '" ' . $image['image'] . ' />';
-        }
-      }
-      else {
-        $output[] = '<!-- <source ' . $image['image'] . ' /> -->';
-        $output[] = '<source ' . $image['image'] . ' />';
+  if (!empty($sources)) {
+    $attributes = array();
+    foreach (array('alt', 'title') as $key) {
+      if (isset($variables[$key])) {
+        $attributes[$key] = $variables[$key];
       }
     }
+    $output[] = '<picture' . drupal_attributes($attributes) . '>';
 
-    // output the default image as fallback
-    // $output .= '<img src="' . image_style_url($variables['style_name'], $variables['uri']) . '" alt="' . check_plain($variables['alt']) . '" />';
-    $output[] = '<noscript><img ' . $images[0]['image'] . '/></noscript>';
+    // Add source tags to the output.
+    foreach ($sources as $source) {
+      $output[] = theme('picture_source', $source);
+    }
+
+    // Output the fallback image.
+    $output[] = '<noscript>' . theme('image_style', $variables) . '</noscript>';
     $output[] = '</picture>';
     return implode("\n", $output);
   }
 }
+
+/**
+ * Returns HTML for a source tag.
+ *
+ * @param type $variables
+ *   An associative array containing:
+ *   - media: The media query to use.
+ *   - srcset: The srcset containing the the path of the image file or a full
+ *     URL and optionally multipliers.
+ *   - src: Either the path of the image file (relative to base_path()) or a
+ *     full URL.
+ *   - dimensions: The width and height of the image (if known).
+ *
+ * @ingroup themeable
+ */
+function theme_picture_source($variables) {
+  $output = array();
+  if (isset($variables['media']) && !empty($variables['media'])) {
+    if (!isset($variables['srcset'])) {
+      $output[] = '<!-- <source media="' . $variables['media'] . '" src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . ' /> -->';
+      $output[] = '<source media="' . $variables['media'] . '" src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '/>';
+    }
+    elseif (!isset($variables['src'])) {
+      $output[] = '<!-- <source media="' . $variables['media'] . '" srcset="' . $variables['srcset'] . '" ' . drupal_attributes($variables['dimensions']) . ' /> -->';
+      $output[] = '<source media="' . $variables['media'] . '" srcset="' . $variables['srcset'] . '" ' . drupal_attributes($variables['dimensions']) . ' />';
+    }
+  }
+  else {
+    $output[] = '<!-- <source src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . ' /> -->';
+    $output[] = '<source src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '/>';
+  }
+  return implode("\n", $output);
+}
+
+/**
+ * Determines the dimensions of an image.
+ *
+ * @param $variables
+ *   An associative array containing:
+ *   - style_name: The name of the style to be used to alter the original image.
+ *   - width: The width of the source image (if known).
+ *   - height: The height of the source image (if known).
+ *
+ * @return array
+ *   Dimensions to be modified - an array with components width and height, in
+ *   pixels.
+ */
+function picture_get_image_dimensions($variables) {
+  // Determine the dimensions of the styled image.
+  $dimensions = array(
+    'width' => $variables['width'],
+    'height' => $variables['height'],
+  );
+
+  image_style_transform_dimensions($variables['style_name'], $dimensions);
+
+  return $dimensions;
+}
+
+
