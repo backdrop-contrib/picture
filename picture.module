@@ -505,6 +505,10 @@ function theme_picture($variables) {
     }
 
     // Output the fallback image.
+    if (empty($variables['path'])) {
+      $variables['path'] = $variables['uri'];
+    }
+
     $output[] = '<noscript>' . theme('image_style', $variables) . '</noscript>';
     $output[] = '</picture>';
     return implode("\n", $output);
