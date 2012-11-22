@@ -502,10 +502,10 @@ function theme_picture($variables) {
     $attributes = array();
     foreach (array('alt', 'title') as $key) {
       if (isset($variables[$key])) {
-        $attributes[$key] = $variables[$key];
+        $attributes['data-' . $key] = $variables[$key];
       }
     }
-    $output[] = '<picture' . drupal_attributes($attributes) . '>';
+    $output[] = '<span data-picture' . drupal_attributes($attributes) . '>';
 
     // Add source tags to the output.
     foreach ($sources as $source) {
@@ -518,7 +518,7 @@ function theme_picture($variables) {
     }
 
     $output[] = '<noscript>' . theme('image_style', $variables) . '</noscript>';
-    $output[] = '</picture>';
+    $output[] = '</span>';
     return implode("\n", $output);
   }
 }
@@ -541,17 +541,14 @@ function theme_picture_source($variables) {
   $output = array();
   if (isset($variables['media']) && !empty($variables['media'])) {
     if (!isset($variables['srcset'])) {
-      $output[] = '<!-- <source media="' . $variables['media'] . '" src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . ' /> -->';
-      $output[] = '<source media="' . $variables['media'] . '" src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '/>';
+      $output[] = '<span data-media="' . $variables['media'] . '" data-src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
     }
     elseif (!isset($variables['src'])) {
-      $output[] = '<!-- <source media="' . $variables['media'] . '" srcset="' . $variables['srcset'] . '" ' . drupal_attributes($variables['dimensions']) . ' /> -->';
-      $output[] = '<source media="' . $variables['media'] . '" srcset="' . $variables['srcset'] . '" ' . drupal_attributes($variables['dimensions']) . ' />';
+      $output[] = '<span data-media="' . $variables['media'] . '" data-srcset="' . $variables['srcset'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
     }
   }
   else {
-    $output[] = '<!-- <source src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . ' /> -->';
-    $output[] = '<source src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '/>';
+    $output[] = '<span data-src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
   }
   return implode("\n", $output);
 }

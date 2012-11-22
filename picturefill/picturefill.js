@@ -5,11 +5,6 @@
   // Enable strict mode.
   "use strict";
 
-  // Test if `<picture>` is supported natively, if so, exit.
-  if (!!(w.document.createElement('picture') && w.document.createElement('source') && w.HTMLPictureElement)) {
-    return;
-  }
-
   w.picturefill = function() {
     // Copy attributes from the source to the destination.
     function _copyAttributes(src, tar) {
@@ -20,29 +15,38 @@
     }
 
     // Get all picture tags.
-    var ps = w.document.getElementsByTagName('picture');
+    var ps = w.document.getElementsByTagName('span');
 
     // Loop the pictures.
     for (var i = 0, il = ps.length; i < il; i++ ) {
-      var sources = ps[i].getElementsByTagName('source');
+      var sources = ps[i].getElementsByTagName('span');
       var picImg = null;
       var matches = [];
 
-      // If no sources are found, they're likely erased from the DOM.
-      // Try finding them inside comments.
-      if (!sources.length) {
-        var picText = ps[i].innerHTML;
-        var frag = w.document.createElement('div');
-        // For IE9, convert the source elements to divs.
-        var srcs = picText.replace(/(<)source([^>]+>)/gmi, '$1div$2').match(/<div[^>]+>/gmi);
-
-        frag.innerHTML = srcs.join('');
-        sources = frag.getElementsByTagName('div');
-      }
-
       // See which sources match.
       for (var j = 0, jl = sources.length; j < jl; j++ ) {
-        var media = sources[j].getAttribute('media');
+        var media = sources[j].getAttribute('data-media');
+
+        // adds -webkit- prefix in javascript instead of HTML, for simplicity
+        if (media && media.indexOf("device-pixel-ratio") > -1 ) {
+          var webkitmedia = media.replace("device-pixel-ratio", "-webkit-device-pixel-ratio");
+          var mozmedia = media.replace("device-pixel-ratio", "-moz-device-pixel-ratio");
+          var omedia = media.replace("device-pixel-ratio", "-o-device-pixel-ratio");
+          media = webkitmedia +","+ mozmedia +","+ omedia +","+ media;
+        }
+        if (media && media.indexOf("min-device-pixel-ratio") > -1 ) {
+          var webkitmedia = media.replace("min-device-pixel-ratio", "-webkit-min-device-pixel-ratio");
+          var mozmedia = media.replace("min-device-pixel-ratio", "min--moz-device-pixel-ratio");
+          var omedia = media.replace("min-device-pixel-ratio", "-o-min-device-pixel-ratio");
+          media = webkitmedia +","+ mozmedia +","+ omedia +","+ media;
+        }
+        if (media && media.indexOf("max-device-pixel-ratio") > -1 ) {
+          var webkitmedia = media.replace("max-device-pixel-ratio", "-webkit-max-device-pixel-ratio");
+          var mozmedia = media.replace("max-device-pixel-ratio", "max--moz-device-pixel-ratio");
+          var omedia = media.replace("max-device-pixel-ratio", "-o-max-device-pixel-ratio");
+          media = webkitmedia +","+ mozmedia +","+ omedia +","+ media;
+        }
+
         // If there's no media specified or the media query matches, add it.
         if (!media || (w.matchMedia && w.matchMedia(media).matches)) {
           matches.push(sources[j]);
@@ -52,7 +56,7 @@
       if (matches.length) {
         // Grab the most appropriate (last) match.
         var match = matches.pop();
-        var srcset = match.getAttribute('srcset');
+        var srcset = match.getAttribute('data-srcset');
 
         // Find any existing img element in the picture element.
         picImg = ps[i].getElementsByTagName('img')[0];
@@ -60,7 +64,7 @@
         // Add a new img element if one doesn't exists.
         if (!picImg) {
           picImg = w.document.createElement('img');
-          picImg.alt = ps[i].getAttribute('alt');
+          picImg.alt = ps[i].getAttribute('data-alt');
           ps[i].appendChild(picImg);
         }
 
@@ -102,7 +106,7 @@
           }
         } else {
           // No srcset used, so just use the 'src' value.
-          picImg.src = match.getAttribute('src');
+          picImg.src = match.getAttribute('data-src');
           // Copy width and height from the source tag to the img element.
           _copyAttributes(match, picImg);
         }
