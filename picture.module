@@ -222,7 +222,6 @@ function picture_theme() {
     'picture_source' => array(
       'variables' => array(
         'src' => NULL,
-        'srcset' => NULL,
         'dimension' => NULL,
         'media' => NULL,
       ),
@@ -540,8 +539,6 @@ function picture_get_multiplier_media_query($multiplier, $breakpoint) {
  * @param type $variables
  *   An associative array containing:
  *   - media: The media query to use.
- *   - srcset: The srcset containing the the path of the image file or a full
- *     URL and optionally multipliers.
  *   - src: Either the path of the image file (relative to base_path()) or a
  *     full URL.
  *   - dimensions: The width and height of the image (if known).
@@ -551,12 +548,7 @@ function picture_get_multiplier_media_query($multiplier, $breakpoint) {
 function theme_picture_source($variables) {
   $output = array();
   if (isset($variables['media']) && !empty($variables['media'])) {
-    if (!isset($variables['srcset'])) {
-      $output[] = '<span data-media="' . $variables['media'] . '" data-src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
-    }
-    elseif (!isset($variables['src'])) {
-      $output[] = '<span data-media="' . $variables['media'] . '" data-srcset="' . $variables['srcset'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
-    }
+    $output[] = '<span data-media="' . $variables['media'] . '" data-src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
   }
   else {
     $output[] = '<span data-src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';

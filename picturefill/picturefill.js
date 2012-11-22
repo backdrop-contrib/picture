@@ -37,7 +37,6 @@
         if (matches.length) {
           // Grab the most appropriate (last) match.
           var match = matches.pop();
-          var srcset = match.getAttribute('data-srcset');
 
           // Find any existing img element in the picture element.
           picImg = ps[i].getElementsByTagName('img')[0];
@@ -48,49 +47,9 @@
             picImg.alt = ps[i].getAttribute('data-alt');
             ps[i].appendChild(picImg);
           }
-
-          // Source element uses a srcset.
-          if (srcset) {
-            var screenRes = w.devicePixelRatio || 1;
-            // Split comma-separated `srcset` sources into an array.
-            sources = srcset.split(', ');
-
-            // Loop through each source/resolution in srcset.
-            for (var res = sources.length, r = res - 1; r >= 0; r-- ) {
-              // Remove any leading whitespace, then split on spaces.
-              var source = sources[ r ].replace(/^\s*/, '').replace(/\s*$/, '').split(' ');
-              // Parse out the resolution for each source in `srcset`.
-              var resMatch = parseFloat(source[1], 10);
-
-              if (screenRes >= resMatch) {
-                if (picImg.getAttribute('src') !== source[0]) {
-                  var newImg = document.createElement('img');
-
-                  newImg.src = source[0];
-                  // When the image is loaded, set a width equal to that of the
-                  // original’s intrinsic width divided by the screen resolution.
-                  newImg.onload = function() {
-                    // Clone the original image into memory so the width is
-                    // unaffected by page styles.
-                    var w = this.cloneNode(true).width;
-                    if (w > 0) {
-                      this.width = (w / resMatch);
-                    }
-                  };
-                  // Copy width and height from the source tag to the img element.
-                  _copyAttributes(match, newImg);
-                  picImg.parentNode.replaceChild(newImg, picImg);
-                }
-                // We’ve matched, so bail out of the loop here.
-                break;
-              }
-            }
-          } else {
-            // No srcset used, so just use the 'src' value.
-            picImg.src = match.getAttribute('data-src');
-            // Copy width and height from the source tag to the img element.
-            _copyAttributes(match, picImg);
-          }
+          picImg.src = match.getAttribute('data-src');
+          // Copy width and height from the source tag to the img element.
+          _copyAttributes(match, picImg);
         }
       }
     }
