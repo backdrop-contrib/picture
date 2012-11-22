@@ -28,26 +28,6 @@
         for (var j = 0, jl = sources.length; j < jl; j++ ) {
           var media = sources[j].getAttribute('data-media');
 
-          // adds -webkit- prefix in javascript instead of HTML, for simplicity
-          if (media && media.indexOf("device-pixel-ratio") > -1 ) {
-            var webkitmedia = media.replace("device-pixel-ratio", "-webkit-device-pixel-ratio");
-            var mozmedia = media.replace("device-pixel-ratio", "-moz-device-pixel-ratio");
-            var omedia = media.replace("device-pixel-ratio", "-o-device-pixel-ratio");
-            media = webkitmedia +","+ mozmedia +","+ omedia +","+ media;
-          }
-          if (media && media.indexOf("min-device-pixel-ratio") > -1 ) {
-            var webkitmedia = media.replace("min-device-pixel-ratio", "-webkit-min-device-pixel-ratio");
-            var mozmedia = media.replace("min-device-pixel-ratio", "min--moz-device-pixel-ratio");
-            var omedia = media.replace("min-device-pixel-ratio", "-o-min-device-pixel-ratio");
-            media = webkitmedia +","+ mozmedia +","+ omedia +","+ media;
-          }
-          if (media && media.indexOf("max-device-pixel-ratio") > -1 ) {
-            var webkitmedia = media.replace("max-device-pixel-ratio", "-webkit-max-device-pixel-ratio");
-            var mozmedia = media.replace("max-device-pixel-ratio", "max--moz-device-pixel-ratio");
-            var omedia = media.replace("max-device-pixel-ratio", "-o-max-device-pixel-ratio");
-            media = webkitmedia +","+ mozmedia +","+ omedia +","+ media;
-          }
-
           // If there's no media specified or the media query matches, add it.
           if (!media || (w.matchMedia && w.matchMedia(media).matches)) {
             matches.push(sources[j]);

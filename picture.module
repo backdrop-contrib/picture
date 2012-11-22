@@ -471,28 +471,15 @@ function theme_picture($variables) {
       foreach ($multipliers as $multiplier => $image_style) {
         $new_source = $variables;
         $new_source['style_name'] = $image_style;
-        $new_source['#multiplier'] = $multiplier;
+        $new_source['#media_query'] = picture_get_multiplier_media_query($multiplier, $breakpoint->breakpoint);
         $new_sources[] = $new_source;
       }
 
-      // Only one image, use src.
-      if (count($new_sources) == 1) {
+      foreach ($new_sources as $new_source) {
         $sources[] = array(
-          'src' => image_style_url($new_sources[0]['style_name'], $new_sources[0]['uri']),
+          'srcset' => image_style_url($new_source['style_name'], $new_source['uri']),
           'dimensions' => picture_get_image_dimensions($new_sources[0]),
-          'media' => $breakpoint->breakpoint,
-        );
-      }
-      else {
-        // Mutliple images, use srcset.
-        $srcset = array();
-        foreach ($new_sources as $new_source) {
-          $srcset[] = image_style_url($new_source['style_name'], $new_source['uri']) . ' ' . $new_source['#multiplier'];
-        }
-        $sources[] = array(
-          'srcset' => implode(', ', $srcset),
-          'dimensions' => picture_get_image_dimensions($new_sources[0]),
-          'media' => $breakpoint->breakpoint,
+          'media' => $new_source['#media_query'],
         );
       }
     }
@@ -521,6 +508,30 @@ function theme_picture($variables) {
     $output[] = '</span>';
     return implode("\n", $output);
   }
+}
+
+/**
+ * Generates the media query for multipliers of an image
+ *
+ * @param $multiplier
+ *   A string containing the multiplier for which the media query is for.
+ *
+ * @param $breakpoint
+ *   A string containing the breakpoint media query.
+ *
+ * @return sting
+ *   The sting containing the media query for the multiplier.
+ */
+function picture_get_multiplier_media_query($multiplier, $breakpoint) {
+  $media_query = $breakpoint;
+  if($multiplier != '1x') {
+    $multiplier_formatted = str_replace('x', '', $multiplier);
+    $media_query = $breakpoint . ' and (min-device-pixel-ratio: ' . $multiplier_formatted . '), ';
+    $media_query .= $breakpoint . ' and (-o-min-device-pixel-ratio: ' . $multiplier_formatted . '), ';
+    $media_query .= $breakpoint . ' and (-webkit-min-device-pixel-ratio: ' . $multiplier_formatted . '), ';
+    $media_query .= $breakpoint . ' and (min-resolution: ' . $multiplier_formatted . 'dppx)';
+  }
+  return $media_query;
 }
 
 /**
