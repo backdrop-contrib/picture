@@ -45,11 +45,15 @@
           if (!picImg) {
             picImg = w.document.createElement('img');
             picImg.alt = ps[i].getAttribute('data-alt');
+            picImg.title = ps[i].getAttribute('data-title');
             ps[i].appendChild(picImg);
           }
-          picImg.src = match.getAttribute('data-src');
-          // Copy width and height from the source tag to the img element.
-          _copyAttributes(match, picImg);
+
+          // Set the source if it's different.
+          if (picImg.getAttribute('src') !== match.getAttribute('data-src')) {
+            picImg.src = match.getAttribute('data-src');
+            _copyAttributes(match, picImg);
+          }
         }
       }
     }
