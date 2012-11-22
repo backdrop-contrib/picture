@@ -477,7 +477,7 @@ function theme_picture($variables) {
 
       foreach ($new_sources as $new_source) {
         $sources[] = array(
-          'srcset' => image_style_url($new_source['style_name'], $new_source['uri']),
+          'src' => image_style_url($new_source['style_name'], $new_source['uri']),
           'dimensions' => picture_get_image_dimensions($new_sources[0]),
           'media' => $new_source['#media_query'],
         );
