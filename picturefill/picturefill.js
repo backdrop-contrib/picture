@@ -1,11 +1,11 @@
 /*jshint loopfunc: true, browser: true, curly: true, eqeqeq: true, expr: true, forin: true, latedef: true, newcap: true, noarg: true, trailing: true, undef: true, unused: true */
 /*! Picturefill - Author: Scott Jehl, 2012 | License: MIT/GPLv2 */
-(function( w ){
+(function(w, parent){
 
   // Enable strict mode.
   "use strict";
 
-  w.picturefill = function() {
+  w.picturefill = function(parent) {
     // Copy attributes from the source to the destination.
     function _copyAttributes(src, tar) {
       if (src.getAttribute('width') && src.getAttribute('height')) {
@@ -15,7 +15,11 @@
     }
 
     // Get all picture tags.
-    var ps = w.document.getElementsByTagName('span');
+    console.log(parent);
+    if (!parent || !parent.getElementsByTagName) {
+      parent = w.document;
+    }
+    var ps = parent.getElementsByTagName('span');
 
     // Loop the pictures.
     for (var i = 0, il = ps.length; i < il; i++ ) {
