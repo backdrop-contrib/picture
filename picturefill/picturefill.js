@@ -15,7 +15,6 @@
     }
 
     // Get all picture tags.
-    console.log(parent);
     if (!parent || !parent.getElementsByTagName) {
       parent = w.document;
     }
