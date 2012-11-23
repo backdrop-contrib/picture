@@ -33,7 +33,7 @@ window.matchMedia = window.matchMedia || (function (doc, window) {
   // Store current dimensions, so we can clear the cache when needed.
   var _currentDimensions = {
     width: window.innerWidth || doc.documentElement.clientWidth,
-    height: window.innerHeight || doc.documentElement.clientHeight,
+    height: window.innerHeight || doc.documentElement.clientHeight
   };
 
   function resetCache() {
