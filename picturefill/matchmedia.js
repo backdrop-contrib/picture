@@ -27,6 +27,35 @@ window.matchMedia = window.matchMedia || (function (doc, window) {
   fakeBody.style.background = "none";
   fakeBody.appendChild(div);
 
+  // Global cache to speed up media matching (in IE).
+  var _cache = {};
+
+  // Store current dimensions, so we can clear the cache when needed.
+  var _currentDimensions = {
+    width: window.innerWidth || doc.documentElement.clientWidth,
+    height: window.innerHeight || doc.documentElement.clientHeight,
+  };
+
+  function resetCache() {
+    // Store the new dimensions.
+    _currentDimensions = {
+      width: window.innerWidth || doc.documentElement.clientWidth,
+      height: window.innerHeight || doc.documentElement.clientHeight,
+    };
+    // Clear cache.
+    _cache = {};
+  }
+
+  // Clear cache on resize and orientationchange events.
+  if ('addEventListener' in window) {
+    window.addEventListener('resize', resetCache);
+    window.addEventListener('orientationchange', resetCache);
+  }
+  else if ('attachEvent' in window) {
+    window.attachEvent('onresize', resetCache);
+    window.attachEvent('onorientationchange', resetCache);
+  }
+
   /**
    * A replacement for the native MediaQueryList object.
    *
@@ -36,7 +65,13 @@ window.matchMedia = window.matchMedia || (function (doc, window) {
   function MediaQueryList (q) {
     this.media = q;
     this.matches = false;
-    this.check.call(this);
+    if (_cache.hasOwnProperty(q)) {
+      this.matches = _cache[q];
+    }
+    else {
+      this.check.call(this);
+      _cache[q] = this.matches;
+    }
   }
 
   /**
