@@ -40,7 +40,7 @@ window.matchMedia = window.matchMedia || (function (doc, window) {
     // Store the new dimensions.
     _currentDimensions = {
       width: window.innerWidth || doc.documentElement.clientWidth,
-      height: window.innerHeight || doc.documentElement.clientHeight,
+      height: window.innerHeight || doc.documentElement.clientHeight
     };
     // Clear cache.
     _cache = {};
