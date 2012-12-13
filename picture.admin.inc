@@ -119,7 +119,14 @@ function picture_admin_breakpoints_overview_page() {
  */
 function picture_admin_breakpoints_submit($form, &$form_state) {
   $mapping = (object)$form_state['values']['picture_mapping'];
-  picture_mapping_save($mapping);
+  $saved = picture_mapping_save($mapping);
+  $group = breakpoints_breakpoint_group_load($mapping->breakpoint_group);
+  if ($saved !== FALSE) {
+    drupal_set_message(t('Picture mappings for @group were saved.', array('@group' => $group->name)));
+  }
+  else {
+    drupal_set_message(t('Something went wrong while trying to save picture mappings for @group', array('@group' => $group->name)), 'error');
+  }
 }
 
 function picture_admin_export_form($form, &$form_state, $mappings_name) {
