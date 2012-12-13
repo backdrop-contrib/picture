@@ -97,11 +97,21 @@ function picture_admin_breakpoints_overview_page() {
   foreach ($breakpoint_groups as $breakpoint_group) {
     $links[] = l($breakpoint_group->name, 'admin/config/media/picture/groups/' . $breakpoint_group->machine_name);
   }
-  return array(
-    '#type' => 'container',
-    '#theme' => 'item_list',
-    '#items' => $links,
-  );
+  if (!empty($links)) {
+    return array(
+      '#type' => 'container',
+      '#theme' => 'item_list',
+      '#items' => $links,
+    );
+  }
+  else {
+    $item['info'] = array(
+      '#type' => 'markup',
+      '#title' => t('No breakpoint groups found.'),
+      '#markup' => t('There\'re no breakpoint groups defined, you\'ll have to !create them first.', array('!create' => l(t('create'), 'admin/config/media/breakpoints/groups/add'))),
+    );
+    return $item;
+  }
 }
 
 /**
