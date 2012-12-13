@@ -251,23 +251,12 @@ function picture_field_formatter_settings_form($field, $instance, $view_mode, $f
   $display = $instance['display'][$view_mode];
   $settings = $display['settings'];
 
-  $picture_group_options = array();
-  $picture_mappings = picture_mapping_load_all();
-  if ($picture_mappings && !empty($picture_mappings)) {
-    foreach ($picture_mappings as $machine_name => $picture_mapping) {
-      $breakpoint_group = breakpoints_breakpoint_group_load($picture_mapping->breakpoint_group);
-      if ($breakpoint_group) {
-        $picture_group_options[$machine_name] = $breakpoint_group->name;
-      }
-    }
-  }
-
   $element['picture_group'] = array(
     '#title' => t('Picture group'),
     '#type' => 'select',
     '#default_value' => $settings['picture_group'],
     '#required' => TRUE,
-    '#options' => $picture_group_options,
+    '#options' => picture_get_mapping_options(),
   );
 
   $image_styles = image_style_options(FALSE);
@@ -292,6 +281,20 @@ function picture_field_formatter_settings_form($field, $instance, $view_mode, $f
   );
 
   return $element;
+}
+
+function picture_get_mapping_options() {
+  $picture_mapping_options = array();
+  $picture_mappings = picture_mapping_load_all();
+  if ($picture_mappings && !empty($picture_mappings)) {
+    foreach ($picture_mappings as $machine_name => $picture_mapping) {
+      $breakpoint_group = breakpoints_breakpoint_group_load($picture_mapping->breakpoint_group);
+      if ($breakpoint_group) {
+        $picture_mapping_options[$machine_name] = $breakpoint_group->name;
+      }
+    }
+  }
+  return $picture_mapping_options;
 }
 
 /**
