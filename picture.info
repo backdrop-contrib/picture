@@ -3,3 +3,4 @@ description = Picture element
 core = 7.x
 dependencies[] = breakpoints
 configure = admin/config/media/picture
+package = Picture
