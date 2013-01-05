@@ -533,7 +533,7 @@ function theme_picture($variables) {
           foreach ($new_sources as $new_source) {
             $sources[] = array(
               'src' => image_style_url($new_source['style_name'], $new_source['uri']),
-              'dimensions' => picture_get_image_dimensions($new_sources),
+              'dimensions' => picture_get_image_dimensions($new_source),
               'media' => $new_source['#media_query'],
             );
           }
@@ -552,7 +552,7 @@ function theme_picture($variables) {
             foreach ($new_sources as $new_source) {
               $sources[] = array(
                 'src' => image_style_url($new_source['style_name'], $new_source['uri']),
-                'dimensions' => picture_get_image_dimensions($new_sources),
+                'dimensions' => picture_get_image_dimensions($new_source),
                 'media' => $new_source['#media_query'],
               );
             }
