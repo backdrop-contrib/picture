@@ -199,3 +199,20 @@ function picture_admin_import_form_submit($form, &$form_state) {
     drupal_set_message(t('Something went wrong, we could not save the mapping'), 'error');
   }
 }
+
+/**
+ * Picture settings.
+ */
+function picture_admin_settings($form, &$form_state) {
+  $form['picture_implementation'] = array(
+    '#type' => 'select',
+    '#title' => t('Choose the javascript library to use'),
+    '#options' => array(
+      PICTURE_IMPLEMENTATION_PICTUREFILL => 'picturefill',
+      PICTURE_IMPLEMENTATION_WEBLINC => 'weblinc',
+    ),
+    '#default_value' => variable_get('picture_implementation', PICTURE_IMPLEMENTATION_DEFAULT),
+  );
+
+  return system_settings_form($form);
+}

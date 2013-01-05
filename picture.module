@@ -3,6 +3,10 @@
 define('PICTURE_CLASS', 'picture');
 define('PICTURE_SEPARATOR', '__');
 
+define('PICTURE_IMPLEMENTATION_PICTUREFILL', 'picturefill');
+define('PICTURE_IMPLEMENTATION_WEBLINC', 'weblinc');
+define('PICTURE_IMPLEMENTATION_DEFAULT', 'picturefill');
+
 /**
  * Implements hook_permission().
  */
@@ -34,6 +38,17 @@ function picture_menu() {
     'title' => 'Groups',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 10,
+  );
+
+  $items['admin/config/media/picture/settings'] = array(
+    'title' => 'Settings',
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 20,
+    'description' => 'Pictures settings',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('picture_admin_settings'),
+    'access arguments' => array('administer pictures'),
+    'file' => 'picture.admin.inc',
   );
 
   $items['admin/config/media/picture/groups/global'] = array(
@@ -119,29 +134,63 @@ function picture_mapping_save(&$mapping) {
  * Implements hook_library().
  */
 function picture_library() {
-  $libraries['matchmedia'] = array(
-    'title' => t('Matchmedia'),
-    'website' => 'https://github.com/attiks/picturefill-proposal',
-    'version' => '0.1',
-    'js' => array(
-      drupal_get_path('module', 'picture') . '/picturefill/matchmedia.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
-    ),
-  );
-  $libraries['picturefill'] = array(
-    'title' => t('Picturefill'),
-    'website' => 'https://github.com/attiks/picturefill-proposal',
-    'version' => '0.1',
-    'js' => array(
-      drupal_get_path('module', 'picture') . '/picturefill/picturefill.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
-    ),
-  );
-  $libraries['picture.ajax'] = array(
-    'title' => t('Ajax support for picture'),
-    'version' => VERSION,
-    'js' => array(
-      drupal_get_path('module', 'picture') . '/picture.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
-    ),
-  );
+  switch (variable_get('picture_implementation', PICTURE_IMPLEMENTATION_DEFAULT)) {
+    case PICTURE_IMPLEMENTATION_PICTUREFILL:
+      $libraries['matchmedia'] = array(
+        'title' => t('Matchmedia'),
+        'website' => 'https://github.com/attiks/picturefill-proposal',
+        'version' => '0.1',
+        'js' => array(
+          drupal_get_path('module', 'picture') . '/picturefill/matchmedia.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+        ),
+      );
+      $libraries['picturefill'] = array(
+        'title' => t('Picturefill'),
+        'website' => 'https://github.com/attiks/picturefill-proposal',
+        'version' => '0.1',
+        'js' => array(
+          drupal_get_path('module', 'picture') . '/picturefill/picturefill.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+        ),
+      );
+      $libraries['picture.ajax'] = array(
+        'title' => t('Ajax support for picture'),
+        'version' => VERSION,
+        'js' => array(
+          drupal_get_path('module', 'picture') . '/picture.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+        ),
+      );
+      break;
+    case PICTURE_IMPLEMENTATION_WEBLINC:
+      $libraries['matchmedia'] = array(
+        'title' => t('Matchmedia'),
+        'website' => 'https://github.com/weblinc/media-match',
+        'version' => '0.1',
+        'js' => array(
+          drupal_get_path('module', 'picture') . '/weblinc/media.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+          drupal_get_path('module', 'picture') . '/weblinc/media.extension.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+        ),
+      );
+      $libraries['picturefill'] = array(
+        'title' => t('Picturefill'),
+        'website' => 'https://github.com/weblinc/picture',
+        'version' => '0.1',
+        'js' => array(
+          drupal_get_path('module', 'picture') . '/weblinc/picture.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+        ),
+      );
+      $libraries['picture.ajax'] = array(
+        'title' => t('Ajax support for picture'),
+        'version' => VERSION,
+        'js' => array(
+          drupal_get_path('module', 'picture') . '/picture.weblinc.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+        ),
+        'css' => array(
+          drupal_get_path('module', 'picture') . '/picture.weblinc.css' => array('type' => 'file'),
+        ),
+      );
+      break;
+  }
+
   return $libraries;
 }
 
@@ -470,19 +519,54 @@ function theme_picture($variables) {
     $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint_name);
     if ($breakpoint) {
       $new_sources = array();
-      foreach ($multipliers as $multiplier => $image_style) {
-        $new_source = $variables;
-        $new_source['style_name'] = $image_style;
-        $new_source['#media_query'] = picture_get_multiplier_media_query($multiplier, $breakpoint->breakpoint);
-        $new_sources[] = $new_source;
-      }
+      switch (variable_get('picture_implementation', PICTURE_IMPLEMENTATION_DEFAULT)) {
+        case PICTURE_IMPLEMENTATION_PICTUREFILL:
+          foreach ($multipliers as $multiplier => $image_style) {
+            $new_source = $variables;
+            $new_source['style_name'] = $image_style;
+            $new_source['#media_query'] = picture_get_multiplier_media_query($multiplier, $breakpoint->breakpoint);
+            $new_sources[] = $new_source;
+          }
+          foreach ($new_sources as $new_source) {
+            $sources[] = array(
+              'src' => image_style_url($new_source['style_name'], $new_source['uri']),
+              'dimensions' => picture_get_image_dimensions($new_sources[0]),
+              'media' => $new_source['#media_query'],
+            );
+          }
+          break;
+        case PICTURE_IMPLEMENTATION_WEBLINC:
+          foreach ($multipliers as $multiplier => $image_style) {
+            $new_source = $variables;
+            $new_source['style_name'] = $image_style;
+            $new_source['#media_query'] = $breakpoint->breakpoint;
+            $new_source['#multiplier'] = $multiplier;
+            $new_sources[] = $new_source;
+          }
 
-      foreach ($new_sources as $new_source) {
-        $sources[] = array(
-          'src' => image_style_url($new_source['style_name'], $new_source['uri']),
-          'dimensions' => picture_get_image_dimensions($new_sources[0]),
-          'media' => $new_source['#media_query'],
-        );
+          // Only one image, use src.
+          if (count($new_sources) == 1) {
+            foreach ($new_sources as $new_source) {
+              $sources[] = array(
+                'src' => image_style_url($new_source['style_name'], $new_source['uri']),
+                'dimensions' => picture_get_image_dimensions($new_sources),
+                'media' => $new_source['#media_query'],
+              );
+            }
+          }
+          else {
+            // Mutliple images, use srcset.
+            $srcset = array();
+            foreach ($new_sources as $new_source) {
+              $srcset[] = image_style_url($new_source['style_name'], $new_source['uri']) . ' ' . $new_source['#multiplier'];
+            }
+            $sources[] = array(
+              'srcset' => implode(', ', $srcset),
+              'dimensions' => picture_get_image_dimensions($new_sources[0]),
+              'media' => $new_source['#media_query'],
+            );
+          }
+          break;
       }
     }
   }
@@ -526,12 +610,13 @@ function theme_picture($variables) {
  */
 function picture_get_multiplier_media_query($multiplier, $breakpoint) {
   $media_query = $breakpoint;
-  if($multiplier != '1x') {
+  if ($multiplier != '1x') {
     $multiplier_formatted = str_replace('x', '', $multiplier);
     $media_query = $breakpoint . ' and (min-device-pixel-ratio: ' . $multiplier_formatted . '), ';
     $media_query .= $breakpoint . ' and (-o-min-device-pixel-ratio: ' . $multiplier_formatted . '), ';
     $media_query .= $breakpoint . ' and (-webkit-min-device-pixel-ratio: ' . $multiplier_formatted . '), ';
     $media_query .= $breakpoint . ' and (min-resolution: ' . $multiplier_formatted . 'dppx)';
+    break;
   }
   return $media_query;
 }
@@ -551,7 +636,12 @@ function picture_get_multiplier_media_query($multiplier, $breakpoint) {
 function theme_picture_source($variables) {
   $output = array();
   if (isset($variables['media']) && !empty($variables['media'])) {
-    $output[] = '<span data-media="' . $variables['media'] . '" data-src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
+    if (isset($variables['srcset']) && !empty($variables['srcset'])) {
+      $output[] = '<span data-media="' . $variables['media'] . '" data-srcset="' . $variables['srcset'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
+    }
+    else {
+      $output[] = '<span data-media="' . $variables['media'] . '" data-src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
+    }
   }
   else {
     $output[] = '<span data-src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
