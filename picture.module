@@ -530,7 +530,7 @@ function theme_picture($variables) {
           foreach ($new_sources as $new_source) {
             $sources[] = array(
               'src' => image_style_url($new_source['style_name'], $new_source['uri']),
-              'dimensions' => picture_get_image_dimensions($new_sources[0]),
+              'dimensions' => picture_get_image_dimensions($new_sources),
               'media' => $new_source['#media_query'],
             );
           }
@@ -616,7 +616,6 @@ function picture_get_multiplier_media_query($multiplier, $breakpoint) {
     $media_query .= $breakpoint . ' and (-o-min-device-pixel-ratio: ' . $multiplier_formatted . '), ';
     $media_query .= $breakpoint . ' and (-webkit-min-device-pixel-ratio: ' . $multiplier_formatted . '), ';
     $media_query .= $breakpoint . ' and (min-resolution: ' . $multiplier_formatted . 'dppx)';
-    break;
   }
   return $media_query;
 }
