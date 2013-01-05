@@ -169,6 +169,9 @@ function picture_library() {
           drupal_get_path('module', 'picture') . '/weblinc/media.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
           drupal_get_path('module', 'picture') . '/weblinc/media.extension.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
         ),
+        'css' => array(
+          drupal_get_path('module', 'picture') . '/weblinc/media.css' => array('type' => 'file'),
+        ),
       );
       $libraries['picturefill'] = array(
         'title' => t('Picturefill'),
