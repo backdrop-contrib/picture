@@ -75,7 +75,11 @@
                     height      = src.getAttribute('data-height') || '';
 
                     if (mediaAttr && srcAttr) {
-                        srcList[mediaAttr] = srcAttr;
+                        srcList[mediaAttr] = {
+                          uri: srcAttr,
+                          width: width,
+                          height: height
+                        };
                         mql += (mql.length ? ', ' : '') + mediaAttr;
                     } else if (srcAttr) {
                         srcDef = srcAttr;
@@ -87,8 +91,6 @@
                     media       : mql,
                     src         : srcList,
                     srcDefault  : srcDef,
-                    width       : width,
-                    height      : height,
                     matches     : false
                 });
 
@@ -122,7 +124,7 @@
                         pic.matches = (match && match.media) || match;
 
                         imgs    = pic.element.getElementsByTagName('img');
-                        src     = (match.media && pic.src[match.media]) || pic.srcDefault;
+                        src     = (match.media && pic.src[match.media].uri) || pic.srcDefault;
 
                         if (src) {
                             for (var i = 0, il = imgs.length; i < il; i++) {
@@ -138,11 +140,11 @@
                             if (!hasImg) {
                                 img             = document.createElement('img');
                                 img.alt         = pic.element.getAttribute('data-title') || 'picture';
-                                if (pic.width) {
-                                  img.width = pic.width;
+                                if (pic.src[match.media].width) {
+                                  img.width = pic.src[match.media].width;
                                 }
-                                if (pic.height) {
-                                  img.height = pic.height;
+                                if (pic.src[match.media].height) {
+                                  img.height = pic.src[match.media].height;
                                 }
                                 img.className   = 'match';
 
