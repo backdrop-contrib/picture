@@ -637,6 +637,14 @@ function picture_get_multiplier_media_query($multiplier, $breakpoint) {
  */
 function theme_picture_source($variables) {
   $output = array();
+  // Convert width, height to data-width, data-height.
+  foreach (array('width', 'height') as $key) {
+    if (isset($variables['dimensions'][$key])) {
+      $variables['dimensions']['data-' . $key] = $variables['dimensions'][$key];
+      unset($variables['dimensions'][$key]);
+    }
+  }
+
   if (isset($variables['media']) && !empty($variables['media'])) {
     if (isset($variables['srcset']) && !empty($variables['srcset'])) {
       $output[] = '<span data-media="' . $variables['media'] . '" data-srcset="' . $variables['srcset'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';

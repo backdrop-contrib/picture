@@ -8,9 +8,9 @@
   w.picturefill = function(parent) {
     // Copy attributes from the source to the destination.
     function _copyAttributes(src, tar) {
-      if (src.getAttribute('width') && src.getAttribute('height')) {
-        tar.width = src.getAttribute('width');
-        tar.height = src.getAttribute('height');
+      if (src.getAttribute('data-width') && src.getAttribute('data-height')) {
+        tar.width = src.getAttribute('data-width');
+        tar.height = src.getAttribute('data-height');
       }
     }
 

@@ -71,8 +71,8 @@
                     mediaAttr   = src.getAttribute('data-media');
                     srcAttr     = src.getAttribute('data-src') || parseSrcSet(src.getAttribute('data-srcset') || '');
 
-                    width       = src.getAttribute('width');
-                    height      = src.getAttribute('height');
+                    width       = src.getAttribute('data-width') || '';
+                    height      = src.getAttribute('data-height') || '';
 
                     if (mediaAttr && srcAttr) {
                         srcList[mediaAttr] = srcAttr;
@@ -87,8 +87,8 @@
                     media       : mql,
                     src         : srcList,
                     srcDefault  : srcDef,
-                    width  : width,
-                    height  : height,
+                    width       : width,
+                    height      : height,
                     matches     : false
                 });
 
