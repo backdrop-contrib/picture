@@ -24,7 +24,7 @@
 
             // Math.floor supports the situations when using values such as 1.5x or 1.3x (equals 1)
             if (_res === dppx || Math.floor(_res) === Math.floor(dppx)) {
-                return src.match(_srcExpr)[(ratiol % 2) * 2];
+                return src.match(_srcExpr)[ratiol * 2];
             }
         }
 
@@ -116,10 +116,8 @@
 
                     if (match && !(pic.matches === match.media) || !match && pic.srcDefault) {
                         pic.matches = (match && match.media) || match;
-
                         imgs    = pic.element.getElementsByTagName('img');
                         src     = (match.media && pic.src[match.media]) || pic.srcDefault;
-
                         if (src) {
                             for (var i = 0, il = imgs.length; i < il; i++) {
                                 img = imgs[i];
