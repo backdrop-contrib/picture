@@ -640,11 +640,9 @@ function theme_picture_source($variables) {
   // Convert width, height to data-width, data-height.
   foreach (array('width', 'height') as $key) {
     if (isset($variables['dimensions'][$key])) {
-      if ($variables['dimensions'][$key]) {
-        $variables['dimensions']['data-' . $key] = $variables['dimensions'][$key];
-      }
-      unset($variables['dimensions'][$key]);
+      $variables['dimensions']['data-' . $key] = $variables['dimensions'][$key];
     }
+    unset($variables['dimensions'][$key]);
   }
 
   if (isset($variables['media']) && !empty($variables['media'])) {
