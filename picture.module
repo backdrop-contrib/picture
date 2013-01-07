@@ -508,6 +508,7 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
     // Add css and js for colorbox.
     if ($formatter == 'picture_formatter_colorbox') {
       $element[$delta]['#attached']['css'][drupal_get_path('module', 'picture') . '/picture_colorbox.css'] = array('type' => 'file');
+      $element[$delta]['#attached']['js'][drupal_get_path('module', 'picture') . '/picture_colorbox.js'] = array('type' => 'file');
       if (!variable_get('colorbox_inline', 0)) {
         $element[$delta]['#attached']['js'][drupal_get_path('module', 'colorbox') . '/js/colorbox_inline.js'] = array('type' => 'file');
       }
@@ -578,6 +579,9 @@ function theme_picture_formatter_colorbox($variables) {
       'fragment' => $id,
       'html' => TRUE,
     );
+    
+    // Do not load picture automatically.
+    $colorbox = str_replace('span data-picture=""', 'span data-picture-lazy="lazy"', $colorbox);
     $output = l($output, current_path(), $options) . $colorbox;
   }
   return $output;
@@ -683,7 +687,7 @@ function theme_picture($variables) {
         $attributes['data-' . $key] = $variables[$key];
       }
     }
-    $output[] = '<span data-picture' . drupal_attributes($attributes) . '>';
+    $output[] = '<span data-picture=""' . drupal_attributes($attributes) . '>';
 
     // Add source tags to the output.
     foreach ($sources as $source) {
