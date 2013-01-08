@@ -863,7 +863,7 @@ function picture_file_formatter_picture_view($file, $display, $langcode) {
         array('picture', 'picture.ajax'),
       )),
       '#item' => array(
-        'style_name' => $display['settings']['image_style'],
+        'style_name' => $fallback_image_style,
         'path' => $file->uri,
         'uri' => $file->uri,
         'width' => $file->image_dimensions['width'],
