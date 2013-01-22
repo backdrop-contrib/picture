@@ -850,7 +850,13 @@ function picture_file_formatter_picture_view($file, $display, $langcode) {
     if (isset($display['settings']['fallback_image_style']) && !empty($display['settings']['fallback_image_style'])) {
       $fallback_image_style = $display['settings']['fallback_image_style'];
     }
-
+    if (isset($file->override) && isset($file->override['wysiwyg']) && $file->override['wysiwyg']) {
+      return array(
+        '#theme' => 'image_style',
+        '#style_name' => $fallback_image_style,
+        '#path' => $file->uri,
+      );
+    }
     $replace_options = array(
       'clear' => 1,
       'sanitize' => 0,
