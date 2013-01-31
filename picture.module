@@ -61,7 +61,7 @@ function picture_menu() {
     'title' => 'Import mappings',
     'page arguments' => array('picture_admin_import_form'),
     'type' => MENU_LOCAL_TASK,
-    'access arguments' => array('administer responsive images and styles'),
+    'access arguments' => array('administer pictures'),
     'file' => 'picture.admin.inc',
     'weight' => 999,
   );
@@ -80,9 +80,9 @@ function picture_menu() {
       $items['admin/config/media/picture/groups/' . $breakpoint_group->machine_name . '/export'] = array(
         'title' => 'Export ' . check_plain($breakpoint_group->name) . ' mappings',
         'page callback' => 'drupal_get_form',
-        'page arguments' => array('picture_admin_export_form', 'mappings.' . $breakpoint_group->machine_name),
+        'page arguments' => array('picture_admin_export_form', $breakpoint_group->machine_name),
         'type' => MENU_LOCAL_ACTION,
-        'access arguments' => array('administer responsive images and styles', 'mappings.' . $breakpoint_group->machine_name),
+        'access arguments' => array('administer pictures', $breakpoint_group->machine_name),
         'access callback' => 'picture_mappings_export_access',
         'file' => 'picture.admin.inc',
         'weight' => 15,
