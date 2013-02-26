@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Picture formatter.
+ */
+
 define('PICTURE_CLASS', 'picture');
 define('PICTURE_SEPARATOR', '__');
 
@@ -89,6 +94,17 @@ function picture_menu() {
       );
     }
   }
+
+  $items['admin/config/media/picture/ckeditor'] = array(
+    'title' => 'CKEditor',
+    'type' => MENU_LOCAL_TASK,
+    'description' => 'Choose picture groups to present in the CKEditor image dialog',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('picture_ckeditor_settings'),
+    'access arguments' => array('administer pictures'),
+    'file' => 'picture.admin.inc',
+    'weight' => 0,
+  );
 
   return $items;
 }
@@ -362,6 +378,9 @@ function picture_field_formatter_settings_form($field, $instance, $view_mode, $f
   return $element;
 }
 
+/**
+ * Returns a list of picture mappings for use in a select list.
+ */
 function picture_get_mapping_options() {
   $picture_mapping_options = array();
   $picture_mappings = picture_mapping_load_all();
@@ -547,6 +566,9 @@ function theme_picture_formatter($variables) {
   return $output;
 }
 
+/*
+ * Theme function to add support for colorbox.
+ */
 function theme_picture_formatter_colorbox($variables) {
   if (!isset($variables['breakpoints']) || empty($variables['breakpoints'])) {
     return theme('image_formatter', $variables);
@@ -579,7 +601,7 @@ function theme_picture_formatter_colorbox($variables) {
       'fragment' => $id,
       'html' => TRUE,
     );
-    
+
     // Do not load picture automatically.
     $colorbox = str_replace('span data-picture=""', 'span data-picture-lazy="lazy"', $colorbox);
     $output = l($output, current_path(), $options) . $colorbox;
@@ -685,6 +707,12 @@ function theme_picture($variables) {
     foreach (array('alt', 'title') as $key) {
       if (isset($variables[$key])) {
         $attributes['data-' . $key] = $variables[$key];
+      }
+    }
+    // Add attributes that are already prefixed by 'data-'
+    foreach (array('data-picture-group', 'data-picture-align') as $key) {
+      if (isset($variables[$key])) {
+        $attributes[$key] = $variables[$key];
       }
     }
     $output[] = '<span data-picture=""' . drupal_attributes($attributes) . '>';
@@ -934,4 +962,283 @@ function picture_file_formatter_picture_settings($form, &$form_state, $settings)
   );
 
   return $element;
+}
+
+/**
+ * Implements hook_filter_info().
+ */
+function picture_filter_info() {
+  $filters = array();
+  $filters['picture'] = array(
+    'title' => t('Make images responsive with the picture module'),
+    'description' => t('Replace img tags with markup that contains media width breakpoints. The appropriate image file size will be chosen.'),
+    'process callback' => '_picture_filter_process',
+    'tips callback' => '_picture_filter_tips',
+    );
+
+  return $filters;
+}
+
+/**
+ * Process callback for inline image filter.
+ */
+function _picture_filter_process($text, $filter) {
+
+  // Find all img tags with a data-picture-group attribute.
+  preg_match_all('/<img.*?data-picture-group=".*?>/i', $text, $images);
+
+  if (!empty($images[0])) {
+    foreach ($images[0] as $image) {
+      // Create the render array expected by theme_picture_formatter.
+      $image_render_array = _picture_filter_prepare_image($image);
+      if (!$image_render_array) {
+        return $text;
+      }
+
+      // Get the responsive markup for this image.
+      $new_markup = theme('picture_formatter', $image_render_array);
+
+      // Replace the original img tag with the responsive markup.
+      $text = str_replace($image, $new_markup, $text);
+    }
+  }
+  return $text;
+}
+
+/**
+ * Prepares a Render Array for theme_picture_formatter().
+ * It is similar to picture_field_formatter_view()
+ * with modifications for inline images.
+ *
+ * @param $image
+ *   An img tag
+ * @see picture_field_formatter_view()
+ */
+function _picture_filter_prepare_image($image) {
+  // Parse the tag as xml.
+  $xml = simplexml_load_string('<image>' . html_entity_decode($image, ENT_QUOTES, "utf-8") . '</image>');
+  if (isset($xml->img[0]) && is_object($xml->img[0])) {
+    $attributes = array();
+    foreach ($xml->img[0]->attributes() as $a => $b) {
+      $attributes[$a] = (string) $b;
+    }
+  }
+
+  $image_render_array = array();
+  $breakpoint_styles = array();
+  $fallback_image_style = '';
+  $group_name = $attributes['data-picture-group'];
+  $mappings = picture_mapping_load($group_name);
+
+  if ($mappings) {
+    foreach ($mappings->mapping as $breakpoint_name => $multipliers) {
+      if (!empty($multipliers)) {
+        foreach ($multipliers as $multiplier => $image_style) {
+          if (!empty($image_style)) {
+            if (empty($fallback_image_style)) {
+              $fallback_image_style = $image_style;
+            }
+            if (!isset($breakpoint_styles[$breakpoint_name])) {
+              $breakpoint_styles[$breakpoint_name] = array();
+            }
+            $breakpoint_styles[$breakpoint_name][$multiplier] = $image_style;
+          }
+        }
+      }
+    }
+  }
+
+  // Make sure we have a src attribute.
+  if (!isset($attributes['src'])) {
+    return FALSE;
+  }
+  $src = $attributes['src'];
+
+  // Make sure we have map src to uri.
+  $uri = picture_image_uri($src);
+  if (!$uri) {
+    return FALSE;
+  }
+
+  $image_info = image_get_info($uri);
+  if (!$image_info) {
+    // It's not an image.
+    return FALSE;
+  }
+  $picture_groups = variable_get('picture_ckeditor_groups', array());
+  $image_render_array = array(
+    '#theme' => 'picture_formatter',
+    '#item' => array(
+      'style_name' => $picture_groups[$attributes['data-picture-group']]['fallback'],
+      'uri' => $uri,
+      'width' => $image_info['width'],
+      'height' => $image_info['height'],
+      'data-picture-group' => $attributes['data-picture-group'],
+      'data-picture-align' => isset($attributes['data-picture-align']) ? $attributes['data-picture-align'] : '',
+      'alt' => isset($attributes['alt']) ? $attributes['alt'] : '',
+      'title' => isset($attributes['title']) ? $attributes['title'] : '',
+      'filemime' => $image_info['mime_type'],
+    ),
+    '#image_style' => $picture_groups[$attributes['data-picture-group']]['fallback'],
+    '#breakpoints' => $breakpoint_styles,
+    '#path' => '',
+  );
+
+  return $image_render_array;
+
+}
+/**
+ * Implements picture filter tips callback.
+ */
+function _picture_filter_tips($filter, $format, $long = FALSE) {
+  $tips = 'Images with a data-picture-group attribute will be responsive, with a file size appropriate for the browser width.';
+
+  return $tips;
+}
+
+/**
+ * Implements hook_page_build().
+ *
+ * Add the image processing javascript to every page. This allows these scripts
+ * to get included in aggregation, which is probably good since there will be
+ * pictures needing this javascript on most pages. The library does not get
+ * added twice, even if it's attached to multiple fields that are also being
+ * displayed with responsive images. Maybe this should check that the
+ * page is not an admin theme page?
+ */
+function picture_page_build(&$page) {
+  drupal_add_library('picture', 'matchmedia', TRUE);
+  drupal_add_library('picture', 'picturefill', TRUE);
+  drupal_add_library('picture', 'picture.ajax', TRUE);
+}
+
+/**
+ * Helper function to figure out the uri of an image given the
+ * image src.
+ *
+ * @param
+ *   Image src starting with http://, https://, or root relative /.
+ *   It must point to a local file.
+ */
+function picture_image_uri($src) {
+  $uri = '';
+  // Prepare the src by removing http:// or https://.
+  $src = preg_replace('/https?:\/\//', '', $src);
+  // Remove leading or trailing slashes.
+  $src = trim($src, '/');
+
+  // List all visible stream wrappers. Make sure they're also local since the
+  // getDirectoryPath method exists only for classes that extend
+  // DrupalLocalStreamWrapper.
+  $local_visible_stream_wrappers = array_intersect_key(file_get_stream_wrappers(STREAM_WRAPPERS_LOCAL), file_get_stream_wrappers(STREAM_WRAPPERS_VISIBLE));
+  $needles = array();
+  $matches = array();
+  foreach ($local_visible_stream_wrappers as $scheme => $data) {
+    $class = file_stream_wrapper_get_class($scheme);
+    $stream_wrapper = new $class();
+    // Trim leading or trailing slashes since the Directory could be root
+    // relative.
+    $needles[$scheme] = trim($stream_wrapper->getDirectoryPath(), '/');
+
+    // Check whether the file stream directory is at the beginning of
+    // the image src. Use === since strpos could return false.
+    if (strpos($src, $needles[$scheme]) === 0) {
+      $matches[$scheme] = $needles[$scheme];
+    }
+  }
+
+  // If one file scheme directory is a subdirectory of another file
+  // scheme directory, choose the longer one. This issue is possible with
+  // the following scenario:
+  // public file dir: /sites/default/files/
+  // private file dir: /sites/default/files/private/
+  // image src: /sites/default/files/private/the-image.jpg
+  // In this example, the intended scheme would be 'private'.
+
+  if (empty($matches)) {
+    // Can't figure out the Drupal uri.
+    return FALSE;
+  }
+  // Find the length of each matching directory path.
+  $lengths = array_map('strlen', $matches);
+
+  // Determine the key of the longest one.
+  $the_scheme = array_search(max($lengths), $lengths);
+
+  // Construct the Drupal uri.
+  $uri = $the_scheme . '://' . str_replace($matches[$the_scheme], '', $src);
+  $uri = file_stream_wrapper_uri_normalize($uri);
+
+  return $uri;
+}
+
+/**
+ * Implements hook_wysiwyg_plugin to modify the CKEditor image dialog for use
+ * with the picture module. The integration technique here is borrowed from
+ * imce_wysiwyg.
+ *
+ * Normally an array of plugin settings would be returned, but since it's
+ * problematic to have the WYSIWYG module load a plugin which doesn't have a
+ * button (an 'extension', in other words), this module takes care of
+ * loading the plugin itself. As a consequence, this plugin does not appear
+ * on the WYSIWYG button/plugin configuration page, and is always enabled
+ * for all WYSIWYG CKEditor profiles when picture groups have been enabled from
+ * /admin/config/media/picture/ckeditor
+ * @TODO: low priority - make a checkbox control loading of this extension. The
+ * imce_wysiwyg module does this by passing a CKEditor options array in the
+ * extension definition which is loaded only when the extension is enabled on
+ * the WYSIWYG config page.
+ *
+ * example code to get started with a checkbox would be:
+ *
+ * return array(
+ *   'picture_ckeditor' => array(
+ *       'extensions' => array('picture_ckeditor' => t('Responsive images
+ *       with the Picture module')),
+ *       'url' => 'http://drupal.org/projects/picture',
+ *       'load' => FALSE,
+ *     ),
+ * );
+ */
+function picture_wysiwyg_plugin($editor, $version) {
+
+  // Keep track of whether the JS has already been added since this hook is
+  // called multiple times on a page load.
+  static $picture_ckeditor_integrated = FALSE;
+
+  if ($editor == 'ckeditor' ) {
+    // Load our invocation scripts.
+    if (!$picture_ckeditor_integrated) {
+      // Create the Javascript array of picture group options.
+      $picture_groups = picture_get_mapping_options();
+      $ckeditor_groups = variable_get('picture_ckeditor_groups', array());
+      $groups = array();
+      // CKEditor expects an array of options formatted as
+      // ['Display name', 'machine_name'].
+      foreach ($picture_groups as $key => $value) {
+        if ($ckeditor_groups[$key]['enabled'] == 1) {
+          $groups[] = array($value, $key);
+        }
+      }
+      if (!empty($groups)) {
+        $groups[] = array('Not Set', 'not_set');
+        drupal_add_js(array(
+          'picture' => array(
+            'groups' => $groups,
+            'label' => variable_get('picture_ckeditor_label', 'Image size (required)'),
+            ),
+          ), 'setting');
+        drupal_add_js(drupal_get_path('module', 'picture') . '/picture_ckeditor.js');
+        $picture_ckeditor_integrated = TRUE;
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_uninstall().
+ */
+function picture_uninstall() {
+  variable_del('picture_ckeditor_groups');
+  variable_del('picture_ckeditor_label');
 }
