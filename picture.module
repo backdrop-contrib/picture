@@ -537,6 +537,9 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
   return $element;
 }
 
+/**
+ * Theme picture.
+ */
 function theme_picture_formatter($variables) {
   if (!isset($variables['breakpoints']) || empty($variables['breakpoints'])) {
     return theme('image_formatter', $variables);
@@ -566,7 +569,7 @@ function theme_picture_formatter($variables) {
   return $output;
 }
 
-/*
+/**
  * Theme function to add support for colorbox.
  */
 function theme_picture_formatter_colorbox($variables) {

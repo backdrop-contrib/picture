@@ -1,6 +1,11 @@
 <?php
 
 /**
+ * @file
+ * Picture formatter with flexslider support.
+ */
+
+/**
  * Theme callback.
  */
 function theme_flexslider_picture_list(&$vars) {

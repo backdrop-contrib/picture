@@ -129,6 +129,9 @@ function picture_admin_breakpoints_submit($form, &$form_state) {
   }
 }
 
+/**
+ * Export mappings.
+ */
 function picture_admin_export_form($form, &$form_state, $mappings_name) {
   // Create the export code textarea.
   ctools_include('export');
@@ -155,6 +158,9 @@ function picture_admin_export_form($form, &$form_state, $mappings_name) {
   return $form;
 }
 
+/**
+ * Import mappings.
+ */
 function picture_admin_import_form($form, &$form_state) {
   $form['import'] = array(
     '#type' => 'textarea',
