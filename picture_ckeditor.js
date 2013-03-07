@@ -172,10 +172,6 @@ CKEDITOR.on('dialogDefinition', function(event) {
 
     // Remove a bunch of extraneous fields. These properties will be set in
     // the theme or module CSS.
-    infoFieldsRemove = [ 'cmbAlign', 'txtWidth', 'txtHeight', 'ratioLock', 'txtBorder',
-                     'txtHSpace', 'txtVSpace' ];
-    for (i = 0; i < infoFieldsRemove.length; i++) {
-      infoTab.remove(infoFieldsRemove[i]);
-    }
+    infoTab.remove('basic');
   }
 });
