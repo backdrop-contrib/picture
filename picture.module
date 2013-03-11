@@ -1113,6 +1113,27 @@ function picture_page_build(&$page) {
   drupal_add_library('picture', 'matchmedia', TRUE);
   drupal_add_library('picture', 'picturefill', TRUE);
   drupal_add_library('picture', 'picture.ajax', TRUE);
+
+  // Integrate with the WYSIWYG module, and the CKEditor module.
+  $picture_groups = picture_get_mapping_options();
+  $ckeditor_groups = variable_get('picture_ckeditor_groups', array());
+  $groups = array();
+  // CKEditor library expects an array of options formatted as
+  // ['Display name', 'machine_name'].
+  foreach ($picture_groups as $key => $value) {
+    if ($ckeditor_groups[$key]['enabled'] == 1) {
+      $groups[] = array($value, $key);
+    }
+  }
+  if (!empty($groups)) {
+    $groups[] = array('Not Set', 'not_set');
+    drupal_add_js(array(
+      'picture' => array(
+        'groups' => $groups,
+        'label' => variable_get('picture_ckeditor_label', 'Image size (required)'),
+        ),
+      ), 'setting');
+  }
 }
 
 /**
@@ -1176,66 +1197,37 @@ function picture_image_uri($src) {
 }
 
 /**
- * Implements hook_wysiwyg_plugin to modify the CKEditor image dialog for use
- * with the picture module. The integration technique here is borrowed from
- * imce_wysiwyg.
- *
- * Normally an array of plugin settings would be returned, but since it's
- * problematic to have the WYSIWYG module load a plugin which doesn't have a
- * button (an 'extension', in other words), this module takes care of
- * loading the plugin itself. As a consequence, this plugin does not appear
- * on the WYSIWYG button/plugin configuration page, and is always enabled
- * for all WYSIWYG CKEditor profiles when picture groups have been enabled from
- * /admin/config/media/picture/ckeditor
- * @TODO: low priority - make a checkbox control loading of this extension. The
- * imce_wysiwyg module does this by passing a CKEditor options array in the
- * extension definition which is loaded only when the extension is enabled on
- * the WYSIWYG config page.
- *
- * example code to get started with a checkbox would be:
- *
- * return array(
- *   'picture_ckeditor' => array(
- *       'extensions' => array('picture_ckeditor' => t('Responsive images
- *       with the Picture module')),
- *       'url' => 'http://drupal.org/projects/picture',
- *       'load' => FALSE,
- *     ),
- * );
+ * Implements hook_wysiwyg_plugin() to modify the CKEditor image dialog for use
+ * with the picture module.
  */
 function picture_wysiwyg_plugin($editor, $version) {
-
-  // Keep track of whether the JS has already been added since this hook is
-  // called multiple times on a page load.
-  static $picture_ckeditor_integrated = FALSE;
-
-  if ($editor == 'ckeditor' ) {
-    // Load our invocation scripts.
-    if (!$picture_ckeditor_integrated) {
-      // Create the Javascript array of picture group options.
-      $picture_groups = picture_get_mapping_options();
-      $ckeditor_groups = variable_get('picture_ckeditor_groups', array());
-      $groups = array();
-      // CKEditor expects an array of options formatted as
-      // ['Display name', 'machine_name'].
-      foreach ($picture_groups as $key => $value) {
-        if ($ckeditor_groups[$key]['enabled'] == 1) {
-          $groups[] = array($value, $key);
-        }
-      }
-      if (!empty($groups)) {
-        $groups[] = array('Not Set', 'not_set');
-        drupal_add_js(array(
-          'picture' => array(
-            'groups' => $groups,
-            'label' => variable_get('picture_ckeditor_label', 'Image size (required)'),
-            ),
-          ), 'setting');
-        drupal_add_js(drupal_get_path('module', 'picture') . '/picture_ckeditor.js');
-        $picture_ckeditor_integrated = TRUE;
-      }
-    }
+  if ($editor == 'ckeditor') {
+    return array('picture_ckeditor' => array(
+      'path' => drupal_get_path('module', 'picture') .'/plugins/',
+      'load' => TRUE,
+      'extensions' => array('picture_ckeditor' => t('Responsive images with the Picture Module')),
+      'url' => 'http://drupal.org/projects/picture',
+    ));
   }
+}
+
+/**
+ * Implements hook_ckeditor_plugin() to modify the CKEditor image dialog for use
+ * with the picture module.
+ */
+function picture_ckeditor_plugin() {
+  return array(
+    'picture_ckeditor' => array(
+      // Name of the plugin used to write it.
+      'name' => 'picture_ckeditor',
+      // Description of the plugin - it would be displayed in the plugins management section of profile settings.
+      'desc' => t('Support responsive images with the Picture module.'),
+      // The full path to the CKEditor plugins directory, with the trailing slash.
+      'buttons' => FALSE,
+      'path' => drupal_get_path('module', 'picture') . '/plugins/',
+      'default' => 't',
+    )
+  );
 }
 
 /**
