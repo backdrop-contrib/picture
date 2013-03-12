@@ -1147,7 +1147,7 @@ function picture_page_build(&$page) {
 function picture_image_uri($src) {
   $uri = '';
   // Prepare the src by removing http:// or https://.
-  $src = preg_replace('/https?:\/\//', '', $src);
+  $src = parse_url($src, PHP_URL_PATH);
   // Remove leading or trailing slashes.
   $src = trim($src, '/');
 
