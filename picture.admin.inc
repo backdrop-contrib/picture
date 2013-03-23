@@ -51,6 +51,7 @@ function picture_admin_breakpoints($form, &$form_state, $breakpoint_group_name =
   }
 
   $image_styles = image_style_options(TRUE);
+  $image_styles[PICTURE_EMPTY_IMAGE] = t('- empty image -');
   foreach ($breakpoints as $breakpoint_name => $breakpoint) {
     $label = '1x ' . $breakpoint->name . ' [' . $breakpoint->breakpoint . ']';
     $form['picture_mapping']['mapping'][$breakpoint_name]['1x'] = array(
