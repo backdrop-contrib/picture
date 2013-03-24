@@ -709,8 +709,12 @@ function theme_picture($variables) {
   if (!empty($sources)) {
     $attributes = array();
     foreach (array('alt', 'title') as $key) {
-      if (isset($variables[$key])) {
+      $field = sprintf('field_file_image_%s_text', $key);
+      if (isset($variables[$key]) && !empty($variables[$key])) {
         $attributes['data-' . $key] = $variables[$key];
+      }
+      elseif (isset($variables[$field]) && is_array($variables[$field]) && isset($variables[$field]['und'][0]['safe_value'])) {
+        $attributes['data-' . $key] = $variables[$field]['und'][0]['safe_value'];
       }
     }
     // Add attributes that are already prefixed by 'data-'
