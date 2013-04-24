@@ -1031,6 +1031,10 @@ function _picture_filter_process($text, $filter) {
  * @see picture_field_formatter_view()
  */
 function _picture_filter_prepare_image($image) {
+  // Make sure the closing tag is right.
+  $image = str_replace('/>', '>', $image);
+  $image = str_replace('>', ' />', $image);
+
   // Parse the tag as xml.
   $xml = simplexml_load_string('<image>' . html_entity_decode($image, ENT_QUOTES, "utf-8") . '</image>');
   if (isset($xml->img[0]) && is_object($xml->img[0])) {
