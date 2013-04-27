@@ -717,9 +717,10 @@ function theme_picture($variables) {
         $attributes['data-' . $key] = $variables[$field]['und'][0]['safe_value'];
       }
     }
+
     // Add attributes that are already prefixed by 'data-'
     foreach (array('data-picture-group', 'data-picture-align') as $key) {
-      if (isset($variables[$key])) {
+      if (isset($variables[$key]) && !empty($variables[$key])) {
         $attributes[$key] = $variables[$key];
       }
     }
@@ -1265,4 +1266,20 @@ function _picture_image_style_url($style_name, $path) {
     return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   }
   return image_style_url($style_name, $path);
+}
+
+/**
+ * Implements hook_wysiwyg_editor_settings_alter().
+ */
+function picture_wysiwyg_editor_settings_alter(&$settings, $context) {
+  if ($context['profile']->editor == 'ckeditor') {
+    if (!isset($settings['extraAllowedContent'])) {
+      $settings['extraAllowedContent'] = array(
+        'img[src,title,alt,style,width,height,class,hspace,vspace,view_mode,format,fid,data-picture-group,data-picture-align]',
+      );
+    }
+    else {
+      // @todo: try finding the img entry and add data- attributes if needed.
+    }
+  }
 }
