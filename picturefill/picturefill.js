@@ -47,8 +47,8 @@
           // Add a new img element if one doesn't exists.
           if (!picImg) {
             picImg = w.document.createElement('img');
-            picImg.alt = ps[i].getAttribute('data-alt');
-            picImg.title = ps[i].getAttribute('data-title');
+            picImg.alt = ps[i].getAttribute('data-alt') || '';
+            picImg.title = ps[i].getAttribute('data-title') || '';
             ps[i].appendChild(picImg);
           }
 
