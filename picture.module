@@ -158,7 +158,12 @@ function picture_library() {
         'website' => 'https://github.com/attiks/picturefill-proposal',
         'version' => '0.1',
         'js' => array(
-          drupal_get_path('module', 'picture') . '/picturefill/matchmedia.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+          drupal_get_path('module', 'picture') . '/picturefill/matchmedia.js' => array(
+            'type' => 'file',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'need_jquery' => FALSE,
+          ),
         ),
       );
       $libraries['picturefill'] = array(
@@ -166,14 +171,24 @@ function picture_library() {
         'website' => 'https://github.com/attiks/picturefill-proposal',
         'version' => '0.1',
         'js' => array(
-          drupal_get_path('module', 'picture') . '/picturefill/picturefill.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+          drupal_get_path('module', 'picture') . '/picturefill/picturefill.js' => array(
+            'type' => 'file',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'need_jquery' => FALSE,
+          ),
         ),
       );
       $libraries['picture.ajax'] = array(
         'title' => t('Ajax support for picture'),
         'version' => VERSION,
         'js' => array(
-          drupal_get_path('module', 'picture') . '/picture.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+          drupal_get_path('module', 'picture') . '/picture.js' => array(
+            'type' => 'file',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'need_jquery' => FALSE,
+          ),
         ),
       );
       break;
@@ -183,8 +198,18 @@ function picture_library() {
         'website' => 'https://github.com/weblinc/media-match',
         'version' => '0.1',
         'js' => array(
-          drupal_get_path('module', 'picture') . '/weblinc/media.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
-          drupal_get_path('module', 'picture') . '/weblinc/media.extension.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+          drupal_get_path('module', 'picture') . '/weblinc/media.js' => array(
+            'type' => 'file',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'need_jquery' => FALSE,
+          ),
+          drupal_get_path('module', 'picture') . '/weblinc/media.extension.js' => array(
+            'type' => 'file',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'need_jquery' => FALSE,
+          ),
         ),
         'css' => array(
           drupal_get_path('module', 'picture') . '/weblinc/media.css' => array('type' => 'file'),
@@ -195,14 +220,24 @@ function picture_library() {
         'website' => 'https://github.com/weblinc/picture',
         'version' => '0.1',
         'js' => array(
-          drupal_get_path('module', 'picture') . '/weblinc/picture.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+          drupal_get_path('module', 'picture') . '/weblinc/picture.js' => array(
+            'type' => 'file',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'need_jquery' => FALSE,
+          ),
         ),
       );
       $libraries['picture.ajax'] = array(
         'title' => t('Ajax support for picture'),
         'version' => VERSION,
         'js' => array(
-          drupal_get_path('module', 'picture') . '/picture.weblinc.js' => array('type' => 'file', 'weight' => -10, 'group' => JS_DEFAULT),
+          drupal_get_path('module', 'picture') . '/picture.weblinc.js' => array(
+            'type' => 'file',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'need_jquery' => FALSE,
+          ),
         ),
         'css' => array(
           drupal_get_path('module', 'picture') . '/picture.weblinc.css' => array('type' => 'file'),
