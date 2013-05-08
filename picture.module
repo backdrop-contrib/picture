@@ -1207,6 +1207,8 @@ function picture_page_build(&$page) {
  *   It must point to a local file.
  */
 function picture_image_uri($src) {
+  global $base_path;
+
   $uri = '';
   // Prepare the src by removing http:// or https://.
   $src = parse_url($src, PHP_URL_PATH);
@@ -1224,7 +1226,7 @@ function picture_image_uri($src) {
     $stream_wrapper = new $class();
     // Trim leading or trailing slashes since the Directory could be root
     // relative.
-    $needles[$scheme] = trim($stream_wrapper->getDirectoryPath(), '/');
+    $needles[$scheme] = trim($base_path . $stream_wrapper->getDirectoryPath(), '/');
 
     // Check whether the file stream directory is at the beginning of
     // the image src. Use === since strpos could return false.
