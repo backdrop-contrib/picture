@@ -12,6 +12,10 @@
         tar.width = src.getAttribute('data-width');
         tar.height = src.getAttribute('data-height');
       }
+      else {
+        tar.removeAttribute('width');
+        tar.removeAttribute('height');
+      }
     }
 
     // Get all picture tags.
