@@ -314,6 +314,7 @@ function picture_theme() {
       'variables' => array(
         'style_name' => NULL,
         'path' => NULL,
+        'uri' => NULL,
         'width' => NULL,
         'height' => NULL,
         'alt' => '',
@@ -338,6 +339,7 @@ function picture_theme() {
         'breakpoints' => array(),
         'colorbox' => array(),
         'colorbox_image_style' => NULL,
+        'colorbox_group_id' => NULL,
       ),
     ),
     'picture_source' => array(
@@ -491,27 +493,9 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
     $link_file = TRUE;
   }
 
-  $breakpoint_styles = array();
   $fallback_image_style = '';
-  $group_name = $display['settings']['picture_group'];
-  $mappings = picture_mapping_load($group_name);
-  if ($mappings) {
-    foreach ($mappings->mapping as $breakpoint_name => $multipliers) {
-      if (!empty($multipliers)) {
-        foreach ($multipliers as $multiplier => $image_style) {
-          if (!empty($image_style)) {
-            if (empty($fallback_image_style)) {
-              $fallback_image_style = $image_style;
-            }
-            if (!isset($breakpoint_styles[$breakpoint_name])) {
-              $breakpoint_styles[$breakpoint_name] = array();
-            }
-            $breakpoint_styles[$breakpoint_name][$multiplier] = $image_style;
-          }
-        }
-      }
-    }
-  }
+  $mappings = picture_mapping_load($display['settings']['picture_group']);
+  $breakpoint_styles = picture_get_mapping_breakpoints($mappings, $fallback_image_style);
 
   if (isset($display['settings']['fallback_image_style']) && !empty($display['settings']['fallback_image_style'])) {
     $fallback_image_style = $display['settings']['fallback_image_style'];
@@ -526,23 +510,7 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
   if (module_exists('colorbox') && $display['settings']['image_link'] == 'colorbox') {
     $formatter = 'picture_formatter_colorbox';
     $mappings = picture_mapping_load($display['settings']['colorbox']);
-    if ($mappings) {
-      foreach ($mappings->mapping as $breakpoint_name => $multipliers) {
-        if (!empty($multipliers)) {
-          foreach ($multipliers as $multiplier => $image_style) {
-            if (!empty($image_style)) {
-              if (empty($colorbox_fallback_image_style)) {
-                $colorbox_fallback_image_style = $image_style;
-              }
-              if (!isset($breakpoint_styles[$breakpoint_name])) {
-                $colorbox_breakpoints[$breakpoint_name] = array();
-              }
-              $colorbox_breakpoints[$breakpoint_name][$multiplier] = $image_style;
-            }
-          }
-        }
-      }
-    }
+    $colorbox_breakpoints = picture_get_mapping_breakpoints($mappings, $colorbox_fallback_image_style);
   }
 
   foreach ($items as $delta => $item) {
@@ -647,6 +615,10 @@ function theme_picture_formatter_colorbox($variables) {
       'fragment' => $id,
       'html' => TRUE,
     );
+
+    if (!empty($variables['colorbox_group_id'])) {
+      $options['attributes']['rel'] = $variables['colorbox_group_id'];
+    }
 
     // Do not load picture automatically.
     $colorbox = str_replace('span data-picture=""', 'span data-picture-lazy="lazy"', $colorbox);
@@ -912,27 +884,10 @@ function picture_file_formatter_picture_view($file, $display, $langcode) {
   }
 
   if (file_entity_file_is_readable($file) && isset($file->image_dimensions)) {
-    $breakpoint_styles = array();
     $fallback_image_style = '';
     $group_name = $display['settings']['picture_group'];
     $mappings = picture_mapping_load($group_name);
-    if ($mappings) {
-      foreach ($mappings->mapping as $breakpoint_name => $multipliers) {
-        if (!empty($multipliers)) {
-          foreach ($multipliers as $multiplier => $image_style) {
-            if (!empty($image_style)) {
-              if (empty($fallback_image_style)) {
-                $fallback_image_style = $image_style;
-              }
-              if (!isset($breakpoint_styles[$breakpoint_name])) {
-                $breakpoint_styles[$breakpoint_name] = array();
-              }
-              $breakpoint_styles[$breakpoint_name][$multiplier] = $image_style;
-            }
-          }
-        }
-      }
-    }
+    $breakpoint_styles = picture_get_mapping_breakpoints($mappings, $fallback_image_style);
 
     if (isset($display['settings']['fallback_image_style']) && !empty($display['settings']['fallback_image_style'])) {
       $fallback_image_style = $display['settings']['fallback_image_style'];
@@ -1087,29 +1042,9 @@ function _picture_filter_prepare_image($image) {
     }
   }
 
-  $image_render_array = array();
-  $breakpoint_styles = array();
   $fallback_image_style = '';
-  $group_name = $attributes['data-picture-group'];
-  $mappings = picture_mapping_load($group_name);
-
-  if ($mappings) {
-    foreach ($mappings->mapping as $breakpoint_name => $multipliers) {
-      if (!empty($multipliers)) {
-        foreach ($multipliers as $multiplier => $image_style) {
-          if (!empty($image_style)) {
-            if (empty($fallback_image_style)) {
-              $fallback_image_style = $image_style;
-            }
-            if (!isset($breakpoint_styles[$breakpoint_name])) {
-              $breakpoint_styles[$breakpoint_name] = array();
-            }
-            $breakpoint_styles[$breakpoint_name][$multiplier] = $image_style;
-          }
-        }
-      }
-    }
-  }
+  $mappings = picture_mapping_load($attributes['data-picture-group']);
+  $breakpoint_styles = picture_get_mapping_breakpoints($mappings, $fallback_image_style);
 
   // Make sure we have a src attribute.
   if (!isset($attributes['src'])) {
@@ -1326,4 +1261,43 @@ function picture_wysiwyg_editor_settings_alter(&$settings, $context) {
       // @todo: try finding the img entry and add data- attributes if needed.
     }
   }
+}
+
+/**
+ * Returns a list with the image styles of a mapping configuration.
+ *
+ * @param object $mappings
+ *   The mapping configuration.
+ * @param string $fallback_image_style
+ *   Reference to access the evaluated fallback image style.
+ *
+ * @return array
+ *   List with the image styles of a mapping configuration.
+ *   The array has following structure:
+ *   array(
+ *     breakpoint_name => array(
+ *       multiplier => image_style
+ *     )
+ *   )
+ */
+function picture_get_mapping_breakpoints($mappings, &$fallback_image_style = NULL) {
+  $breakpoint_styles = array();
+  if ($mappings) {
+    foreach ($mappings->mapping as $breakpoint_name => $multipliers) {
+      if (!empty($multipliers)) {
+        foreach ($multipliers as $multiplier => $image_style) {
+          if (!empty($image_style)) {
+            if (empty($fallback_image_style)) {
+              $fallback_image_style = $image_style;
+            }
+            if (!isset($breakpoint_styles[$breakpoint_name])) {
+              $breakpoint_styles[$breakpoint_name] = array();
+            }
+            $breakpoint_styles[$breakpoint_name][$multiplier] = $image_style;
+          }
+        }
+      }
+    }
+  }
+  return $breakpoint_styles;
 }
