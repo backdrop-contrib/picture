@@ -1282,7 +1282,7 @@ function picture_wysiwyg_editor_settings_alter(&$settings, $context) {
  */
 function picture_get_mapping_breakpoints($mappings, &$fallback_image_style = NULL) {
   $breakpoint_styles = array();
-  if ($mappings) {
+  if (is_object($mappings)) {
     foreach ($mappings->mapping as $breakpoint_name => $multipliers) {
       if (!empty($multipliers)) {
         foreach ($multipliers as $multiplier => $image_style) {
