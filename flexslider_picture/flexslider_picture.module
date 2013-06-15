@@ -118,6 +118,7 @@ function flexslider_picture_form_ctools_export_ui_edit_item_form_alter(&$form, &
         '#type' => 'select',
         '#description' => t('Picture mapping for the main stage images.'),
         '#options' => $options,
+        '#default_value' => (!empty($form_state['item']->mapping)) ? $form_state['item']->mapping : '',
       );
     }
     else {
