@@ -328,6 +328,7 @@ function picture_theme() {
         'item' => NULL,
         'path' => NULL,
         'image_style' => NULL,
+        'attributes' => array(),
         'breakpoints' => array(),
       ),
     ),
@@ -565,6 +566,7 @@ function theme_picture_formatter($variables) {
 
   $item['style_name'] = $variables['image_style'];
   $item['breakpoints'] = $variables['breakpoints'];
+  $item['attributes'] = $variables['attributes'];
 
   if (!isset($item['path']) && isset($variables['uri'])) {
     $item['path'] = $variables['uri'];
@@ -638,6 +640,7 @@ function theme_picture_formatter_colorbox($variables) {
  *   - height: The height of the image (if known).
  *   - alt: The alternative text for text-based browsers.
  *   - breakpoints: An array containing breakpoints.
+ *   - attributes: An array containing attributes.
  *
  * @ingroup themeable
  */
@@ -737,6 +740,11 @@ function theme_picture($variables) {
       if (isset($variables[$key]) && !empty($variables[$key])) {
         $attributes[$key] = $variables[$key];
       }
+    }
+
+     // Add additional attributes passed in through the render array.
+    if (isset($variables['attributes']) && !empty($variables['attributes'])) {
+      $attributes = array_merge($attributes, $variables['attributes']);
     }
     $output[] = '<span data-picture=""' . drupal_attributes($attributes) . '>';
 
