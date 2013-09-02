@@ -66,8 +66,18 @@ function flexslider_picture_schema_alter(&$schema) {
       'mapping',
     ),
     'fields' => array(
-      'imagestyle_type' => 'imagestyle_type',
-      'mapping' => 'mapping',
+      'imagestyle_type' => array(
+        'description' => 'One of image_style or picture_mapping.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+      ),
+      'mapping' => array(
+        'description' => 'The picture mapping for this optionset.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => FALSE,
+      ),
     ),
   );
 }
