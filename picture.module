@@ -613,7 +613,7 @@ function theme_picture_formatter_colorbox($variables) {
 
     $options = array(
       'attributes' => array('class' => array('colorbox-inline')),
-      'query' => array('maxWidth' => '80%', 'maxHeight' => '80%', 'width' => '80%', 'height' => '80%', 'inline' => 'true'),
+      'query' => array('maxWidth' => '80%', 'maxHeight' => '80%', 'inline' => 'true'),
       'fragment' => $id,
       'html' => TRUE,
     );
