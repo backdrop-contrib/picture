@@ -7,13 +7,13 @@
 
 
 /**
- * Preprocess the items and prepare the item slides to be rendered.
+ * Process the items and prepare the item slides to be rendered.
  *
  * @param $vars
  */
-function template_preprocess_flexslider_picture_list(&$vars) {
+function template_process_flexslider_picture_list(&$vars) {
   // Call default preprocessor first.
-  template_preprocess_flexslider_list($vars);
+  template_process_flexslider_list($vars);
 
   $optionset = &$vars['settings']['optionset'];
 
