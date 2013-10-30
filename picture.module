@@ -392,13 +392,7 @@ function picture_field_formatter_settings_form($field, $instance, $view_mode, $f
     '#options' => $image_styles,
   );
 
-  $link_types = array(
-    'content' => t('Content'),
-    'file' => t('File'),
-  );
-  if (module_exists('colorbox')) {
-    $link_types['colorbox'] = t('Colorbox');
-  }
+  $link_types = picture_link_types($instance);
 
   $element['image_link'] = array(
     '#title' => t('Link image to'),
@@ -473,13 +467,11 @@ function picture_field_formatter_settings_summary($field, $instance, $view_mode)
     $summary[] = t('Automatic fallback');
   }
 
-  $link_types = array(
-    'content' => t('Linked to content'),
-    'file' => t('Linked to file'),
-  );
+  $link_types = picture_link_types($instance);
+
   // Display this setting only if image is linked.
   if (isset($link_types[$settings['image_link']])) {
-    $summary[] = $link_types[$settings['image_link']];
+    $summary[] = filter_xss_admin($link_types[$settings['image_link']]);
   }
 
   return implode('<br />', $summary);
@@ -492,11 +484,23 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
   $element = array();
 
   // Check if the formatter involves a link.
-  if ($display['settings']['image_link'] == 'content') {
+  $image_link = $display['settings']['image_link'];
+  if ($image_link == 'content') {
     $uri = entity_uri($entity_type, $entity);
   }
-  elseif ($display['settings']['image_link'] == 'file') {
+  elseif ($image_link == 'file') {
     $link_file = TRUE;
+  }
+  elseif ($image_link) {
+    if (isset($entity->$image_link)) {
+      // Support for field translations.
+      $language = field_language($entity_type, $entity, $field['field_name']);
+      $link_field = $entity->$image_link;
+
+      if (isset($link_field[$language])) {
+        $link_values = $link_field[$language];
+      }
+    }
   }
 
   $fallback_image_style = '';
@@ -525,6 +529,23 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
         'path' => file_create_url($item['uri']),
         'options' => array(),
       );
+    }
+    // Handle multiple link with image values.
+    if (isset($link_values)) {
+      if (isset($link_values[$delta]['url'])) {
+        $uri = array(
+          'path' => $link_values[$delta]['url'],
+          'options' => array('attributes' => $link_values[$delta]['attributes']),
+        );
+        // Handle query fragment if there is any.
+        if (!empty($link_values[$delta]['query'])) {
+          $uri['options']['query'] = $link_values[$delta]['query'];
+        }
+      }
+      // If there are more image values than link values unset the link.
+      else {
+        unset($uri);
+      }
     }
     $element[$delta] = array(
       '#theme' => $formatter,
@@ -1313,4 +1334,27 @@ function picture_get_mapping_breakpoints($mappings, &$fallback_image_style = NUL
     }
   }
   return $breakpoint_styles;
+}
+
+/**
+ * Helper function to compute the list of possible link types.
+ */
+function picture_link_types($instance) {
+  $link_types = array(
+    'content' => t('Content'),
+    'file' => t('File'),
+  );
+  if (module_exists('colorbox')) {
+    $link_types['colorbox'] = t('Colorbox');
+  }
+  // If the link module is installed, also allow any link fields to be used.
+  foreach (field_info_fields() as $field_key => $field_info) {
+    if ($field_info['type'] == 'link_field') {
+      $field_instance = field_info_instance($instance['entity_type'], $field_info['field_name'], $instance['bundle']);
+      if ($field_instance) {
+        $link_types[$field_key] = "$field_instance[label] ($field_info[field_name])";
+      }
+    }
+  }
+  return $link_types;
 }
