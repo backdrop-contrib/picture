@@ -450,13 +450,18 @@ function picture_field_formatter_settings_summary($field, $instance, $view_mode)
 
   $summary = array();
 
-  $picture_mapping = picture_mapping_load($settings['picture_group']);
-  $breakpoint_group = breakpoints_breakpoint_group_load($picture_mapping->breakpoint_group);
-  if ($breakpoint_group) {
-    $summary[] = t('Picture group: @picture_group', array('@picture_group' => $breakpoint_group->name));
+  if (isset($settings['picture_group'])) {
+    $picture_mapping = picture_mapping_load($settings['picture_group']);
+    $breakpoint_group = breakpoints_breakpoint_group_load($picture_mapping->breakpoint_group);
+    if ($breakpoint_group) {
+      $summary[] = t('Picture group: @picture_group', array('@picture_group' => $breakpoint_group->name));
+    }
+    else {
+      $summary[] = t("Picture group doesn't exists");
+    }
   }
   else {
-    $summary[] = t("Picture group doesn't exists");
+    $summary[] = t("You have to select a mapping first.");
   }
 
   $image_styles = image_style_options(FALSE);
