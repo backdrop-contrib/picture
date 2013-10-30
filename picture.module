@@ -1344,9 +1344,11 @@ function picture_link_types($instance) {
     'content' => t('Content'),
     'file' => t('File'),
   );
+
   if (module_exists('colorbox')) {
     $link_types['colorbox'] = t('Colorbox');
   }
+
   // If the link module is installed, also allow any link fields to be used.
   foreach (field_info_fields() as $field_key => $field_info) {
     if ($field_info['type'] == 'link_field') {
