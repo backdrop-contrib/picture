@@ -780,7 +780,7 @@ function theme_picture($variables) {
     }
 
     // Output the fallback image.
-    if (empty($variables['path'])) {
+    if (empty($variables['path']) && isset($variables['uri'])) {
       $variables['path'] = $variables['uri'];
     }
 
