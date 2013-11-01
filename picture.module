@@ -1199,7 +1199,7 @@ function picture_image_uri($src) {
 
     // Check whether the file stream directory is at the beginning of
     // the image src. Use === since strpos could return false.
-    if (strpos($src, $needles[$scheme]) === 0) {
+    if (!empty($needles[$scheme]) && strpos($src, $needles[$scheme]) === 0) {
       $matches[$scheme] = $needles[$scheme];
     }
   }
