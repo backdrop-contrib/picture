@@ -689,7 +689,7 @@ function theme_picture($variables) {
   // Fallback image, output as source with media query.
   $sources[] = array(
     'src' => _picture_image_style_url($variables['style_name'], $variables['uri']),
-    'dimensions' => picture_get_image_dimensions($variables),
+    'dimensions' => picture_get_image_dimensions($variables, 1),
   );
 
   // All breakpoints and multipliers.
@@ -703,12 +703,13 @@ function theme_picture($variables) {
             $new_source = $variables;
             $new_source['style_name'] = $image_style;
             $new_source['#media_query'] = picture_get_multiplier_media_query($multiplier, $breakpoint->breakpoint);
+            $new_source['#multiplier'] = $multiplier;
             $new_sources[] = $new_source;
           }
           foreach ($new_sources as $new_source) {
             $sources[] = array(
               'src' => _picture_image_style_url($new_source['style_name'], $new_source['uri']),
-              'dimensions' => picture_get_image_dimensions($new_source),
+              'dimensions' => picture_get_image_dimensions($new_source, $new_source['#multiplier']),
               'media' => $new_source['#media_query'],
             );
           }
@@ -727,7 +728,7 @@ function theme_picture($variables) {
             foreach ($new_sources as $new_source) {
               $sources[] = array(
                 'src' => _picture_image_style_url($new_source['style_name'], $new_source['uri']),
-                'dimensions' => picture_get_image_dimensions($new_source),
+                'dimensions' => picture_get_image_dimensions($new_source, $new_source['#multiplier']),
                 'media' => $new_source['#media_query'],
               );
             }
@@ -740,7 +741,7 @@ function theme_picture($variables) {
             }
             $sources[] = array(
               'srcset' => implode(', ', $srcset),
-              'dimensions' => picture_get_image_dimensions($new_sources[0]),
+              'dimensions' => picture_get_image_dimensions($new_sources[0], $new_sources[0]['#multiplier']),
               'media' => $new_source['#media_query'],
             );
           }
@@ -858,12 +859,14 @@ function theme_picture_source($variables) {
  *   - style_name: The name of the style to be used to alter the original image.
  *   - width: The width of the source image (if known).
  *   - height: The height of the source image (if known).
+ * @param $multiplier
+ *   Multiplier from the source
  *
  * @return array
  *   Dimensions to be modified - an array with components width and height, in
  *   pixels.
  */
-function picture_get_image_dimensions($variables) {
+function picture_get_image_dimensions($variables, $multiplier = 1) {
   // Determine the dimensions of the styled image.
   $dimensions = array(
     'width' => $variables['width'],
@@ -878,6 +881,10 @@ function picture_get_image_dimensions($variables) {
   }
   else {
     image_style_transform_dimensions($variables['style_name'], $dimensions);
+    if ($multiplier != 0 && $multiplier != 1) {
+      $dimensions['width'] = ceil($dimensions['width'] / $multiplier);
+      $dimensions['height'] = ceil($dimensions['height'] / $multiplier);
+    }
   }
 
   return $dimensions;
