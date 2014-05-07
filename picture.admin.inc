@@ -215,6 +215,7 @@ function picture_admin_settings($form, &$form_state) {
     '#type' => 'select',
     '#title' => t('Choose the javascript library to use'),
     '#options' => array(
+      PICTURE_IMPLEMENTATION_PICTUREFILL2 => 'picturefill 2.0',
       PICTURE_IMPLEMENTATION_PICTUREFILL => 'picturefill',
       PICTURE_IMPLEMENTATION_WEBLINC => 'weblinc',
     ),
