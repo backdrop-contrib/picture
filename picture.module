@@ -699,6 +699,10 @@ function theme_picture($variables) {
     unset($variables['width']);
     unset($variables['height']);
   }
+  if (isset($variables['metadata']['width']) && isset($variables['metadata']['height'])) {
+    $variables['width'] = $variables['metadata']['width'];
+    $variables['height'] = $variables['metadata']['height'];
+  }
 
   $sources = array();
   $output = array();
