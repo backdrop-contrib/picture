@@ -1,4 +1,4 @@
-/*! Picturefill - v2.0.0-beta - 2014-05-07
+/*! Picturefill - v2.0.0-beta - 2014-05-08
 * http://scottjehl.github.io/picturefill
 * Copyright (c) 2014 https://github.com/scottjehl/picturefill/blob/master/Authors.txt; Licensed MIT */
 /*! matchMedia() polyfill - Test a CSS media type/query in JS. Authors & copyright (c) 2012: Scott Jehl, Paul Irish, Nicholas Zakas, David Knight. Dual MIT/BSD license */
@@ -127,6 +127,11 @@ window.matchMedia || (window.matchMedia = function() {
 
 	// container of supported mime types that one might need to qualify before using
 	pf.types =  {};
+
+	// Add support for standard mime types.
+	pf.types["image/jpeg"] = true;
+	pf.types["image/gif"] = true;
+	pf.types["image/png"] = true;
 
 	// test svg support
 	pf.types[ "image/svg+xml" ] = doc.implementation.hasFeature('http://www.w3.org/TR/SVG11/feature#Image', '1.1');
@@ -489,7 +494,7 @@ window.matchMedia || (window.matchMedia = function() {
 					// No sources matched, so we’re down to processing the inner `img` as a source.
 					candidates = pf.processSourceSet( picImg );
 
-					if( picImg.srcset === undefined || picImg.getAttribute( "sizes" ) ) {
+					if( picImg.srcset === undefined || ( picImg.getAttribute( "sizes" ) && picImg[ pf.ns ].srcset ) ) {
 						// Either `srcset` is completely unsupported, or we need to polyfill `sizes` functionality.
 						pf.applyBestCandidate( candidates, picImg );
 					} // Else, resolution-only `srcset` is supported natively.
