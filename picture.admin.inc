@@ -50,28 +50,49 @@ function picture_admin_breakpoints($form, &$form_state, $breakpoint_group_name =
     }
   }
 
+  $all_image_styles = image_style_options(FALSE);
   $image_styles = image_style_options(TRUE);
   $image_styles[PICTURE_EMPTY_IMAGE] = t('- empty image -');
   $image_styles[PICTURE_ORIGINAL_IMAGE] = t('- original image -');
+
+  // Make a list of all breakpoints and multipliers.
+  $breakpoints_and_multipliers = array();
   foreach ($breakpoints as $breakpoint_name => $breakpoint) {
-    $label = '1x ' . $breakpoint->name . ' [' . $breakpoint->breakpoint . ']';
-    $form['picture_mapping']['mapping'][$breakpoint_name]['1x'] = array(
-      '#title' => check_plain($label),
-      '#type' => 'select',
-      '#options' => $image_styles,
-      '#default_value' => isset($mappings->mapping[$breakpoint_name]['1x']) ? $mappings->mapping[$breakpoint_name]['1x'] : '',
-    );
+    $breakpoints_and_multipliers[$breakpoint_name]['1x'] = $breakpoint;
     if (isset($breakpoint->multipliers) && !empty($breakpoint->multipliers)) {
       foreach ($breakpoint->multipliers as $multiplier => $status) {
         if ($status) {
-          $label = $multiplier . ' ' . $breakpoint->name . ' [' . $breakpoint->breakpoint . ']';
-          $form['picture_mapping']['mapping'][$breakpoint_name][$multiplier] = array(
-            '#title' => check_plain($label),
-            '#type' => 'select',
-            '#options' => $image_styles,
-            '#default_value' => isset($mappings->mapping[$breakpoint_name][$multiplier]) ? $mappings->mapping[$breakpoint_name][$multiplier] : '',
-          );
+          $breakpoints_and_multipliers[$breakpoint_name][$multiplier] = $breakpoint;
         }
+      }
+    }
+  }
+
+  foreach ($breakpoints_and_multipliers as $breakpoint_name => $breakpoint_info) {
+    foreach ($breakpoint_info as $multiplier => $breakpoint) {
+      $label = $multiplier . ' ' . $breakpoint->name . ' [' . $breakpoint->breakpoint . ']';
+      $form['picture_mapping']['mapping'][$breakpoint_name][$multiplier]['image_style'] = array(
+        '#title' => check_plain($label),
+        '#type' => 'select',
+        '#options' => $image_styles,
+        '#default_value' => isset($mappings->mapping[$breakpoint_name][$multiplier]['image_style']) ? $mappings->mapping[$breakpoint_name][$multiplier]['image_style'] : '',
+      );
+      $form['picture_mapping']['mapping'][$breakpoint_name][$multiplier]['sizes'] = array(
+        '#title' => t('Sizes'),
+        '#type' => 'textfield',
+        '#default_value' => isset($mappings->mapping[$breakpoint_name][$multiplier]['sizes']) ? $mappings->mapping[$breakpoint_name][$multiplier]['sizes'] : 0,
+      );
+      foreach ($all_image_styles as $id => $label) {
+        $form['picture_mapping']['mapping'][$breakpoint_name][$multiplier]['sizes_list'][$id]['on'] = array(
+          '#title' => $label,
+          '#type' => 'checkbox',
+          '#default_value' => isset($mappings->mapping[$breakpoint_name][$multiplier]['sizes_list'][$id]['on']) ? $mappings->mapping[$breakpoint_name][$multiplier]['sizes_list'][$id]['on'] : 0,
+        );
+        $form['picture_mapping']['mapping'][$breakpoint_name][$multiplier]['sizes_list'][$id]['size'] = array(
+          '#title' => t('Size'),
+          '#type' => 'textfield',
+          '#default_value' => isset($mappings->mapping[$breakpoint_name][$multiplier]['sizes_list'][$id]['size']) ? $mappings->mapping[$breakpoint_name][$multiplier]['sizes_list'][$id]['size'] : '',
+        );
       }
     }
   }

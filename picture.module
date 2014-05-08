@@ -597,6 +597,7 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
  * Theme picture.
  */
 function theme_picture_formatter($variables) {
+  dpm($variables, 'theme_picture_formatter');
   if (!isset($variables['breakpoints']) || empty($variables['breakpoints'])) {
     return theme('image_formatter', $variables);
   }
@@ -689,6 +690,7 @@ function theme_picture_formatter_colorbox($variables) {
  * @ingroup themeable
  */
 function theme_picture($variables) {
+  dpm($variables, 'theme_picture');
   // Make sure that width and height are proper values
   // If they exists we'll output them
   // @see http://www.w3.org/community/respimg/2012/06/18/florians-compromise/
@@ -724,11 +726,25 @@ function theme_picture($variables) {
         case PICTURE_IMPLEMENTATION_PICTUREFILL2:
         case PICTURE_IMPLEMENTATION_WEBLINC:
           foreach ($multipliers as $multiplier => $image_style) {
-            $new_source = $variables;
-            $new_source['style_name'] = $image_style;
-            $new_source['#media_query'] = $breakpoint->breakpoint;
-            $new_source['#multiplier'] = $multiplier;
-            $new_sources[] = $new_source;
+            if (is_array($image_style)) {
+              $new_source = $variables;
+              if (isset($image_style['image_style'])) {
+                $new_source['style_name'] = $image_style['image_style'];
+              }
+              if (isset($image_style['sizes'])) {
+                $new_source['#sizes'] = $image_style['sizes'];
+              }
+              $new_source['#media_query'] = $breakpoint->breakpoint;
+              $new_source['#multiplier'] = $multiplier;
+              $new_sources[] = $new_source;
+            }
+            else {
+              $new_source = $variables;
+              $new_source['style_name'] = $image_style;
+              $new_source['#media_query'] = $breakpoint->breakpoint;
+              $new_source['#multiplier'] = $multiplier;
+              $new_sources[] = $new_source;
+            }
           }
 
           // Only one image, use src.
@@ -1374,7 +1390,12 @@ function picture_get_mapping_breakpoints($mappings, &$fallback_image_style = NUL
         foreach ($multipliers as $multiplier => $image_style) {
           if (!empty($image_style)) {
             if (empty($fallback_image_style)) {
-              $fallback_image_style = $image_style;
+              if (is_array($image_style)) {
+                $fallback_image_style = $image_style['image_style'];
+              }
+              else {
+                $fallback_image_style = $image_style;
+              }
             }
             if (!isset($breakpoint_styles[$breakpoint_name])) {
               $breakpoint_styles[$breakpoint_name] = array();
