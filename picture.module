@@ -8,6 +8,7 @@
 define('PICTURE_CLASS', 'picture');
 define('PICTURE_SEPARATOR', '__');
 define('PICTURE_EMPTY_IMAGE', '_empty image_');
+define('PICTURE_ORIGINAL_IMAGE', '_original image_');
 
 define('PICTURE_IMPLEMENTATION_PICTUREFILL2', 'picturefill2');
 define('PICTURE_IMPLEMENTATION_PICTUREFILL', 'picturefill');
@@ -917,6 +918,9 @@ function picture_get_image_dimensions($variables, $multiplier = 1) {
       'height' => 1,
     );
   }
+  elseif ($variables['style_name'] == PICTURE_ORIGINAL_IMAGE) {
+    // NOOP.
+  }
   else {
     image_style_transform_dimensions($variables['style_name'], $dimensions);
     if ($multiplier != 0 && $multiplier != 1) {
@@ -1322,6 +1326,9 @@ function picture_uninstall() {
 function _picture_image_style_url($style_name, $path) {
   if ($style_name == PICTURE_EMPTY_IMAGE) {
     return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+  }
+  if ($style_name == PICTURE_ORIGINAL_IMAGE) {
+    return file_create_url($path);
   }
   return image_style_url($style_name, $path);
 }
