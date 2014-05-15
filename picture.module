@@ -4,16 +4,34 @@
  * @file
  * Picture formatter.
  */
-
-define('PICTURE_CLASS', 'picture');
-define('PICTURE_SEPARATOR', '__');
 define('PICTURE_EMPTY_IMAGE', '_empty image_');
 define('PICTURE_ORIGINAL_IMAGE', '_original image_');
 
-define('PICTURE_IMPLEMENTATION_PICTUREFILL2', 'picturefill2');
-define('PICTURE_IMPLEMENTATION_PICTUREFILL', 'picturefill');
-define('PICTURE_IMPLEMENTATION_WEBLINC', 'weblinc');
-define('PICTURE_IMPLEMENTATION_DEFAULT', 'picturefill');
+/**
+ * Implements hook_help().
+ */
+function picture_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case 'admin/help#picture':
+      $output .= '<h3>' . t('About') . '</h3>';
+      $output .= '<p>' . t('The Picture module provides an image formatter and breakpoint mappings to output responsive images using the HTML5 picture tag. For more information, see the <a href="!picture">online documentation for the Picture module</a>.', array( '!picture' => 'https://drupal.org/documentation/modules/picture')) . '</p>';
+      $output .= '<h3>' . t('Uses') . '</h3>';
+      $output .= '<dl>';
+      $output .= '<dt>' . t('Defining picture mappings') . '</dt>';
+      $output .= '<dd>' . t('By creating picture mappings you define the image styles that are being used to output images at certain breakpoints. On the <a href="!picture_mapping">Picture mappings</a> page, click <em>Add picture mapping</em> to create a new mapping. First chose a label and a breakpoint group and click Save. After that you can choose the image styles that will be used for each breakpoint. Image styles can be defined on the <a href="!image_styles">Image styles page</a> that is provided by the <a href="!image_help">Image module</a>. Breakpoints are defined in the info files of the theme or you can create custom breakpoints. See the <a href="!breakpoint_help">help page of the Breakpoint module</a> for more information.', array('!picture_mapping' => url('admin/config/media/picture'), '!image_styles' => url('admin/config/media/image-styles'), '!image_help' => url('admin/help/image'), '!breakpoint_help' => url('admin/help/breakpoints'))) . '</dd>';
+      $output .= '<dt>' . t('Using picture mappings in Image fields') . '</dt>';
+      $output .= '<dd>' . t('After defining responsive image mappings, you can use them in the display settings for your Image fields, so that the site displays responsive images using the HTML5 picture tag. Open the Manage display page for the entity type (content type, taxonomy vocabulary, etc.) that the Image field is attached to. Choose the format <em>Picture</em>, click the Edit icon, and select one of the picture mappings that you have created. For general information on how to manage fields and their display see the <a href="!field_ui">help page of the Field UI module</a>.', array('!field_ui' => url('admin/help/field_ui'))) . '</dd>';
+      $output .= '</dl>';
+      break;
+
+    case 'admin/config/media/picture':
+      $output .= '<p>' . t('A picture mapping associates an image style with each breakpoint defined by your theme.') . '</p>';
+      break;
+
+  }
+  return $output;
+}
 
 /**
  * Implements hook_permission().
@@ -33,30 +51,19 @@ function picture_permission() {
 function picture_menu() {
   $items = array();
 
-  $items['admin/config/media/picture'] = array(
-    'title' => 'Picture',
-    'description' => 'Manage Pictures',
+  /*$items['admin/config/media/picture'] = array(
+    'title' => 'Picture mappings',
+    'description' => 'Manage Picture mappings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('picture_admin_breakpoints'),
     'access arguments' => array('administer pictures'),
     'file' => 'picture.admin.inc',
   );
 
-  $items['admin/config/media/picture/groups'] = array(
-    'title' => 'Groups',
+  $items['admin/config/media/picture/picture-mapping'] = array(
+    'title' => 'Picture mappings',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 10,
-  );
-
-  $items['admin/config/media/picture/settings'] = array(
-    'title' => 'Settings',
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 20,
-    'description' => 'Pictures settings',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('picture_admin_settings'),
-    'access arguments' => array('administer pictures'),
-    'file' => 'picture.admin.inc',
   );
 
   $items['admin/config/media/picture/groups/global'] = array(
@@ -96,7 +103,7 @@ function picture_menu() {
         'weight' => 15,
       );
     }
-  }
+  }*/
 
   $items['admin/config/media/picture/ckeditor'] = array(
     'title' => 'CKEditor',
@@ -143,134 +150,28 @@ function picture_mapping_load_all() {
 /**
  * Save mappings.
  */
-function picture_mapping_save(&$mapping) {
-  ctools_include('export');
-  $update = isset($mapping->id) ? array('id') : array();
-  return drupal_write_record('picture_mapping', $mapping, $update);
+function picture_mapping_save(PictureMapping $mapping) {
+  return $mapping->save();
 }
 
 /**
  * Implements hook_library().
  */
 function picture_library() {
-  switch (variable_get('picture_implementation', PICTURE_IMPLEMENTATION_DEFAULT)) {
-    case PICTURE_IMPLEMENTATION_PICTUREFILL2:
-      $libraries['picturefill'] = array(
-        'title' => t('Picturefill'),
-        'website' => 'https://github.com/scottjehl/picturefill',
-        'version' => '2.0',
-        'js' => array(
-          drupal_get_path('module', 'picture') . '/picturefill2/picturefill.js' => array(
-            'type' => 'file',
-            'weight' => -10,
-            'group' => JS_DEFAULT,
-            'scope' => 'footer',
-            'need_jquery' => FALSE,
-          ),
-        ),
-      );
-      break;
-    case PICTURE_IMPLEMENTATION_PICTUREFILL:
-      $libraries['matchmedia'] = array(
-        'title' => t('Matchmedia'),
-        'website' => 'https://github.com/attiks/picturefill-proposal',
-        'version' => '0.1',
-        'js' => array(
-          drupal_get_path('module', 'picture') . '/picturefill/matchmedia.js' => array(
-            'type' => 'file',
-            'weight' => -10,
-            'group' => JS_DEFAULT,
-            'scope' => 'footer',
-            'need_jquery' => FALSE,
-          ),
-        ),
-      );
-      $libraries['picturefill'] = array(
-        'title' => t('Picturefill'),
-        'website' => 'https://github.com/attiks/picturefill-proposal',
-        'version' => '0.1',
-        'js' => array(
-          drupal_get_path('module', 'picture') . '/picturefill/picturefill.js' => array(
-            'type' => 'file',
-            'weight' => -10,
-            'group' => JS_DEFAULT,
-            'scope' => 'footer',
-            'need_jquery' => FALSE,
-          ),
-        ),
-      );
-      $libraries['picture.ajax'] = array(
-        'title' => t('Ajax support for picture'),
-        'version' => VERSION,
-        'js' => array(
-          drupal_get_path('module', 'picture') . '/picture.js' => array(
-            'type' => 'file',
-            'weight' => -10,
-            'group' => JS_DEFAULT,
-            'scope' => 'footer',
-            'need_jquery' => FALSE,
-          ),
-        ),
-      );
-      break;
-    case PICTURE_IMPLEMENTATION_WEBLINC:
-      $libraries['matchmedia'] = array(
-        'title' => t('Matchmedia'),
-        'website' => 'https://github.com/weblinc/media-match',
-        'version' => '0.1',
-        'js' => array(
-          drupal_get_path('module', 'picture') . '/weblinc/media.js' => array(
-            'type' => 'file',
-            'weight' => -10,
-            'group' => JS_DEFAULT,
-            'scope' => 'footer',
-            'need_jquery' => FALSE,
-          ),
-          drupal_get_path('module', 'picture') . '/weblinc/media.extension.js' => array(
-            'type' => 'file',
-            'weight' => -10,
-            'group' => JS_DEFAULT,
-            'scope' => 'footer',
-            'need_jquery' => FALSE,
-          ),
-        ),
-        'css' => array(
-          drupal_get_path('module', 'picture') . '/weblinc/media.css' => array('type' => 'file'),
-        ),
-      );
-      $libraries['picturefill'] = array(
-        'title' => t('Picturefill'),
-        'website' => 'https://github.com/weblinc/picture',
-        'version' => '0.1',
-        'js' => array(
-          drupal_get_path('module', 'picture') . '/weblinc/picture.js' => array(
-            'type' => 'file',
-            'weight' => -10,
-            'group' => JS_DEFAULT,
-            'scope' => 'footer',
-            'need_jquery' => FALSE,
-          ),
-        ),
-      );
-      $libraries['picture.ajax'] = array(
-        'title' => t('Ajax support for picture'),
-        'version' => VERSION,
-        'js' => array(
-          drupal_get_path('module', 'picture') . '/picture.weblinc.js' => array(
-            'type' => 'file',
-            'weight' => -10,
-            'group' => JS_DEFAULT,
-            'scope' => 'footer',
-            'need_jquery' => FALSE,
-          ),
-        ),
-        'css' => array(
-          drupal_get_path('module', 'picture') . '/picture.weblinc.css' => array('type' => 'file'),
-        ),
-      );
-      break;
-  }
-
+  $libraries['picturefill'] = array(
+    'title' => t('Picturefill'),
+    'website' => 'https://github.com/scottjehl/picturefill',
+    'version' => '2.0',
+    'js' => array(
+      drupal_get_path('module', 'picture') . '/picturefill2/picturefill.js' => array(
+        'type' => 'file',
+        'weight' => -10,
+        'group' => JS_DEFAULT,
+        'scope' => 'footer',
+        'need_jquery' => FALSE,
+      ),
+    ),
+  );
   return $libraries;
 }
 
@@ -305,6 +206,18 @@ function picture_ctools_plugin_api($owner, $api) {
   );
   if (isset($api_versions[$owner][$api])) {
     return array('version' => $api_versions[$owner][$api]);
+  }
+}
+
+/**
+ * Implements hook_ctools_plugin_api().
+ *
+ * Lets CTools know which plugin APIs are implemented by picture module.
+ */
+function picture_ctools_plugin_directory($owner, $plugin_type) {
+  // Load the export_ui plugin.
+  if ($owner == 'ctools' && $plugin_type == 'export_ui') {
+    return 'ctools/plugins/export_ui';
   }
 }
 
@@ -721,55 +634,49 @@ function theme_picture($variables) {
     $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint_name);
     if ($breakpoint) {
       $new_sources = array();
-      switch (variable_get('picture_implementation', PICTURE_IMPLEMENTATION_DEFAULT)) {
-        case PICTURE_IMPLEMENTATION_PICTUREFILL:
-        case PICTURE_IMPLEMENTATION_PICTUREFILL2:
-        case PICTURE_IMPLEMENTATION_WEBLINC:
-          foreach ($multipliers as $multiplier => $image_style) {
-            if (is_array($image_style)) {
-              $new_source = $variables;
-              if (isset($image_style['image_style'])) {
-                $new_source['style_name'] = $image_style['image_style'];
-              }
-              if (isset($image_style['sizes'])) {
-                $new_source['#sizes'] = $image_style['sizes'];
-              }
-              $new_source['#media_query'] = $breakpoint->breakpoint;
-              $new_source['#multiplier'] = $multiplier;
-              $new_sources[] = $new_source;
-            }
-            else {
-              $new_source = $variables;
-              $new_source['style_name'] = $image_style;
-              $new_source['#media_query'] = $breakpoint->breakpoint;
-              $new_source['#multiplier'] = $multiplier;
-              $new_sources[] = $new_source;
-            }
+      foreach ($multipliers as $multiplier => $image_style) {
+        if (is_array($image_style)) {
+          $new_source = $variables;
+          if (isset($image_style['image_style'])) {
+            $new_source['style_name'] = $image_style['image_style'];
           }
+          if (isset($image_style['sizes'])) {
+            $new_source['#sizes'] = $image_style['sizes'];
+          }
+          $new_source['#media_query'] = $breakpoint->breakpoint;
+          $new_source['#multiplier'] = $multiplier;
+          $new_sources[] = $new_source;
+        }
+        else {
+          $new_source = $variables;
+          $new_source['style_name'] = $image_style;
+          $new_source['#media_query'] = $breakpoint->breakpoint;
+          $new_source['#multiplier'] = $multiplier;
+          $new_sources[] = $new_source;
+        }
+      }
 
-          // Only one image, use src.
-          if (count($new_sources) == 1) {
-            foreach ($new_sources as $new_source) {
-              $sources[] = array(
-                'src' => _picture_image_style_url($new_source['style_name'], $new_source['uri']),
-                'dimensions' => picture_get_image_dimensions($new_source, $new_source['#multiplier']),
-                'media' => $new_source['#media_query'],
-              );
-            }
-          }
-          else {
-            // Mutliple images, use srcset.
-            $srcset = array();
-            foreach ($new_sources as $new_source) {
-              $srcset[] = _picture_image_style_url($new_source['style_name'], $new_source['uri']) . ' ' . $new_source['#multiplier'];
-            }
-            $sources[] = array(
-              'srcset' => implode(', ', $srcset),
-              'dimensions' => picture_get_image_dimensions($new_sources[0], $new_sources[0]['#multiplier']),
-              'media' => $new_source['#media_query'],
-            );
-          }
-          break;
+      // Only one image, use src.
+      if (count($new_sources) == 1) {
+        foreach ($new_sources as $new_source) {
+          $sources[] = array(
+            'src' => _picture_image_style_url($new_source['style_name'], $new_source['uri']),
+            'dimensions' => picture_get_image_dimensions($new_source, $new_source['#multiplier']),
+            'media' => $new_source['#media_query'],
+          );
+        }
+      }
+      else {
+        // Mutliple images, use srcset.
+        $srcset = array();
+        foreach ($new_sources as $new_source) {
+          $srcset[] = _picture_image_style_url($new_source['style_name'], $new_source['uri']) . ' ' . $new_source['#multiplier'];
+        }
+        $sources[] = array(
+          'srcset' => implode(', ', $srcset),
+          'dimensions' => picture_get_image_dimensions($new_sources[0], $new_sources[0]['#multiplier']),
+          'media' => $new_source['#media_query'],
+        );
       }
     }
   }
@@ -798,12 +705,7 @@ function theme_picture($variables) {
       $attributes = array_merge($attributes, $variables['attributes']);
     }
 
-    if (variable_get('picture_implementation', PICTURE_IMPLEMENTATION_DEFAULT) === PICTURE_IMPLEMENTATION_PICTUREFILL2) {
-      $output[] = '<picture' . drupal_attributes($attributes) . '>';
-    }
-    else {
-      $output[] = '<span data-picture=""' . drupal_attributes($attributes) . '>';
-    }
+    $output[] = '<picture' . drupal_attributes($attributes) . '>';
 
     // Add source tags to the output.
     foreach ($sources as $source) {
@@ -814,45 +716,11 @@ function theme_picture($variables) {
     if (empty($variables['path']) && isset($variables['uri'])) {
       $variables['path'] = $variables['uri'];
     }
+    $output[] = theme('image_style', $variables);
+    $output[] = '</picture>';
 
-    if (variable_get('picture_implementation', PICTURE_IMPLEMENTATION_DEFAULT) === PICTURE_IMPLEMENTATION_PICTUREFILL2) {
-      $output[] = theme('image_style', $variables);
-      $output[] = '</picture>';
-    }
-    else {
-      $output[] = '<noscript>' . theme('image_style', $variables) . '</noscript>';
-      $output[] = '</span>';
-    }
     return implode("\n", $output);
   }
-}
-
-/**
- * Generates the media query for multipliers of an image
- *
- * @param $multiplier
- *   A string containing the multiplier for which the media query is for.
- *
- * @param $breakpoint
- *   A string containing the breakpoint media query.
- *
- * @return sting
- *   The sting containing the media query for the multiplier.
- */
-function picture_get_multiplier_media_query($multiplier, $breakpoint) {
-  $media_query = $breakpoint;
-  if ($multiplier != '1x') {
-    $multiplier_formatted = str_replace('x', '', $multiplier);
-    if (variable_get('picture_implementation', PICTURE_IMPLEMENTATION_DEFAULT) === PICTURE_IMPLEMENTATION_PICTUREFILL2) {
-    }
-    else {
-      $media_query = $breakpoint . ' and (min-device-pixel-ratio: ' . $multiplier_formatted . '), ';
-      $media_query .= $breakpoint . ' and (-o-min-device-pixel-ratio: ' . $multiplier_formatted . '), ';
-      $media_query .= $breakpoint . ' and (-webkit-min-device-pixel-ratio: ' . $multiplier_formatted . '), ';
-      $media_query .= $breakpoint . ' and (min-resolution: ' . $multiplier_formatted . 'dppx)';
-    }
-  }
-  return $media_query;
 }
 
 /**
@@ -879,29 +747,14 @@ function theme_picture_source($variables) {
 
   if (isset($variables['media']) && !empty($variables['media'])) {
     if (isset($variables['srcset']) && !empty($variables['srcset'])) {
-      if (variable_get('picture_implementation', PICTURE_IMPLEMENTATION_DEFAULT) === PICTURE_IMPLEMENTATION_PICTUREFILL2) {
-        $output[] = '<source media="' . $variables['media'] . '" srcset="' . $variables['srcset'] . '">';
-      }
-      else {
-        $output[] = '<span data-media="' . $variables['media'] . '" data-srcset="' . $variables['srcset'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
-      }
+      $output[] = '<source media="' . $variables['media'] . '" srcset="' . $variables['srcset'] . '">';
     }
     else {
-      if (variable_get('picture_implementation', PICTURE_IMPLEMENTATION_DEFAULT) === PICTURE_IMPLEMENTATION_PICTUREFILL2) {
-        $output[] = '<source media="' . $variables['media'] . '" srcset="' . $variables['src'] . '">';
-      }
-      else {
-        $output[] = '<span data-media="' . $variables['media'] . '" data-src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
-      }
+      $output[] = '<source media="' . $variables['media'] . '" srcset="' . $variables['src'] . '">';
     }
   }
   else {
-    if (variable_get('picture_implementation', PICTURE_IMPLEMENTATION_DEFAULT) === PICTURE_IMPLEMENTATION_PICTUREFILL2) {
-      //$output[] = '<source src="' . $variables['src'] . '"></source>';
-    }
-    else {
-      $output[] = '<span data-src="' . $variables['src'] . '" ' . drupal_attributes($variables['dimensions']) . '></span>';
-    }
+    //$output[] = '<source src="' . $variables['src'] . '"></source>';
   }
   return implode("\n", $output);
 }
@@ -1302,7 +1155,7 @@ function picture_image_uri($src) {
 function picture_wysiwyg_plugin($editor, $version) {
   if ($editor == 'ckeditor') {
     return array('picture_ckeditor' => array(
-      'path' => drupal_get_path('module', 'picture') .'/plugins/',
+      'path' => drupal_get_path('module', 'picture') .'/ckeditor/plugins/',
       'load' => TRUE,
       'extensions' => array('picture_ckeditor' => t('Responsive images with the Picture Module')),
       'url' => 'http://drupal.org/projects/picture',
@@ -1323,7 +1176,7 @@ function picture_ckeditor_plugin() {
       'desc' => t('Support responsive images with the Picture module.'),
       // The full path to the CKEditor plugins directory, with the trailing slash.
       'buttons' => FALSE,
-      'path' => drupal_get_path('module', 'picture') . '/plugins/',
+      'path' => drupal_get_path('module', 'picture') . '/ckeditor/plugins/',
       'default' => 't',
     )
   );
@@ -1433,4 +1286,14 @@ function picture_link_types($instance) {
     }
   }
   return $link_types;
+}
+
+function picture_mapping_object_factory($schema, $data) {
+  return new PictureMapping ($schema, $data);
+}
+
+function picture_mapping_create($set_defaults) {
+  $schema = ctools_export_get_schema('picture_mapping');
+  $data = ctools_export_new_object('picture_mapping', $set_defaults);
+  return picture_mapping_object_factory($schema, $data);
 }

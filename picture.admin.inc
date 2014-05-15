@@ -4,7 +4,84 @@
  * @file
  * Picture - map breakpoints and image styles
  */
+function picture_mapping_form($form, &$form_state) {
+  $picture_mapping = $form_state['item'];
+  $image_styles = image_style_options(TRUE);
+  foreach ($picture_mapping->getMappings() as $breakpoint_id => $mapping) {
+    foreach ($mapping as $multiplier => $mapping_definition) {
+      $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint_id);
+      $label = $multiplier . ' ' . $breakpoint->label . ' [' . $breakpoint->breakpoint . ']';
+      $form['mapping'][$breakpoint_id][$multiplier] = array(
+        '#type' => 'details',
+        '#title' => check_plain($label),
+      );
+      $form['mapping'][$breakpoint_id][$multiplier]['mapping_type'] = array(
+        '#title' => t('Type'),
+        '#type' => 'radios',
+        '#options' => array(
+          '_none' => t('Do not use this breakpoint'),
+          'image_style' => t('Use image styles'),
+          'sizes' => t('Use the sizes attribute'),
+        ),
+        '#default_value' => isset($mapping_definition['mapping_type']) ? $mapping_definition['mapping_type'] : '_none',
+      );
+      $form['mapping'][$breakpoint_id][$multiplier]['image_style'] = array(
+        '#type' => 'select',
+        '#title' => t('Image style'),
+        '#options' => $image_styles,
+        '#default_value' => isset($mapping_definition['image_style']) ? $mapping_definition['image_style'] : array(),
+        '#description' => $this->t('Select an image style for this breakpoint.'),
+        '#states' => array(
+          'visible' => array(
+            ':input[name="mappings[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'image_style'),
+          ),
+        ),
+      );
+      $form['mapping'][$breakpoint_id][$multiplier]['sizes'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Sizes'),
+        '#default_value' => isset($mapping_definition['sizes']) ? $mapping_definition['sizes'] : '',
+        '#description' => $this->t('Enter the value for the sizes attribute (e.g. "(min-width:700px) 700px, 100vw").'),
+        '#states' => array(
+          'visible' => array(
+            ':input[name="mappings[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'sizes'),
+          ),
+        ),
+      );
+      $form['mapping'][$breakpoint_id][$multiplier]['sizes_image_styles'] = array(
+        '#title' => t('Image styles'),
+        '#type' => 'checkboxes',
+        '#options' => array_diff_key($image_styles, array('' => '')),
+        '#default_value' => isset($mapping_definition['sizes_image_styles']) ? $mapping_definition['sizes_image_styles'] : array(),
+        '#states' => array(
+          'visible' => array(
+            ':input[name="mappings[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'sizes'),
+          ),
+        ),
+      );
 
+    }
+  }
+
+  $form['#tree'] = TRUE;
+  return $form;
+}
+
+function picture_select_breakpoint_group_form($form, &$form_state) {
+  $groups = breakpoints_breakpoint_group_load_all();
+  $options = array();
+  foreach ($groups as $group) {
+    $options[$group->machine_name] = $group->name;
+  }
+  $form['breakpoint_group'] = array(
+    '#title' => t('Breakpoint group'),
+    '#type' => 'select',
+    '#required' => TRUE,
+    '#description' => t('Select a breakpoint group.'),
+    '#options' => $options,
+  );
+  return $form;
+}
 /**
  * Admin form.
  */
@@ -230,24 +307,6 @@ function picture_admin_import_form_submit($form, &$form_state) {
 }
 
 /**
- * Picture settings.
- */
-function picture_admin_settings($form, &$form_state) {
-  $form['picture_implementation'] = array(
-    '#type' => 'select',
-    '#title' => t('Choose the javascript library to use'),
-    '#options' => array(
-      PICTURE_IMPLEMENTATION_PICTUREFILL2 => 'picturefill 2.0',
-      PICTURE_IMPLEMENTATION_PICTUREFILL => 'picturefill',
-      PICTURE_IMPLEMENTATION_WEBLINC => 'weblinc',
-    ),
-    '#default_value' => variable_get('picture_implementation', PICTURE_IMPLEMENTATION_DEFAULT),
-  );
-
-  return system_settings_form($form);
-}
-
-/**
  * Chooses which picture groups are available in the CKEditor image dialog.
  */
 function picture_ckeditor_settings() {
@@ -307,6 +366,11 @@ function picture_ckeditor_settings() {
     $form['submit'] = array(
       '#type' => 'submit',
       '#value' => 'Save',
+    );
+  }
+  else {
+    $form['info'] = array(
+      '#markup' => t('No picture mappings found. !create', array('!create' => l(t('Create one now.'), 'admin/config/media/picture/add'))),
     );
   }
   return $form;

@@ -17,6 +17,13 @@ function picture_schema() {
         'description' => 'The internal identifier for this mapping',
         'no export' => TRUE, // do not export database only keys.
       ),
+      'label' => array(
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+        'description' => 'The machine name of the mapping',
+      ),
       'machine_name' => array(
         'type' => 'varchar',
         'length' => 255,
@@ -45,6 +52,8 @@ function picture_schema() {
       'identifier' => 'picture_mapping',
       'admin_title' => 'label',
       'default hook' => 'default_picture_mapping',
+      'object factory' => 'picture_mapping_object_factory',
+      'create callback' => 'picture_mapping_create',
       'api' => array(
         'owner' => 'picture',
         'api' => 'default_picture_mapping',
@@ -53,6 +62,18 @@ function picture_schema() {
       ),
     ),
   );
-
   return $schema;
+}
+
+/**
+ * Update from 7.x-1.x.
+ */
+function picture_update_7200() {
+  db_add_field('picture_mapping', 'label', array(
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'default' => '',
+    'description' => 'The machine name of the mapping',
+  ));
 }
