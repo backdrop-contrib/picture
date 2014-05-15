@@ -1198,10 +1198,10 @@ function picture_page_build(&$page) {
   $groups = array();
   // CKEditor library expects an array of options formatted as
   // ['Display name', 'machine_name'].
-  foreach ($picture_groups as $key => $value) {
-    if (array_key_exists($key, $ckeditor_groups)) {
-      if ($ckeditor_groups[$key]['enabled'] == 1) {
-        $groups[] = array($value, $key);
+  foreach ($ckeditor_groups as $machine_name => $parameters) {
+    if (array_key_exists($machine_name, $picture_groups)) {
+      if ($parameters['enabled'] == 1) {
+        $groups[] = array($picture_groups[$machine_name], $machine_name);
       }
     }
   }
