@@ -1071,7 +1071,8 @@ function picture_filter_info() {
     'description' => t('Replace img tags with markup that contains media width breakpoints. The appropriate image file size will be chosen.'),
     'process callback' => '_picture_filter_process',
     'tips callback' => '_picture_filter_tips',
-    );
+    'type' => 'FILTER_TYPE_TRANSFORM_REVERSIBLE',
+  );
 
   return $filters;
 }
