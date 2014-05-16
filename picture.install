@@ -60,8 +60,8 @@ function picture_schema() {
       'api' => array(
         'owner' => 'picture',
         'api' => 'default_picture_mapping',
-        'minimum_version' => 1,
-        'current_version' => 1,
+        'minimum_version' => 2,
+        'current_version' => 2,
       ),
     ),
   );
