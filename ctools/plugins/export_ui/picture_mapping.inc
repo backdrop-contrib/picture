@@ -33,6 +33,9 @@ $plugin = array(
     'edit order' => array(
       'configure' => t('Configure the matching engine'),
     ),
+    'clone order' => array(
+      'configure' => t('Configure the matching engine'),
+    ),
     'import order' => array(
       'import' => t('Import code'),
     ),

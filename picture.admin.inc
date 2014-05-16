@@ -1,18 +1,78 @@
 <?php
-
 /**
  * @file
  * Picture - map breakpoints and image styles
  */
-function picture_mapping_form($form, &$form_state) {
+
+/**
+ * Select breakpoint group form.
+ */
+function picture_select_breakpoint_group_form($form, &$form_state) {
+  $groups = breakpoints_breakpoint_group_load_all();
+  $options = array();
+  foreach ($groups as $group) {
+    $options[$group->machine_name] = $group->name;
+  }
+  $form['breakpoint_group'] = array(
+    '#title' => t('Breakpoint group'),
+    '#type' => 'select',
+    '#required' => TRUE,
+    '#description' => t('Select a breakpoint group.'),
+    '#options' => $options,
+    '#default_value' => $form_state['item']->getBreakpointGroup() ? $form_state['item']->getBreakpointGroup()->name : NULL,
+  );
+  return $form;
+}
+
+/**
+ * Submit callback.
+ */
+function picture_select_breakpoint_group_form_submit($form, &$form_state) {
+  $form_state['item']->setBreakpointGroup($form_state['values']['breakpoint_group']);
+}
+
+function picture_mapping_form(&$form, &$form_state) {
   $picture_mapping = $form_state['item'];
-  $image_styles = image_style_options(TRUE);
+  $form['info']['label']['#required'] = TRUE;
+  $form['info']['machine_name']['#title'] = t('Machine name');
+  $groups = breakpoints_breakpoint_group_load_all();
+  $options = array();
+  foreach ($groups as $group) {
+    $options[$group->machine_name] = $group->name;
+  }
+  $form['breakpoint_group'] = array(
+    '#title' => t('Breakpoint group'),
+    '#type' => 'select',
+    '#required' => TRUE,
+    '#description' => t('Select a breakpoint group.'),
+    '#options' => $options,
+    '#default_value' => $picture_mapping->getBreakpointGroup()->name,
+    '#ajax' => array(
+      'callback' => 'picture_mapping_form_change_breakpoint_group',
+      'wrapper' => 'picture-mapping-container',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+
+  $form['mapping'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'id' => 'picture-mapping-container',
+    ),
+    '#tree' => TRUE,
+  );
+
+  $image_styles = image_style_options(TRUE) + array(
+    PICTURE_EMPTY_IMAGE => t('Empty image'),
+    PICTURE_ORIGINAL_IMAGE => t('Original image'),
+  );
   foreach ($picture_mapping->getMappings() as $breakpoint_id => $mapping) {
     foreach ($mapping as $multiplier => $mapping_definition) {
       $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint_id);
-      $label = $multiplier . ' ' . $breakpoint->label . ' [' . $breakpoint->breakpoint . ']';
+      $label = $multiplier . ' ' . $breakpoint->name . ' [' . $breakpoint->breakpoint . ']';
       $form['mapping'][$breakpoint_id][$multiplier] = array(
-        '#type' => 'details',
+        '#type' => 'fieldset',
         '#title' => check_plain($label),
       );
       $form['mapping'][$breakpoint_id][$multiplier]['mapping_type'] = array(
@@ -30,10 +90,10 @@ function picture_mapping_form($form, &$form_state) {
         '#title' => t('Image style'),
         '#options' => $image_styles,
         '#default_value' => isset($mapping_definition['image_style']) ? $mapping_definition['image_style'] : array(),
-        '#description' => $this->t('Select an image style for this breakpoint.'),
+        '#description' => t('Select an image style for this breakpoint.'),
         '#states' => array(
           'visible' => array(
-            ':input[name="mappings[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'image_style'),
+            ':input[name="mapping[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'image_style'),
           ),
         ),
       );
@@ -41,10 +101,10 @@ function picture_mapping_form($form, &$form_state) {
         '#type' => 'textfield',
         '#title' => t('Sizes'),
         '#default_value' => isset($mapping_definition['sizes']) ? $mapping_definition['sizes'] : '',
-        '#description' => $this->t('Enter the value for the sizes attribute (e.g. "(min-width:700px) 700px, 100vw").'),
+        '#description' => t('Enter the value for the sizes attribute (e.g. "(min-width:700px) 700px, 100vw").'),
         '#states' => array(
           'visible' => array(
-            ':input[name="mappings[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'sizes'),
+            ':input[name="mapping[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'sizes'),
           ),
         ),
       );
@@ -55,254 +115,37 @@ function picture_mapping_form($form, &$form_state) {
         '#default_value' => isset($mapping_definition['sizes_image_styles']) ? $mapping_definition['sizes_image_styles'] : array(),
         '#states' => array(
           'visible' => array(
-            ':input[name="mappings[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'sizes'),
+            ':input[name="mapping[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'sizes'),
           ),
         ),
       );
 
     }
   }
-
-  $form['#tree'] = TRUE;
+  $form['#tree'] = FALSE;
   return $form;
 }
 
-function picture_select_breakpoint_group_form($form, &$form_state) {
-  $groups = breakpoints_breakpoint_group_load_all();
-  $options = array();
-  foreach ($groups as $group) {
-    $options[$group->machine_name] = $group->name;
-  }
-  $form['breakpoint_group'] = array(
-    '#title' => t('Breakpoint group'),
-    '#type' => 'select',
-    '#required' => TRUE,
-    '#description' => t('Select a breakpoint group.'),
-    '#options' => $options,
-  );
-  return $form;
-}
-/**
- * Admin form.
- */
-function picture_admin_breakpoints($form, &$form_state, $breakpoint_group_name = '') {
-  // Show a list of all groups if no group name is given.
-  if ($breakpoint_group_name == '' || $breakpoint_group_name == 'global') {
-    return picture_admin_breakpoints_overview_page();
-  }
-  $machine_name = $breakpoint_group_name;
-  $form = array();
-
-  $mappings = picture_mapping_load($breakpoint_group_name);
-  $mappings = $mappings ? $mappings : new stdClass();
-
-  $form['picture_mapping'] = array(
-    '#type' => 'container',
-    '#tree' => TRUE,
-  );
-  $form['picture_mapping']['machine_name'] = array(
-    '#type' => 'value',
-    '#value' => isset($mappings->machine_name) ? $mappings->machine_name : $machine_name,
-  );
-  $form['picture_mapping']['breakpoint_group'] = array(
-    '#type' => 'value',
-    '#value' => isset($mappings->breakpoint_group) ? $mappings->breakpoint_group : $breakpoint_group_name,
-  );
-  if (isset($mappings->id)) {
-    $form['picture_mapping']['id'] = array(
-      '#type' => 'value',
-      '#value' => $mappings->id,
-    );
-  }
-
-  $breakpoints = array();
-  $breakpoint_group = breakpoints_breakpoint_group_load($breakpoint_group_name);
-  $weight = 0;
-  foreach ($breakpoint_group->breakpoints as $breakpoint_name) {
-    $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint_name);
-    if ($breakpoint && $breakpoint->status) {
-      $breakpoint->global_weight = $breakpoint->weight;
-      $breakpoint->weight = $weight++;
-      $breakpoints[$breakpoint_name] = $breakpoint;
-    }
-  }
-
-  $all_image_styles = image_style_options(FALSE);
-  $image_styles = image_style_options(TRUE);
-  $image_styles[PICTURE_EMPTY_IMAGE] = t('- empty image -');
-  $image_styles[PICTURE_ORIGINAL_IMAGE] = t('- original image -');
-
-  // Make a list of all breakpoints and multipliers.
-  $breakpoints_and_multipliers = array();
-  foreach ($breakpoints as $breakpoint_name => $breakpoint) {
-    $breakpoints_and_multipliers[$breakpoint_name]['1x'] = $breakpoint;
-    if (isset($breakpoint->multipliers) && !empty($breakpoint->multipliers)) {
-      foreach ($breakpoint->multipliers as $multiplier => $status) {
-        if ($status) {
-          $breakpoints_and_multipliers[$breakpoint_name][$multiplier] = $breakpoint;
-        }
-      }
-    }
-  }
-
-  foreach ($breakpoints_and_multipliers as $breakpoint_name => $breakpoint_info) {
-    foreach ($breakpoint_info as $multiplier => $breakpoint) {
-      $label = $multiplier . ' ' . $breakpoint->name . ' [' . $breakpoint->breakpoint . ']';
-      $form['picture_mapping']['mapping'][$breakpoint_name][$multiplier]['image_style'] = array(
-        '#title' => check_plain($label),
-        '#type' => 'select',
-        '#options' => $image_styles,
-        '#default_value' => isset($mappings->mapping[$breakpoint_name][$multiplier]['image_style']) ? $mappings->mapping[$breakpoint_name][$multiplier]['image_style'] : '',
-      );
-      $form['picture_mapping']['mapping'][$breakpoint_name][$multiplier]['sizes'] = array(
-        '#title' => t('Sizes'),
-        '#type' => 'textfield',
-        '#default_value' => isset($mappings->mapping[$breakpoint_name][$multiplier]['sizes']) ? $mappings->mapping[$breakpoint_name][$multiplier]['sizes'] : 0,
-      );
-      foreach ($all_image_styles as $id => $label) {
-        $form['picture_mapping']['mapping'][$breakpoint_name][$multiplier]['sizes_list'][$id]['on'] = array(
-          '#title' => $label,
-          '#type' => 'checkbox',
-          '#default_value' => isset($mappings->mapping[$breakpoint_name][$multiplier]['sizes_list'][$id]['on']) ? $mappings->mapping[$breakpoint_name][$multiplier]['sizes_list'][$id]['on'] : 0,
-        );
-        $form['picture_mapping']['mapping'][$breakpoint_name][$multiplier]['sizes_list'][$id]['size'] = array(
-          '#title' => t('Size'),
-          '#type' => 'textfield',
-          '#default_value' => isset($mappings->mapping[$breakpoint_name][$multiplier]['sizes_list'][$id]['size']) ? $mappings->mapping[$breakpoint_name][$multiplier]['sizes_list'][$id]['size'] : '',
-        );
-      }
-    }
-  }
-
-  // Buttons
-  $form['buttons'] = array(
-    '#type' => 'container',
-  );
-
-  // Submit button
-  $form['buttons']['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Save'),
-  );
-
-  return $form;
+function picture_mapping_form_change_breakpoint_group($form, &$form_state) {
+  return $form['mapping'];
 }
 
 /**
- * Admin form overview page.
+ * Validate callback.
  */
-function picture_admin_breakpoints_overview_page() {
-  $links = array();
-  $breakpoint_groups = breakpoints_breakpoint_group_load_all();
-  foreach ($breakpoint_groups as $breakpoint_group) {
-    $links[] = l($breakpoint_group->name, 'admin/config/media/picture/groups/' . $breakpoint_group->machine_name);
-  }
-  if (!empty($links)) {
-    return array(
-      '#type' => 'container',
-      '#theme' => 'item_list',
-      '#items' => $links,
-    );
-  }
-  else {
-    $item['info'] = array(
-      '#type' => 'markup',
-      '#title' => t('No breakpoint groups found.'),
-      '#markup' => t('There\'re no breakpoint groups defined, you\'ll have to !create them first.', array('!create' => l(t('create'), 'admin/config/media/breakpoints/groups/add'))),
-    );
-    return $item;
-  }
-}
-
-/**
- * Admin form submit.
- */
-function picture_admin_breakpoints_submit($form, &$form_state) {
-  $mapping = (object)$form_state['values']['picture_mapping'];
-  $saved = picture_mapping_save($mapping);
-  $group = breakpoints_breakpoint_group_load($mapping->breakpoint_group);
-  if ($saved !== FALSE) {
-    drupal_set_message(t('Picture mappings for @group were saved.', array('@group' => $group->name)));
-  }
-  else {
-    drupal_set_message(t('Something went wrong while trying to save picture mappings for @group', array('@group' => $group->name)), 'error');
-  }
-}
-
-/**
- * Export mappings.
- */
-function picture_admin_export_form($form, &$form_state, $mappings_name) {
-  // Create the export code textarea.
-  ctools_include('export');
-  $mapping = picture_mapping_load($mappings_name);
-  if (!$mapping) {
-    $mapping = new stdClass();
-  }
-  $export = ctools_export_object('picture_mapping', $mapping);
-  $form['mapping_export'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Mapping code'),
-    '#rows' => count(explode("\n", $export)),
-    '#default_value' => $export,
-    '#weight' => -1,
-    '#description' => t('<strong>Warning!</strong> Only import these mappings if the breakpoint group below has been imported on that site already, or if they were manually created there.'),
-  );
-
-  // Also export the group it belongs to.
-  module_load_include('inc', 'breakpoints', 'breakpoints.admin');
-  $form += drupal_get_form('breakpoints_admin_breakpoint_group_export_form', $mapping->breakpoint_group);
-  $form['export']['#description'] = t('If you want to import this mapping on an other site,
-    you\'ll need to import the breakpoint group with its breakpoints as well,
-    if it doesn\'t already exist on that site.');
-  return $form;
-}
-
-/**
- * Import mappings.
- */
-function picture_admin_import_form($form, &$form_state) {
-  $form['import'] = array(
-    '#type' => 'textarea',
-    '#rows' => 10,
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => t('Import')
-  );
-  return $form;
-}
-
-
-/**
- * Validate a mapping import.
- */
-function picture_admin_import_form_validate($form, &$form_state) {
-  ctools_include('export');
-  $code = $form_state['values']['import'];
-  $mapping = ctools_export_crud_import('picture_mapping', $code);
-  if (!picture_mapping_validate($mapping)) {
-    form_set_error('import', t('Not a valid mapping object'));
+function picture_mapping_form_validate($form, &$form_state) {
+  $picture_mapping = $form_state['item'];
+  if ($form_state['triggering_element']['#type'] != 'submit') {
+    $picture_mapping->setBreakpointGroup($form_state['values']['breakpoint_group']);
+    $form_state['rebuild'] = TRUE;
     return;
   }
-  if (picture_mapping_load($mapping->machine_name)) {
-    form_set_error('import', t('A mapping with machine name %name already exists', array('%name' => $mapping->machine_name)));
-    return;
-  }
-  form_set_value($form['import'], $mapping, $form_state);
-}
-
-/**
- * Import mapping.
- */
-function picture_admin_import_form_submit($form, &$form_state) {
-  $mapping = $form_state['values']['import'];
-  if (picture_mapping_save($mapping)) {
-    drupal_set_message(t('Mapping %mapping saved.', array('%mapping' => $mapping->machine_name)));
-    $form_state['redirect'] = 'admin/config/media/picture/';
-  }
-  else {
-    drupal_set_message(t('Something went wrong, we could not save the mapping'), 'error');
+  $picture_mapping->setLabel($form_state['values']['label']);
+  $picture_mapping->setMachineName($form_state['values']['machine_name']);
+  $picture_mapping->setMappings($form_state['values']['mapping']);
+  // Make sure at least one mapping is defined.
+  if (!$picture_mapping->hasMappings()) {
+    form_error($form['mapping'], t('Please select at least one mapping.'));
   }
 }
 
@@ -311,55 +154,55 @@ function picture_admin_import_form_submit($form, &$form_state) {
  */
 function picture_ckeditor_settings() {
   $form = array();
-  $picture_groups = picture_get_mapping_options();
-  $ckeditor_groups = array();
+  $picture_mappings = picture_get_mapping_options();
+  $ckeditor_mappins = array();
 
-  // Check if picture group mappings have been configured before proceeding.
-  if ($picture_groups) {
+  // Check if picture mappings have been configured before proceeding.
+  if ($picture_mappings) {
     // Create a settings form.
     $form['description'] = array(
       '#type' => 'item',
-      '#title' => t('Choose which picture groups will be available in the CKEditor image dialog.'),
+      '#title' => t('Choose which picture mappings will be available in the CKEditor image dialog.'),
       '#description' => 'See picture_wysiwyg.css for an example of how to style these images in your theme using the selectors suggested below.',
     );
 
     // Retrieve pre-existing settings.
-    $ckeditor_groups = variable_get('picture_ckeditor_groups', array());
+    $ckeditor_mappings = variable_get('picture_ckeditor_mappings', array());
 
-    // Loop through each picture group and place a checkbox and weight.
-    foreach ($picture_groups as $machine_name => $display_name) {
+    // Loop through each picture mapping and place a checkbox and weight.
+    foreach ($picture_mappings as $machine_name => $display_name) {
       $form[$machine_name] = array(
         '#type' => 'fieldset',
-        '#title' => t('@name picture group', array('@name' => $display_name)),
+        '#title' => t('@name picture mapping', array('@name' => $display_name)),
       );
       $form[$machine_name]['enabled'] = array(
         '#type' => 'checkbox',
-        '#default_value' => isset($ckeditor_groups[$machine_name]) ? $ckeditor_groups[$machine_name]['enabled'] : 0,
-        '#title' => t('Include @name picture group in the CKEditor image dialog', array('@name' => $display_name)),
+        '#default_value' => isset($ckeditor_mappings[$machine_name]) ? $ckeditor_mappings[$machine_name]['enabled'] : 0,
+        '#title' => t('Include @name picture mapping in the CKEditor image dialog', array('@name' => $display_name)),
       );
       $form[$machine_name]['css'] = array(
         '#type' => 'item',
-        '#markup' => 'Consider using the selector <code>span[data-picture-group="' . $machine_name . '"]</code> in your theme CSS.',
+        '#markup' => 'Consider using the selector <code>span[data-picture-mapping="' . $machine_name . '"]</code> in your theme CSS.',
       );
       $form[$machine_name]['weight'] = array(
         '#type' => 'select',
         '#title' => t('Weight'),
         '#options' => drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
-        '#default_value' => isset($ckeditor_groups[$machine_name]) ? $ckeditor_groups[$machine_name]['weight'] : 1,
-        '#description' => t('Control the sort order of picture groups in the CKEditor "size" drop-down. Higher weights sink to the bottom of the list.'),
+        '#default_value' => isset($ckeditor_mappings[$machine_name]) ? $ckeditor_mappings[$machine_name]['weight'] : 1,
+        '#description' => t('Control the sort order of picture mappings in the CKEditor "size" drop-down. Higher weights sink to the bottom of the list.'),
       );
       $form[$machine_name]['fallback'] = array(
         '#type' => 'select',
         '#title' => t('Fallback image style'),
         '#options' => drupal_map_assoc(array_keys(image_styles())),
-        '#default_value' => isset($ckeditor_groups[$machine_name]) ? $ckeditor_groups[$machine_name]['fallback'] : NULL,
+        '#default_value' => isset($ckeditor_mappings[$machine_name]) ? $ckeditor_mappings[$machine_name]['fallback'] : NULL,
       );
     }
     $form['#tree'] = TRUE;
     $form['ckeditor_label'] = array(
       '#type' => 'textfield',
       '#title' => t('Label in the CKEditor image dialog'),
-      '#description' => t('This sets the label for the drop-down select box containing these picture groups in the CKEditor image dialog'),
+      '#description' => t('This sets the label for the drop-down select box containing these picture mappings in the CKEditor image dialog'),
       '#default_value' => variable_get('picture_ckeditor_label', 'Image size (required)'),
     );
 
@@ -379,16 +222,15 @@ function picture_ckeditor_settings() {
 /**
  * Validate handler for the picture_ckeditor_settings form.
  * It checks that a fallback image style is selected for every
- * picture group that has been enabled for the CKEditor image dialog.
+ * picture mapping that has been enabled for the CKEditor image dialog.
  */
 function picture_ckeditor_settings_validate($form, &$form_state) {
-  $picture_groups = picture_mapping_load();
-  $ckeditor_groups = array();
-  foreach ($picture_groups as $picture_group) {
-    $machine_name = $picture_group->machine_name;
+  $picture_mappings = picture_mapping_load_all();
+  foreach ($picture_mappings as $picture_mapping) {
+    $machine_name = $picture_mapping->getMachineName();
     if ($form_state['values'][$machine_name]['enabled'] == 1) {
       if (empty($form_state['values'][$machine_name]['fallback'])) {
-        form_set_error($machine_name . '][fallback', t('Please choose a fallback image style for this picture group'));
+        form_set_error($machine_name . '][fallback', t('Please choose a fallback image style for this picture mapping'));
       }
     }
   }
@@ -399,19 +241,19 @@ function picture_ckeditor_settings_validate($form, &$form_state) {
  * groups into the variables table.
  */
 function picture_ckeditor_settings_submit($form, &$form_state) {
-  $picture_groups = picture_mapping_load();
-  $ckeditor_groups = array();
+  $picture_mappings = picture_mapping_load_all();
+  $ckeditor_mappings = array();
 
-  // Loop each picture group and record the settings.
-  foreach ($picture_groups as $picture_group) {
-    $machine_name = $picture_group->machine_name;
-    $ckeditor_groups[$machine_name]['enabled'] = $form_state['values'][$machine_name]['enabled'];
-    $ckeditor_groups[$machine_name]['weight'] = $form_state['values'][$machine_name]['weight'];
-    $ckeditor_groups[$machine_name]['fallback'] = $form_state['values'][$machine_name]['fallback'];
+  // Loop each picture mapping and record the settings.
+  foreach ($picture_mappings as $picture_mapping) {
+    $machine_name = $picture_mapping->getMachineName();
+    $ckeditor_mappings[$machine_name]['enabled'] = $form_state['values'][$machine_name]['enabled'];
+    $ckeditor_mappings[$machine_name]['weight'] = $form_state['values'][$machine_name]['weight'];
+    $ckeditor_mappings[$machine_name]['fallback'] = $form_state['values'][$machine_name]['fallback'];
   }
 
-  uasort($ckeditor_groups, 'picture_compare_weights');
-  variable_set('picture_ckeditor_groups', $ckeditor_groups);
+  uasort($ckeditor_mappings, 'picture_compare_weights');
+  variable_set('picture_ckeditor_mappings', $ckeditor_mappings);
   variable_set('picture_ckeditor_label', $form_state['values']['ckeditor_label']);
   drupal_set_message(t('Your settings have been saved'));
 }

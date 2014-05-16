@@ -54,6 +54,9 @@ function picture_schema() {
       'default hook' => 'default_picture_mapping',
       'object factory' => 'picture_mapping_object_factory',
       'create callback' => 'picture_mapping_create',
+      'save callback' => 'picture_mapping_save',
+      'export callback' => 'picture_mapping_export',
+      'import callback' => 'picture_mapping_import',
       'api' => array(
         'owner' => 'picture',
         'api' => 'default_picture_mapping',
@@ -76,4 +79,6 @@ function picture_update_7200() {
     'default' => '',
     'description' => 'The machine name of the mapping',
   ));
+  variable_set('picture_ckeditor_mappings', variable_get('picture_ckeditor_groups', array()));
+  variable_del('picture_ckeditor_groups');
 }

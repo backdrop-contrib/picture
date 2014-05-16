@@ -4,42 +4,54 @@ class PictureMapping {
 
   /**
    * The picture mapping ID (machine name).
-   *
+   * Must be public for ctools, it is preferred however to use getMachineName()
+   * and setMachineName().
    * @var string
    */
-  public $machine_name;
+  protected $machine_name;
 
   /**
    * The picture mapping label.
-   *
+   * Must be public for ctools, it is preferred however to use label() and
+   * setLabel().
    * @var string
    */
-  public $label;
+  protected $label;
 
   /**
    * The picture mappings.
    *
    * @var array
    */
-  public $mapping = array();
+  protected $mapping = array();
 
   /**
    * The breakpoint group.
    */
-  public $breakpoint_group = '';
+  protected $breakpoint_group = '';
 
   /**
    * Constructor.
    * @see picture_mapping_object_factory().
    */
-  public function __construct($schema, $data) {
+  public function __construct($schema = array(), $data = NULL) {
+    $this->setValues($schema, $data);
+    $this->loadBreakpointGroup();
+    $this->loadAllMappings();
+  }
+
+  /**
+   *
+   */
+  protected function setValues($schema, $data) {
     foreach ($schema['fields'] as $field => $info) {
       if (isset($data->{$field})) {
-        $this->{$field} = empty($info['serialize']) ? $data->{$field} : unserialize($data->{$field});
+        $this->{$field} = !empty($info['serialize']) && is_string($data->{$field}) ? unserialize($data->{$field}) : $data->{$field};
       }
       else {
         $this->{$field} = NULL;
       }
+      unset($data->{$field});
     }
 
     if (isset($schema['join'])) {
@@ -49,27 +61,45 @@ class PictureMapping {
           foreach ($join['load'] as $field) {
             $info = $join_schema['fields'][$field];
             $this->{$field} = empty($info['serialize']) ? $data->{$field} : unserialize($data->{$field});
+            unset($data->field);
           }
         }
       }
     }
-    $this->loadBreakpointGroup();
-    $this->loadAllMappings();
+    foreach((array)$data as $field => $val) {
+      $this->{$field} = $val;
+    }
   }
 
   /**
    * Save the picture mapping.
    */
   public function save() {
-    // Only save the keys, but return the full objects.
-    $breakpoint_group = $this->getBreakpointGroup();
-    if ($breakpoint_group && is_object($breakpoint_group)) {
-      $this->setBreakpointGroup($breakpoint_group->machine_name);
+    $update = array();
+    $data = $this->toArray();
+    if (isset($this->id) && $this->id) {
+       $update = array('id');
+       $data['id'] = $this->id;
     }
-    $update = isset($this->id) ? array('id') : array();
-    $return = drupal_write_record('picture_mapping', $this, $update);
+    $return = drupal_write_record('picture_mapping', $data, $update);
+    $this->setValues(ctools_export_get_schema('picture_mapping'), $data);
     $this->loadBreakpointGroup();
     return $return;
+  }
+
+  /**
+   * Returns an array of all property values.
+   *
+   * @return mixed[]
+   *   An array of property values, keyed by property name.
+   */
+  public function toArray() {
+    return array(
+      'machine_name' => $this->machine_name,
+      'label' => $this->label,
+      'breakpoint_group' => $this->breakpoint_group && is_object($this->breakpoint_group) ? $this->breakpoint_group->machine_name : $this->breakpoint_group,
+      'mapping' => $this->mapping,
+    );
   }
 
   /**
@@ -78,6 +108,7 @@ class PictureMapping {
   public function createDuplicate() {
     $clone = clone $this;
     $clone->id = NULL;
+    $clone->machine_name = $this->machine_name . '_clone';
     $clone->label = t('Clone of !label', array('!label' => check_plain($this->label)));
     $clone->mapping = $this->mapping;
     return $clone;
@@ -87,7 +118,7 @@ class PictureMapping {
    * Loads the breakpoint group.
    */
   protected function loadBreakpointGroup() {
-    if ($this->breakpoint_group) {
+    if ($this->breakpoint_group && !is_object($this->breakpoint_group)) {
       $breakpoint_group = breakpoints_breakpoint_group_load($this->breakpoint_group);
       $this->breakpoint_group = $breakpoint_group;
     }
@@ -105,8 +136,8 @@ class PictureMapping {
         $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint_id);
         // Get the mapping for the default multiplier.
         $all_mappings[$breakpoint_id]['1x'] = '';
-        if (isset($loaded_mappings[$breakpoint->source_type][$breakpoint->source][$breakpoint->name]['1x'])) {
-          $all_mappings[$breakpoint_id]['1x'] = $loaded_mappings[$breakpoint->source_type][$breakpoint->source][$breakpoint->name]['1x'];
+        if (isset($loaded_mappings[$breakpoint->machine_name]['1x'])) {
+          $all_mappings[$breakpoint_id]['1x'] = $loaded_mappings[$breakpoint->machine_name]['1x'];
         }
 
         // Get the mapping for the other multipliers.
@@ -114,8 +145,8 @@ class PictureMapping {
           foreach ($breakpoint->multipliers as $multiplier => $status) {
             if ($status) {
               $all_mappings[$breakpoint_id][$multiplier] = '';
-              if (isset($loaded_mappings[$breakpoint->source_type][$breakpoint->source][$breakpoint->name][$multiplier])) {
-                $all_mappings[$breakpoint_id][$multiplier] = $loaded_mappings[$breakpoint->source_type][$breakpoint->source][$breakpoint->name][$multiplier];
+              if (isset($loaded_mappings[$breakpoint->machine_name][$multiplier])) {
+                $all_mappings[$breakpoint_id][$multiplier] = $loaded_mappings[$breakpoint->machine_name][$multiplier];
               }
             }
           }
@@ -142,7 +173,7 @@ class PictureMapping {
   }
 
   /**
-   * {@inheritdoc}
+   * Check if a mapping definition is empty.
    */
   public static function isEmptyMappingDefinition($mapping_definition) {
     if (!empty($mapping_definition)) {
@@ -163,9 +194,95 @@ class PictureMapping {
   }
 
   /**
+   * Get the machine name.
+   */
+  public function getMachineName() {
+    return $this->machine_name;
+  }
+
+  public function setMachineName($machine_name) {
+    $this->machine_name = $machine_name;
+  }
+
+  /**
    * Get the picture mappings.
    */
   public function getMappings() {
     return $this->mapping;
+  }
+
+  /**
+   * Set the picture mappings.
+   */
+  public function setMappings($mappings) {
+    $this->mapping = $mappings;
+  }
+
+  /**
+   * Set the label.
+   */
+  public function setLabel($label) {
+    $this->label = $label;
+  }
+
+  /**
+   * Get the label.
+   */
+  public function label() {
+    return $this->label;
+  }
+
+  /**
+   * Set the breakpoint group.
+   */
+  public function setBreakpointGroup($breakpoint_group) {
+    if (!$this->getBreakpointGroup() || $breakpoint_group != $this->getBreakpointGroup()->name) {
+      $this->breakpoint_group = $breakpoint_group;
+      $this->loadBreakpointGroup();
+      $this->loadAllMappings();
+    }
+  }
+
+  /**
+   * Get the breakpoint group.
+   */
+  public function getBreakpointGroup() {
+    $this->loadBreakpointGroup();
+    return $this->breakpoint_group;
+  }
+
+  public function __get($name) {
+    switch ($name) {
+      case 'machine_name':
+        return $this->getMachineName();
+      case 'label':
+        return $this->label();
+      case 'mapping':
+        return $this->getMappings();
+      case 'breakpoint_group':
+        return $this->getBreakpointGroup();
+      default:
+        return $this->{$name};
+    }
+  }
+
+  public function __set($name, $value) {
+    switch ($name) {
+      case 'machine_name':
+        $this->setMachineName($value);
+        break;
+      case 'label':
+        $this->setLabel($value);
+        break;
+      case 'mapping':
+        $this->setMappings($value);
+        break;
+      case 'breakpoint_group':
+        $this->setBreakpointGroup($value);
+        break;
+      default:
+        $this->{$name} = $value;
+        break;
+    }
   }
 }

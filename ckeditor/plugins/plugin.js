@@ -1,5 +1,5 @@
 /**
- * @file Plugin to support responsive images with the Picture module and 
+ * @file Plugin to support responsive images with the Picture module and
  * the CKEditor module.
  */
 ( function(){
@@ -7,13 +7,13 @@
   {
       init : function(editor)
       {
-                
+
           // This disables the browser resize handles since the width will now be set
           // in the image dialog. This also prevents CKEditor from automatically adding
           // pesky inline width and height styles, although these inline styles are
           // still added when an image is dragged and dropped.
           // Resize handles are also removed from tables as an unintended consequence.
-        CKEDITOR.config.disableObjectResizing = true; 
+        CKEDITOR.config.disableObjectResizing = true;
 
 
         // When opening a dialog, a 'definition' is created for it. For
@@ -61,30 +61,30 @@
               type: 'select',
               id: 'imageSize',
               label: Drupal.settings.picture.label,
-              items: Drupal.settings.picture.groups,
+              items: Drupal.settings.picture.mappings,
               'default': 'not_set',
               onChange: function() {
                 var dialog = this.getDialog();
                 var element = dialog.originalElement;
-                element.setAttribute('data-picture-group', this.getValue());
+                element.setAttribute('data-picture-mapping', this.getValue());
                 updatePreview(this.getDialog());
               },
               setup: function(type, element) {
                 if (type == IMAGE) {
-                  var value = element.getAttribute('data-picture-group');
+                  var value = element.getAttribute('data-picture-mapping');
                   this.setValue(value);
                 }
               },
-              // Create a custom data-picture-group attribute.
+              // Create a custom data-picture-mapping attribute.
               commit: function(type, element) {
                 if (type == IMAGE) {
                   if (this.getValue() || this.isChanged()) {
-                    element.setAttribute('data-picture-group', this.getValue());
+                    element.setAttribute('data-picture-mapping', this.getValue());
                   }
                 } else if (type == PREVIEW) {
-                  element.setAttribute('data-picture-group', this.getValue());
+                  element.setAttribute('data-picture-mapping', this.getValue());
                 } else if (type == CLEANUP) {
-                  element.setAttribute('data-picture-group', '');
+                  element.setAttribute('data-picture-mapping', '');
                 }
               },
               validate: function() {
