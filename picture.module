@@ -759,10 +759,11 @@ function picture_filter_info() {
 function _picture_filter_process($text, $filter) {
 
   // Find all img tags with a data-picture-mapping attribute.
-  preg_match_all('/<img.*?data-picture-mapping=".*?>/i', $text, $images);
-
-  if (!empty($images[0])) {
-    foreach ($images[0] as $image) {
+  preg_match_all('/<img.*?data-picture-mapping=".*?>/i', $text, $images1);
+  preg_match_all('/<img.*?data-picture-group=".*?>/i', $text, $images2);
+  $images = array_merge($images1[0], $images2[0]);
+  if (!empty($images)) {
+    foreach ($images as $image) {
       // Create the render array expected by theme_picture_formatter.
       $image_render_array = _picture_filter_prepare_image($image);
       if (!$image_render_array) {
@@ -803,7 +804,8 @@ function _picture_filter_prepare_image($image) {
   }
 
   $fallback_image_style = '';
-  $mappings = picture_mapping_load($attributes['data-picture-mapping']);
+  $mapping_id = isset($attributes['data-picture-mapping']) ? $attributes['data-picture-mapping'] : $attributes['data-picture-group'];
+  $mappings = picture_mapping_load($mapping_id);
   $breakpoint_styles = picture_get_mapping_breakpoints($mappings, $fallback_image_style);
 
   // Make sure we have a src attribute.
@@ -827,17 +829,17 @@ function _picture_filter_prepare_image($image) {
   $image_render_array = array(
     '#theme' => 'picture_formatter',
     '#item' => array(
-      'style_name' => $picture_mappings[$attributes['data-picture-mapping']]['fallback'],
+      'style_name' => $picture_mappings[$mapping_id]['fallback'],
       'uri' => $uri,
       'width' => $image_info['width'],
       'height' => $image_info['height'],
-      'data-picture-mapping' => $attributes['data-picture-mapping'],
+      'data-picture-mapping' => $mapping_id,
       'data-picture-align' => isset($attributes['data-picture-align']) ? $attributes['data-picture-align'] : '',
       'alt' => isset($attributes['alt']) ? $attributes['alt'] : '',
       'title' => isset($attributes['title']) ? $attributes['title'] : '',
       'filemime' => $image_info['mime_type'],
     ),
-    '#image_style' => $picture_mappings[$attributes['data-picture-mapping']]['fallback'],
+    '#image_style' => $picture_mappings[$mapping_id]['fallback'],
     '#breakpoints' => $breakpoint_styles,
     '#path' => '',
   );
@@ -1016,7 +1018,7 @@ function picture_wysiwyg_editor_settings_alter(&$settings, $context) {
   if ($context['profile']->editor == 'ckeditor') {
     if (!isset($settings['extraAllowedContent'])) {
       $settings['extraAllowedContent'] = array(
-        'img[src,title,alt,style,width,height,class,hspace,vspace,view_mode,format,fid,data-picture-mapping,data-picture-align]',
+        'img[src,title,alt,style,width,height,class,hspace,vspace,view_mode,format,fid,data-picture-mapping,data-picture-group,data-picture-align]',
       );
     }
     else {
