@@ -4,16 +4,12 @@ class PictureMapping {
 
   /**
    * The picture mapping ID (machine name).
-   * Must be public for ctools, it is preferred however to use getMachineName()
-   * and setMachineName().
    * @var string
    */
   protected $machine_name;
 
   /**
    * The picture mapping label.
-   * Must be public for ctools, it is preferred however to use label() and
-   * setLabel().
    * @var string
    */
   protected $label;
@@ -31,19 +27,15 @@ class PictureMapping {
   protected $breakpoint_group = '';
 
   /**
-   * Constructor.
-   * @see picture_mapping_object_factory().
+   * Boolean flag, used internally.
    */
-  public function __construct($schema = array(), $data = NULL) {
-    $this->setValues($schema, $data);
-    $this->loadBreakpointGroup();
-    $this->loadAllMappings();
-  }
+  protected $_is_exporting = FALSE;
 
   /**
-   *
+   * Set data values based on schema
+   * @see picture_mapping_object_factory().
    */
-  protected function setValues($schema, $data) {
+  public function setValues($schema, $data) {
     foreach ($schema['fields'] as $field => $info) {
       if (isset($data->{$field})) {
         $this->{$field} = !empty($info['serialize']) && is_string($data->{$field}) ? unserialize($data->{$field}) : $data->{$field};
@@ -69,10 +61,16 @@ class PictureMapping {
     foreach((array)$data as $field => $val) {
       $this->{$field} = $val;
     }
+    $this->loadBreakpointGroup();
+    $this->loadAllMappings();
   }
 
   /**
    * Save the picture mapping.
+   *
+   * @return
+   *   If the record insert or update failed, returns FALSE. If it succeeded,
+   *   returns SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
    */
   public function save() {
     $update = array();
@@ -104,6 +102,9 @@ class PictureMapping {
 
   /**
    * Create a duplicate.
+   *
+   * @return PictureMapping
+   *   The duplicate.
    */
   public function createDuplicate() {
     $clone = clone $this;
@@ -158,6 +159,9 @@ class PictureMapping {
 
   /**
    * Check if there are mappings.
+   *
+   * @return boolean
+   *    TRUE if this PictureMapping has mappings, FALSE otherwise.
    */
   public function hasMappings() {
     $mapping_found = FALSE;
@@ -174,6 +178,9 @@ class PictureMapping {
 
   /**
    * Check if a mapping definition is empty.
+   *
+   * @return boolean
+   *    TRUE if this mapping definition is considered empty, FALSE otherwise.
    */
   public static function isEmptyMappingDefinition($mapping_definition) {
     if (!empty($mapping_definition)) {
@@ -195,17 +202,26 @@ class PictureMapping {
 
   /**
    * Get the machine name.
+   *
+   * @return string
+   *    The machine name.
    */
   public function getMachineName() {
     return $this->machine_name;
   }
 
+  /**
+   * Set the machine name.
+   */
   public function setMachineName($machine_name) {
     $this->machine_name = $machine_name;
   }
 
   /**
    * Get the picture mappings.
+   *
+   * @return array
+   *    The mappings.
    */
   public function getMappings() {
     return $this->mapping;
@@ -227,6 +243,9 @@ class PictureMapping {
 
   /**
    * Get the label.
+   *
+   * @return string
+   *    The label.
    */
   public function label() {
     return $this->label;
@@ -245,12 +264,18 @@ class PictureMapping {
 
   /**
    * Get the breakpoint group.
+   *
+   * @return stdClass
+   *   The breakpoint group object.
    */
   public function getBreakpointGroup() {
     $this->loadBreakpointGroup();
     return $this->breakpoint_group;
   }
 
+  /**
+   * Is utilized for reading data from inaccessible properties.
+   */
   public function __get($name) {
     switch ($name) {
       case 'machine_name':
@@ -260,12 +285,18 @@ class PictureMapping {
       case 'mapping':
         return $this->getMappings();
       case 'breakpoint_group':
+        if ($this->_is_exporting) {
+          return $this->breakpoint_group;
+        }
         return $this->getBreakpointGroup();
       default:
         return $this->{$name};
     }
   }
 
+  /**
+   * Is run when writing data to inaccessible properties.
+   */
   public function __set($name, $value) {
     switch ($name) {
       case 'machine_name':
@@ -284,5 +315,27 @@ class PictureMapping {
         $this->{$name} = $value;
         break;
     }
+  }
+
+  /**
+   * Is triggered by calling isset() or empty() on inaccessible properties.
+   */
+  public function __isset($name) {
+    return isset($this->{$name});
+  }
+
+  /**
+   * Export this PictureMapping.
+   *
+   * @return string
+   *    The export string.
+   */
+  public function export($indent) {
+    $this->breakpoint_group = $this->getBreakpointGroup() ? $this->getBreakpointGroup()->machine_name : $this->breakpoint_group;
+    $this->_is_exporting = TRUE;
+    $export = ctools_export_object('picture_mapping', $this, $indent);
+    $this->_is_exporting = TRUE;
+    $this->loadBreakpointGroup();
+    return $export;
   }
 }
