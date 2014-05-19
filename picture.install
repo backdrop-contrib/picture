@@ -100,25 +100,28 @@ function picture_update_7200() {
   $all_mappings = array_merge($db_mappings, $code_mappings);
   // Update mappings.
   foreach ($all_mappings as $picture_mapping) {
-    if ($picture_mapping->export_type & EXPORT_IN_DATABASE) {
-      $mapping = $picture_mapping->getMappings();
-      $picture_mapping->setLabel($picture_mapping->getMachineName());
-      if (isset($picture_mapping->api_version)) {
-        $picture_mapping->api_version = 2;
-      }
-      $new_mapping = array();
-      foreach ($mapping as $breakpoint => $multipliers) {
-        foreach ($multipliers as $multiplier => $image_style) {
-          $new_mapping[$breakpoint][$multiplier] = array(
-            'mapping_type' => 'image_style',
-            'image_style' => $image_style,
-            'sizes' => '',
-            'sizes_image_styles' => array(),
-          );
-        }
-      }
-      $picture_mapping->setMappings($new_mapping);
-      $picture_mapping->save();
+    if (!($picture_mapping instanceof PictureMapping)) {
+      $old_mapping = $picture_mapping;
+      $picture_mapping = new PictureMapping();
+      $picture_mapping->setValues($schema, $old_mapping);
     }
+    $mapping = $picture_mapping->getMappings();
+    $picture_mapping->setLabel($picture_mapping->getMachineName());
+    if (isset($picture_mapping->api_version)) {
+      $picture_mapping->api_version = 2;
+    }
+    $new_mapping = array();
+    foreach ($mapping as $breakpoint => $multipliers) {
+      foreach ($multipliers as $multiplier => $image_style) {
+        $new_mapping[$breakpoint][$multiplier] = array(
+          'mapping_type' => 'image_style',
+          'image_style' => $image_style,
+          'sizes' => '',
+          'sizes_image_styles' => array(),
+        );
+      }
+    }
+    $picture_mapping->setMappings($new_mapping);
+    $picture_mapping->save();
   }
 }
