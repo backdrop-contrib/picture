@@ -183,7 +183,7 @@ class PictureMapping {
    *    TRUE if this mapping definition is considered empty, FALSE otherwise.
    */
   public static function isEmptyMappingDefinition($mapping_definition) {
-    if (!empty($mapping_definition)) {
+    if (!empty($mapping_definition) && isset($mapping_definition['mapping_type'])) {
       switch ($mapping_definition['mapping_type']) {
         case 'sizes':
           if ($mapping_definition['sizes'] && array_filter($mapping_definition['sizes_image_styles'])) {
