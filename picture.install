@@ -84,6 +84,7 @@ function picture_update_7200() {
   drupal_get_schema('picture_mapping', TRUE);
 
   // Get old picture mappings from code.
+  ctools_include('export');
   $schema = ctools_export_get_schema('picture_mapping');
   $schema['export']['api'] = array(
     'owner' => 'picture',
