@@ -86,13 +86,14 @@ function picture_update_7200() {
   // Get old picture mappings from code.
   ctools_include('export');
   $schema = ctools_export_get_schema('picture_mapping');
-  $schema['export']['api'] = array(
+  $export = $schema['export'];
+  $export['api'] = array(
     'owner' => 'picture',
     'api' => 'default_picture_mapping',
     'minimum_version' => 1,
     'current_version' => 1,
   );
-  $code_mappings = _ctools_export_get_defaults('picture_mapping', $schema['export']);
+  $code_mappings = _ctools_export_get_defaults('picture_mapping', $export);
   // Get old picture mappings from database.
   $db_mappings = ctools_export_crud_load_all('picture_mapping');
 
@@ -101,6 +102,7 @@ function picture_update_7200() {
   foreach ($all_mappings as $picture_mapping) {
     if ($picture_mapping->export_type & EXPORT_IN_DATABASE) {
       $mapping = $picture_mapping->getMappings();
+      $picture_mapping->setLabel($picture_mapping->getMachineName());
       $new_mapping = array();
       foreach ($mapping as $breakpoint => $multipliers) {
         foreach ($multipliers as $multiplier => $image_style) {
