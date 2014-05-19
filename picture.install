@@ -103,6 +103,9 @@ function picture_update_7200() {
     if ($picture_mapping->export_type & EXPORT_IN_DATABASE) {
       $mapping = $picture_mapping->getMappings();
       $picture_mapping->setLabel($picture_mapping->getMachineName());
+      if (isset($picture_mapping->api_version)) {
+        $picture_mapping->api_version = 2;
+      }
       $new_mapping = array();
       foreach ($mapping as $breakpoint => $multipliers) {
         foreach ($multipliers as $multiplier => $image_style) {
