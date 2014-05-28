@@ -453,7 +453,7 @@ function theme_picture_formatter($variables) {
     '#alt' => $item['alt'],
   );
   if (isset($item['title']) && drupal_strlen($item['title']) != 0) {
-    $responsive_image['#title'] = $item->title;
+    $responsive_image['#title'] = $item['title'];
   }
   if (isset($variables['path']['path'])) {
     $path = $variables['path']['path'];
