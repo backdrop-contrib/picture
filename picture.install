@@ -71,6 +71,7 @@ function picture_schema() {
  * Update from 7.x-1.x.
  */
 function picture_update_7200() {
+  module_load_include('php', 'picture', 'includes/PictureMapping');
   db_add_field('picture_mapping', 'label', array(
     'type' => 'varchar',
     'length' => 255,
