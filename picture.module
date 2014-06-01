@@ -596,6 +596,7 @@ function theme_picture($variables) {
 
   if (!empty($sources)) {
     $output[] = '<picture>';
+    $output[] = '<!--[if IE 9]><video style="display: none;"><![endif]-->';
     $output = array_merge($output, array_map('drupal_render', $sources));
     // Fallback image.
     $dimensions = array(
@@ -621,6 +622,7 @@ function theme_picture($variables) {
         $fallback_image['#' . $key] = $variables[$field]['und'][0]['safe_value'];
       }
     }
+    $output[] = '<!--[if IE 9]></video><![endif]-->';
     $output[] = drupal_render($fallback_image);
     $output[] = '</picture>';
 
