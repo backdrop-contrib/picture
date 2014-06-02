@@ -242,7 +242,7 @@ function picture_field_formatter_settings_form($field, $instance, $view_mode, $f
   $element['picture_mapping'] = array(
     '#title' => t('Picture mapping'),
     '#type' => 'select',
-    '#default_value' => $settings['picture_mapping'],
+    '#default_value' => isset($settings['picture_mapping']) ? $settings['picture_mapping'] : '',
     '#required' => TRUE,
     '#options' => picture_get_mapping_options(),
   );
