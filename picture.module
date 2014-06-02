@@ -574,12 +574,10 @@ function theme_picture($variables) {
             }
             break;
           case 'image_style':
-
-            // Get mime type.
-            //$derivative_mime_type = $mime_type;
-            //$image_style->transformMimeType($derivative_mime_type);
-            //$derivative_mime_types[] = $derivative_mime_type;
-
+            // Get mime type (not implemented in Drupal 7.
+            // $derivative_mime_type = $mime_type;
+            // $image_style->transformMimeType($derivative_mime_type);
+            // $derivative_mime_types[] = $derivative_mime_type;
             $srcset[] = _picture_image_style_url($mapping_definition['image_style'], $variables['uri']) . ' ' . $multiplier;
             break;
         }
