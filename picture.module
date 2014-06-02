@@ -277,7 +277,9 @@ function picture_field_formatter_settings_form($field, $instance, $view_mode, $f
     '#options' => picture_get_mapping_options(),
     '#states' => array(
       'visible' => array(
-        ':input[name$="[settings_edit_form][settings][image_link]"]' => array('value' => 'colorbox'),
+        array(':input[name$="[settings_edit_form][settings][image_link]"]' => array('value' => 'colorbox')),
+        array(':input[name$="displays[file_field_picture][settings][image_link]"]' => array('value' => 'colorbox')),
+        array(':input[name$="options[settings][image_link]"]' => array('value' => 'colorbox')),
       ),
     ),
   );
