@@ -11,10 +11,7 @@
  *
  * @param $vars
  */
-function template_process_flexslider_picture_list(&$vars) {
-  // Call default preprocessor first.
-  template_process_flexslider_list($vars);
-
+function template_preprocess_flexslider_picture_list(&$vars) {
   $optionset = &$vars['settings']['optionset'];
 
   // Check if this is a picture optionset.
@@ -47,18 +44,15 @@ function template_process_flexslider_picture_list(&$vars) {
 
     // Prepare the item slides to be passed to render().
     foreach ($items as $i => &$item) {
-      // If the slide hasn't been set, build the slide using the image
-      // attributes given (assumes we're using a multi-image field)
-      // @todo need to allow for different types of field and collection fields.
-      if (!isset($item['slide'])) {
+      if (isset($item['item'])) {
         $item['slide'] = array(
           '#theme' => 'picture',
           '#style_name' => $optionset->imagestyle_normal,
-          '#uri' => $item['uri'],
-          '#height' => $item['height'],
-          '#width' => $item['width'],
-          '#alt' => $item['alt'],
-          '#title' => $item['title'],
+          '#uri' => $item['item']['uri'],
+          '#height' => $item['item']['height'],
+          '#width' => $item['item']['width'],
+          '#alt' => $item['item']['alt'],
+          '#title' => $item['item']['title'],
           '#breakpoints' => $breakpoint_styles,
         );
 
@@ -66,17 +60,42 @@ function template_process_flexslider_picture_list(&$vars) {
         if (!empty($optionset->options['colorboxEnabled'])) {
           $item['slide'] = array(
             '#theme' => 'picture_formatter_colorbox',
-            '#item' => $item,
+            '#item' => $item['item'],
             '#image_style' => $optionset->imagestyle_normal,
-            '#path' => $item['uri'],
+            '#path' => $item['item']['uri'],
             '#colorbox_image_style' => $colorbox_fallback_image_style,
             '#colorbox' => $colorbox_breakpoints,
             '#colorbox_group_id' => $colorbox_group_id,
-          ) + $item['slide'];
+            '#width' => $item['item']['width'],
+            '#height' => $item['item']['height'],
+            '#alt' => $item['item']['alt'],
+            '#title' => $item['item']['title'],
+          );
+        }
+        if (!isset($item['thumb'])) {
+          $item['thumb'] = image_style_url($optionset->imagestyle_thumbnail, $item['item']['uri']);
         }
       }
-      if (!isset($item['thumb'])) {
-        $item['thumb'] = image_style_url($optionset->imagestyle_thumbnail, $item['uri']);
+    }
+  }
+}
+
+function template_process_flexslider_picture_list_item(&$vars) {
+  // Call the default process function first.
+  template_process_flexslider_list_item($vars);
+
+  $settings = $vars['settings'];
+  $attributes = &$vars['settings']['attributes'];
+  if (isset($settings['optionset']->options['controlNav']) and $settings['optionset']->options['controlNav'] === "thumbnails" && !isset($attributes['data-thumb']) || empty($attributes['data-thumb'])) {
+    if (isset($vars['thumb'])) {
+      $attributes['data-thumb'] = $vars['thumb'];
+    }
+    else {
+      $src = array();
+      preg_match("<img.+?srcset=[\"'](.+?)[\"'\s].+?>", $vars['item'], $src);
+
+      if (!empty($src[1])) {
+        $attributes['data-thumb'] = $src[1];
       }
     }
   }
@@ -96,11 +115,12 @@ function theme_flexslider_picture_list(&$vars) {
     if (!empty($vars['items'])) {
       $output .= "<$type" . drupal_attributes($attributes) . '>';
       foreach ($vars['items'] as $i => $item) {
-        $item = render($item['slide']);
+        $slide = render($item['slide']);
         $output .= theme('flexslider_list_item', array(
-          'item' => $item,
-          'thumb' => $item['thumb'],
-          'optionset' => $vars['settings']['optionset'],
+          'item' => $slide,
+          'thumb' => isset($item['thumb']) ? $item['thumb'] : NULL,
+          'settings' => $vars['settings'],
+          'caption' => isset($item['caption']) ? $item['caption'] : '',
         ));
       }
       $output .= "</$type>";
