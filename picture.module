@@ -365,7 +365,9 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
     }
   }
   $fallback_image_style = $settings['fallback_image_style'];
-  $picture_mapping = picture_mapping_load($display['settings']['picture_mapping']);
+  // Support old display settings from 7.x-1.x.
+  $mapping_name = isset($display['settings']['picture_mapping']) && !empty($display['settings']['picture_mapping']) ? $display['settings']['picture_mapping'] : $display['settings']['picture_group'];
+  $picture_mapping = picture_mapping_load($mapping_name);
   $breakpoint_styles = picture_get_mapping_breakpoints($picture_mapping, $fallback_image_style);
 
   // Assume regular display.
@@ -447,8 +449,8 @@ function theme_picture_formatter($variables) {
 
   $responsive_image = array(
     '#theme' => 'picture',
-    '#width' => $item['width'],
-    '#height' => $item['height'],
+    '#width' => isset($item['width']) ? $item['width'] : NULL,
+    '#height' => isset($item['height']) ? $item['height'] : NULL,
     '#style_name' => $variables['image_style'],
     '#breakpoints' => $variables['breakpoints'],
     '#uri' => $item['uri'],
