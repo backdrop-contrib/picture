@@ -95,6 +95,7 @@ function picture_mapping_save(PictureMapping $mapping) {
  * Implements hook_library().
  */
 function picture_library() {
+  $libraries = array();
   $libraries['picturefill'] = array(
     'title' => t('Picturefill'),
     'website' => 'https://github.com/scottjehl/picturefill',
