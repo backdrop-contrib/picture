@@ -89,7 +89,7 @@ function picture_mapping_form(&$form, &$form_state) {
         '#type' => 'select',
         '#title' => t('Image style'),
         '#options' => $image_styles,
-        '#default_value' => isset($mapping_definition['image_style']) ? $mapping_definition['image_style'] : array(),
+        '#default_value' => isset($mapping_definition['image_style']) ? $mapping_definition['image_style'] : '',
         '#description' => t('Select an image style for this breakpoint.'),
         '#states' => array(
           'visible' => array(

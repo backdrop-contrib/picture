@@ -74,6 +74,7 @@ class PictureMapping {
    */
   public function save() {
     $update = array();
+    $this->cleanMappings();
     $data = $this->toArray();
     if (isset($this->id) && $this->id) {
        $update = array('id');
@@ -155,6 +156,29 @@ class PictureMapping {
       }
     }
     $this->mapping = $all_mappings;
+  }
+
+  protected function cleanMappings() {
+    foreach ($this->mapping as $breakpoint => $multipliers) {
+      foreach ($multipliers as $multiplier => $mapping_definition) {
+        switch ($mapping_definition['mapping_type']) {
+          case '_none':
+            unset($mapping_definition['image_style']);
+            unset($mapping_definition['sizes']);
+            unset($mapping_definition['sizes_image_styles']);
+            break;
+          case 'image_style':
+            unset($mapping_definition['sizes']);
+            unset($mapping_definition['sizes_image_styles']);
+            break;
+          case 'sizes':
+            unset($mapping_definition['image_style']);
+            $mapping_definition['sizes_image_styles'] = array_filter($mapping_definition['sizes_image_styles']);
+            break;
+        }
+        $this->mapping[$breakpoint][$multiplier] = $mapping_definition;
+      }
+    }
   }
 
   /**
@@ -331,6 +355,7 @@ class PictureMapping {
    *    The export string.
    */
   public function export($indent) {
+    $this->cleanMappings();
     $this->breakpoint_group = $this->getBreakpointGroup() ? $this->getBreakpointGroup()->machine_name : $this->breakpoint_group;
     $this->_is_exporting = TRUE;
     $export = ctools_export_object('picture_mapping', $this, $indent);
