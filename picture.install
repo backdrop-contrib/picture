@@ -68,6 +68,14 @@ function picture_schema() {
 }
 
 /**
+ * Implements hook_uninstall().
+ */
+function picture_uninstall() {
+  variable_del('picture_ckeditor_mappings');
+  variable_del('picture_ckeditor_label');
+}
+
+/**
  * Update from 7.x-1.x.
  */
 function picture_update_7200() {
