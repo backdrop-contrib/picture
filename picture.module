@@ -127,7 +127,7 @@ function picture_library() {
 }
 
 /**
- * Implements hook_ctools_plugin_api().
+ * Implements hook_ctools_plugin_directory().
  *
  * Lets CTools know which plugin APIs are implemented by picture module.
  */
