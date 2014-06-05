@@ -166,15 +166,15 @@ function picture_update_7201() {
           unset($display->settings['alt']);
           unset($display->settings['title']);
           $display->settings['image_link'] = '';
-          $display->settings['colorbox'] = isset($display->settings['picture_mappings']) ? $display->settings['picture_mappings'] : $display->settings['picture_group'];
-          $display->settings['picture_mappings'] = isset($display->settings['picture_mappings']) ? $display->settings['picture_mappings'] : $display->settings['picture_group'];
+          $display->settings['colorbox'] = isset($display->settings['picture_mapping']) ? $display->settings['picture_mapping'] : $display->settings['picture_group'];
+          $display->settings['picture_mapping'] = isset($display->settings['picture_mapping']) ? $display->settings['picture_mapping'] : $display->settings['picture_group'];
           unset($display->settings['picture_group']);
           file_display_save($display);
         }
       }
       elseif (isset($current_displays['file_field_picture'])) {
         $display = $current_displays['file_field_picture'];
-        $display->settings['picture_mappings'] = isset($display->settings['picture_mappings']) ? $display->settings['picture_mappings'] : $display->settings['picture_group'];
+        $display->settings['picture_mapping'] = isset($display->settings['picture_mapping']) ? $display->settings['picture_mapping'] : $display->settings['picture_group'];
         unset($display->settings['picture_group']);
         file_display_save($display);
       }
