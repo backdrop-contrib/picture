@@ -13,15 +13,34 @@ function picture_select_breakpoint_group_form($form, &$form_state) {
   foreach ($groups as $group) {
     $options[$group->machine_name] = $group->name;
   }
-  $form['breakpoint_group'] = array(
-    '#title' => t('Breakpoint group'),
-    '#type' => 'select',
-    '#required' => TRUE,
-    '#description' => t('Select a breakpoint group.'),
-    '#options' => $options,
-    '#default_value' => $form_state['item']->getBreakpointGroup() ? $form_state['item']->getBreakpointGroup()->name : NULL,
-  );
+  if ($options) {
+    $form['breakpoint_group'] = array(
+      '#title' => t('Breakpoint group'),
+      '#type' => 'select',
+      '#required' => TRUE,
+      '#description' => t('Select a breakpoint group.'),
+      '#options' => $options,
+      '#default_value' => $form_state['item']->getBreakpointGroup() ? $form_state['item']->getBreakpointGroup()->name : NULL,
+    );
+  }
+  else {
+    $form['breakpoint_group'] = array(
+      '#title' => t('Breakpoint group'),
+      '#type' => 'item',
+      '#markup' => t(
+        'There are no breakpoint groups. !create_link.',
+        array('!create_link' => l(t('Create a breakpoint group'), 'admin/config/media/breakpoints/groups/add'))
+      ),
+    );
+  }
+
   return $form;
+}
+
+function picture_select_breakpoint_group_form_validate($form, &$form_state) {
+  if (!isset($form_state['values']['breakpoint_group']) || empty($form_state['values']['breakpoint_group'])) {
+    form_error($form['breakpoint_group'], t('No breakpoint group was selected.'));
+  }
 }
 
 /**

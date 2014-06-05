@@ -223,14 +223,28 @@ function picture_field_formatter_info() {
 function picture_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
   $display = $instance['display'][$view_mode];
   $settings = $display['settings'];
+  $options = picture_get_mapping_options();
 
-  $element['picture_mapping'] = array(
-    '#title' => t('Picture mapping'),
-    '#type' => 'select',
-    '#default_value' => isset($settings['picture_mapping']) ? $settings['picture_mapping'] : '',
-    '#required' => TRUE,
-    '#options' => picture_get_mapping_options(),
-  );
+  if ($options) {
+    $element['picture_mapping'] = array(
+      '#title' => t('Picture mapping'),
+      '#type' => 'select',
+      '#default_value' => isset($settings['picture_mapping']) ? $settings['picture_mapping'] : '',
+      '#required' => TRUE,
+      '#options' => picture_get_mapping_options(),
+    );
+  }
+  // No picture mappings.
+  else {
+    $element['picture_mapping'] = array(
+      '#title' => t('Picture mapping'),
+      '#type' => 'item',
+      '#markup' => t(
+        'There are no picture groups defined. !create_link.',
+        array('!create_link' => l(t('Create a picture mapping'), 'admin/config/media/picture/add'))
+      )
+    );
+  }
 
   $image_styles = image_style_options(FALSE);
   $element['fallback_image_style'] = array(
