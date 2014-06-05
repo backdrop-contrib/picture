@@ -186,6 +186,7 @@ function picture_theme() {
     'image_srcset' => array(
       'variables' => array(
         'uri' => NULL,
+        'data_uri' => NULL,
         'width' => NULL,
         'height' => NULL,
         'alt' => '',
@@ -599,21 +600,36 @@ function theme_picture($variables) {
     $output[] = '<picture>';
     $output[] = '<!--[if IE 9]><video style="display: none;"><![endif]-->';
     $output = array_merge($output, array_map('drupal_render', $sources));
+    $output[] = '<!--[if IE 9]></video><![endif]-->';
+
     // Fallback image.
-    $dimensions = array(
-      'width' => $image->info['width'],
-      'height' => $image->info['height'],
-    );
-    picture_get_image_dimensions($variables['style_name'], $dimensions);
-    $fallback_image = array(
-      '#theme' => 'image_srcset',
-      '#srcset' => array(
-        array(
-          'uri' => _picture_image_style_url($variables['style_name'], $variables['uri']),
-          'width' => $dimensions['width'] . 'w',
+    if ($variables['style_name'] !== PICTURE_EMPTY_IMAGE) {
+      $dimensions = array(
+        'width' => $image->info['width'],
+        'height' => $image->info['height'],
+      );
+      picture_get_image_dimensions($variables['style_name'], $dimensions);
+      $fallback_image = array(
+        '#theme' => 'image_srcset',
+        '#srcset' => array(
+          array(
+            'uri' => _picture_image_style_url($variables['style_name'], $variables['uri']),
+            'width' => $dimensions['width'] . 'w',
+          ),
         ),
-      ),
-    );
+      );
+    }
+    else {
+      $fallback_image = array(
+        '#theme' => 'image_srcset',
+        '#srcset' => array(
+          array(
+            'data_uri' => _picture_image_style_url($variables['style_name'], $variables['uri']),
+            'width' => '1w',
+          ),
+        ),
+      );
+    }
     foreach (array('alt', 'title', 'attributes') as $key) {
       $field = sprintf('field_file_image_%s_text', $key);
       if (isset($variables[$key]) && !empty($variables[$key])) {
@@ -623,8 +639,8 @@ function theme_picture($variables) {
         $fallback_image['#' . $key] = $variables[$field]['und'][0]['safe_value'];
       }
     }
-    $output[] = '<!--[if IE 9]></video><![endif]-->';
     $output[] = drupal_render($fallback_image);
+
     $output[] = '</picture>';
 
     return implode("\n", $output);
@@ -666,6 +682,16 @@ function theme_image_srcset($variables) {
       // URI is mandatory.
       if (isset($srcset['uri']) && !empty($srcset['uri'])) {
         $new_source = file_create_url($srcset['uri']);
+        if (isset($srcset['width']) && !empty($srcset['width'])) {
+          $new_source .= ' ' . $srcset['width'];
+        }
+        elseif (isset($srcset['multiplier']) && !empty($srcset['multiplier'])) {
+          $new_source .= ' ' . $srcset['multiplier'];
+        }
+        $srcsets[] = $new_source;
+      }
+      elseif (isset($srcset['data_uri']) && !empty($srcset['data_uri'])) {
+        $new_source = $srcset['data_uri'];
         if (isset($srcset['width']) && !empty($srcset['width'])) {
           $new_source .= ' ' . $srcset['width'];
         }
