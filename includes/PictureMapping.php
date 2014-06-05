@@ -354,7 +354,7 @@ class PictureMapping {
    * @return string
    *    The export string.
    */
-  public function export($indent) {
+  public function export($indent = '') {
     $this->cleanMappings();
     $this->breakpoint_group = $this->getBreakpointGroup() ? $this->getBreakpointGroup()->machine_name : $this->breakpoint_group;
     $this->_is_exporting = TRUE;
