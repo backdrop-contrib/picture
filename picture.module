@@ -595,9 +595,28 @@ function theme_picture($variables) {
       );
     }
   }
-
+  $attributes = array();
+  foreach (array('alt', 'title', 'attributes') as $key) {
+    $field = sprintf('field_file_image_%s_text', $key);
+    if (isset($variables[$key]) && !empty($variables[$key])) {
+      if ($key == 'attributes') {
+        $attributes += $variables[$key];
+      }
+      else {
+        $attributes[$key] = $variables[$key];
+      }
+    }
+    elseif (isset($variables[$field]) && is_array($variables[$field]) && isset($variables[$field]['und'][0]['safe_value'])) {
+      if ($key == 'attributes') {
+        $attributes += $variables[$field]['und'][0]['safe_value'];
+      }
+      else {
+        $attributes[$key] = $variables[$field]['und'][0]['safe_value'];
+      }
+    }
+  }
   if (!empty($sources)) {
-    $output[] = '<picture>';
+    $output[] = '<picture ' . drupal_attributes(array_diff_key($attributes, array('alt' => ''))) . '>';
     $output[] = '<!--[if IE 9]><video style="display: none;"><![endif]-->';
     $output = array_merge($output, array_map('drupal_render', $sources));
     $output[] = '<!--[if IE 9]></video><![endif]-->';
@@ -630,15 +649,11 @@ function theme_picture($variables) {
         ),
       );
     }
-    foreach (array('alt', 'title', 'attributes') as $key) {
-      $field = sprintf('field_file_image_%s_text', $key);
-      if (isset($variables[$key]) && !empty($variables[$key])) {
-        $fallback_image['#' . $key] = $variables[$key];
-      }
-      elseif (isset($variables[$field]) && is_array($variables[$field]) && isset($variables[$field]['und'][0]['safe_value'])) {
-        $fallback_image['#' . $key] = $variables[$field]['und'][0]['safe_value'];
-      }
-    }
+    $fallback_image += array(
+      '#alt' => isset($attributes['alt']) ? $attributes['alt'] : '',
+      '#title' => isset($attributes['title']) ? $attributes['title'] : '',
+      '#attributes' => array_diff_key($attributes, array('alt' => '', 'title' => '')),
+    );
     $output[] = drupal_render($fallback_image);
 
     $output[] = '</picture>';
@@ -801,7 +816,7 @@ function _picture_filter_process($text, $filter) {
       }
 
       // Get the responsive markup for this image.
-      $new_markup = theme('picture_formatter', $image_render_array);
+      $new_markup = drupal_render($image_render_array);
 
       // Replace the original img tag with the responsive markup.
       $text = str_replace($image, $new_markup, $text);
@@ -844,6 +859,11 @@ function _picture_filter_prepare_image($image) {
     return FALSE;
   }
   $src = $attributes['src'];
+  unset($attributes['src']);
+  $alt = isset($attributes['alt']) ? $attributes['alt'] : '';
+  unset($attributes['alt']);
+  $title = isset($attributes['title']) ? $attributes['title'] : '';
+  unset($attributes['title']);
 
   // Make sure we have map src to uri.
   $uri = picture_image_uri($src);
@@ -858,25 +878,19 @@ function _picture_filter_prepare_image($image) {
   }
   $picture_mappings = variable_get('picture_ckeditor_mappings', array());
   $image_render_array = array(
-    '#theme' => 'picture_formatter',
-    '#item' => array(
-      'style_name' => $picture_mappings[$mapping_id]['fallback'],
-      'uri' => $uri,
-      'width' => $image_info['width'],
-      'height' => $image_info['height'],
+    '#theme' => 'picture',
+    '#style_name' => $picture_mappings[$mapping_id]['fallback'],
+    '#uri' => $uri,
+    '#width' => $image_info['width'],
+    '#height' => $image_info['height'],
+    '#alt' => $alt,
+    '#title' => $title,
+    '#attributes' => array(
       'data-picture-mapping' => $mapping_id,
-      'data-picture-align' => isset($attributes['data-picture-align']) ? $attributes['data-picture-align'] : '',
-      'alt' => isset($attributes['alt']) ? $attributes['alt'] : '',
-      'title' => isset($attributes['title']) ? $attributes['title'] : '',
-      'filemime' => $image_info['mime_type'],
-    ),
-    '#image_style' => $picture_mappings[$mapping_id]['fallback'],
+    ) + $attributes,
     '#breakpoints' => $breakpoint_styles,
-    '#path' => '',
   );
-
   return $image_render_array;
-
 }
 
 /**
