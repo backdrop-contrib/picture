@@ -70,6 +70,7 @@ function template_preprocess_flexslider_picture_list(&$vars) {
             '#height' => $item['item']['height'],
             '#alt' => $item['item']['alt'],
             '#title' => $item['item']['title'],
+            '#breakpoints' => $breakpoint_styles,
           );
         }
         if (!isset($item['thumb'])) {
