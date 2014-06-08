@@ -139,9 +139,16 @@ function picture_update_7200() {
  * Update to the new file display formatter provided by file_entity.module.
  */
 function picture_update_7201() {
+  // Nothing to do if file_entity does not exist.
   if (!module_exists('file_entity')) {
     return;
   }
+
+  // Make sure file_type_load_all exists.
+  if (!function_exists('file_type_load_all')) {
+    throw new Exception("You're using an old version of file_entity please update it first, see https://drupal.org/node/2282485.");
+  }
+
   $entity_info = entity_get_info('file');
   $types = file_type_load_all();
   foreach ($types as $file_type) {
