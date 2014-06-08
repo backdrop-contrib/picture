@@ -96,6 +96,19 @@ function picture_mapping_save(PictureMapping $mapping) {
  */
 function picture_library() {
   $libraries = array();
+  $libraries['picturefill_head'] = array(
+    'title' => t('Picturefill head fix'),
+    'version' => '2.0',
+    'js' => array(
+      'document.createElement( "picture" );' => array(
+        'type' => 'inline',
+        'weight' => -10,
+        'group' => JS_DEFAULT,
+        'scope' => 'header',
+        'need_jquery' => FALSE,
+      ),
+    ),
+  );
   $libraries['picturefill'] = array(
     'title' => t('Picturefill'),
     'website' => 'https://github.com/scottjehl/picturefill',
@@ -107,6 +120,7 @@ function picture_library() {
         'group' => JS_DEFAULT,
         'scope' => 'footer',
         'need_jquery' => FALSE,
+        'async' => TRUE,
       ),
     ),
   );
@@ -120,6 +134,7 @@ function picture_library() {
         'group' => JS_DEFAULT,
         'scope' => 'footer',
         'need_jquery' => FALSE,
+        'async' => TRUE,
       ),
     ),
   );
@@ -409,6 +424,7 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
     $element[$delta] = array(
       '#theme' => $formatter,
       '#attached' => array('library' => array(
+        array('picture', 'picturefill_head'),
         array('picture', 'picturefill'),
         array('picture', 'picture.ajax'),
       )),
@@ -911,6 +927,7 @@ function _picture_filter_tips($filter, $format, $long = FALSE) {
  * page is not an admin theme page?
  */
 function picture_page_build(&$page) {
+  drupal_add_library('picture', 'picturefill_head', TRUE);
   drupal_add_library('picture', 'picturefill', TRUE);
   drupal_add_library('picture', 'picture.ajax', TRUE);
 
