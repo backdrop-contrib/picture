@@ -284,7 +284,7 @@ function picture_admin_settings_submit($form, &$form_state) {
     variable_set('picture_ckeditor_mappings', $ckeditor_mappings);
     variable_set('picture_ckeditor_label', $form_state['values']['ckeditor_label']);
   }
-  if ($form_state['values']['picture_updated_to_file_entity_2']) {
+  if (isset($form_state['values']['picture_updated_to_file_entity_2']) && $form_state['values']['picture_updated_to_file_entity_2']) {
     variable_set('picture_updated_to_file_entity_2', _picture_update_to_file_entity_2());
   }
   drupal_set_message(t('Your settings have been saved'));
