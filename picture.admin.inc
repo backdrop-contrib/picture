@@ -171,7 +171,7 @@ function picture_mapping_form_validate($form, &$form_state) {
 /**
  * Chooses which picture groups are available in the CKEditor image dialog.
  */
-function picture_ckeditor_settings() {
+function picture_admin_settings() {
   $form = array();
   $picture_mappings = picture_get_mapping_options();
   $ckeditor_mappins = array();
@@ -224,17 +224,24 @@ function picture_ckeditor_settings() {
       '#description' => t('This sets the label for the drop-down select box containing these picture mappings in the CKEditor image dialog'),
       '#default_value' => variable_get('picture_ckeditor_label', 'Image size (required)'),
     );
-
-    $form['submit'] = array(
-      '#type' => 'submit',
-      '#value' => 'Save',
-    );
   }
   else {
     $form['info'] = array(
       '#markup' => t('No picture mappings found. !create', array('!create' => l(t('Create one now.'), 'admin/config/media/picture/add'))),
     );
   }
+  if (module_exists('file_entity') && function_exists('file_type_load_all') && !variable_get('picture_updated_to_file_entity_2', FALSE)) {
+    $form['picture_updated_to_file_entity_2'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Update the file formatter to version 2 of the File Entity module'),
+      '#default_value' => variable_get('picture_updated_to_file_entity_2', FALSE),
+    );
+  }
+
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => 'Save',
+  );
   return $form;
 }
 
@@ -243,13 +250,15 @@ function picture_ckeditor_settings() {
  * It checks that a fallback image style is selected for every
  * picture mapping that has been enabled for the CKEditor image dialog.
  */
-function picture_ckeditor_settings_validate($form, &$form_state) {
+function picture_admin_settings_validate($form, &$form_state) {
   $picture_mappings = picture_mapping_load_all();
-  foreach ($picture_mappings as $picture_mapping) {
-    $machine_name = $picture_mapping->getMachineName();
-    if ($form_state['values'][$machine_name]['enabled'] == 1) {
-      if (empty($form_state['values'][$machine_name]['fallback'])) {
-        form_set_error($machine_name . '][fallback', t('Please choose a fallback image style for this picture mapping'));
+  if ($picture_mappings) {
+    foreach ($picture_mappings as $picture_mapping) {
+      $machine_name = $picture_mapping->getMachineName();
+      if ($form_state['values'][$machine_name]['enabled'] == 1) {
+        if (empty($form_state['values'][$machine_name]['fallback'])) {
+          form_set_error($machine_name . '][fallback', t('Please choose a fallback image style for this picture mapping'));
+        }
       }
     }
   }
@@ -259,22 +268,69 @@ function picture_ckeditor_settings_validate($form, &$form_state) {
  * Submit handler for the picture_ckeditor_settings form. Places chosen picture
  * groups into the variables table.
  */
-function picture_ckeditor_settings_submit($form, &$form_state) {
+function picture_admin_settings_submit($form, &$form_state) {
   $picture_mappings = picture_mapping_load_all();
   $ckeditor_mappings = array();
+  if ($picture_mappings) {
+    // Loop each picture mapping and record the settings.
+    foreach ($picture_mappings as $picture_mapping) {
+      $machine_name = $picture_mapping->getMachineName();
+      $ckeditor_mappings[$machine_name]['enabled'] = $form_state['values'][$machine_name]['enabled'];
+      $ckeditor_mappings[$machine_name]['weight'] = $form_state['values'][$machine_name]['weight'];
+      $ckeditor_mappings[$machine_name]['fallback'] = $form_state['values'][$machine_name]['fallback'];
+    }
 
-  // Loop each picture mapping and record the settings.
-  foreach ($picture_mappings as $picture_mapping) {
-    $machine_name = $picture_mapping->getMachineName();
-    $ckeditor_mappings[$machine_name]['enabled'] = $form_state['values'][$machine_name]['enabled'];
-    $ckeditor_mappings[$machine_name]['weight'] = $form_state['values'][$machine_name]['weight'];
-    $ckeditor_mappings[$machine_name]['fallback'] = $form_state['values'][$machine_name]['fallback'];
+    uasort($ckeditor_mappings, 'picture_compare_weights');
+    variable_set('picture_ckeditor_mappings', $ckeditor_mappings);
+    variable_set('picture_ckeditor_label', $form_state['values']['ckeditor_label']);
   }
-
-  uasort($ckeditor_mappings, 'picture_compare_weights');
-  variable_set('picture_ckeditor_mappings', $ckeditor_mappings);
-  variable_set('picture_ckeditor_label', $form_state['values']['ckeditor_label']);
+  if ($form_state['values']['picture_updated_to_file_entity_2']) {
+    variable_set('picture_updated_to_file_entity_2', _picture_update_to_file_entity_2());
+  }
   drupal_set_message(t('Your settings have been saved'));
+}
+
+/**
+ * Update picture module to version 2 of File Entity module.
+ */
+function _picture_update_to_file_entity_2() {
+  // File Entity is not installed or the installed version is not version 2.
+  if (!module_exists('file_entity') || !function_exists('file_type_load_all')) {
+    return FALSE;
+  }
+  // Picture was already updated.
+  if (variable_get('picture_updated_to_file_entity_2', FALSE)) {
+    return TRUE;
+  }
+  $entity_info = entity_get_info('file');
+  $types = file_type_load_all();
+  foreach ($types as $file_type) {
+    $view_modes = array('default' => array('label' => t('Default'))) + $entity_info['view modes'];
+    foreach (array_keys($view_modes) as $view_mode) {
+      $current_displays = file_displays_load($file_type->type, $view_mode, TRUE);
+      if (isset($current_displays['file_picture']) && $current_displays['file_picture']->status) {
+        if (!isset($current_displays['file_field_picture']) || !$current_displays['file_field_picture']->status) {
+          $display = file_display_new($file_type->type, $view_mode, 'file_field_picture');//clone $current_displays['file_picture'];
+          $display->settings = $current_displays['file_picture']->settings;
+          unset($display->settings['alt']);
+          unset($display->settings['title']);
+          $display->settings['image_link'] = '';
+          $display->settings['colorbox'] = isset($display->settings['picture_mapping']) ? $display->settings['picture_mapping'] : $display->settings['picture_group'];
+          $display->settings['picture_mapping'] = isset($display->settings['picture_mapping']) ? $display->settings['picture_mapping'] : $display->settings['picture_group'];
+          unset($display->settings['picture_group']);
+          $display->status = 1;
+          file_display_save($display);
+        }
+      }
+      elseif (isset($current_displays['file_field_picture'])) {
+        $display = $current_displays['file_field_picture'];
+        $display->settings['picture_mapping'] = isset($display->settings['picture_mapping']) ? $display->settings['picture_mapping'] : $display->settings['picture_group'];
+        unset($display->settings['picture_group']);
+        file_display_save($display);
+      }
+    }
+  }
+  return TRUE;
 }
 
 /**

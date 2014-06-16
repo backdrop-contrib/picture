@@ -7,6 +7,10 @@
 define('PICTURE_EMPTY_IMAGE', '_empty image_');
 define('PICTURE_ORIGINAL_IMAGE', '_original image_');
 
+if (!variable_get('picture_updated_to_file_entity_2', FALSE)) {
+  module_load_include('file_entity_1.inc', 'picture');
+}
+
 /**
  * Implements hook_help().
  */
@@ -50,12 +54,12 @@ function picture_permission() {
  */
 function picture_menu() {
   $items = array();
-  $items['admin/config/media/picture/ckeditor'] = array(
-    'title' => 'CKEditor',
+  $items['admin/config/media/picture/settings'] = array(
+    'title' => 'Settings',
     'type' => MENU_LOCAL_TASK,
-    'description' => 'Choose picture mappings to present in the CKEditor image dialog',
+    'description' => 'Picture settings (CKEditor, File Entity)',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('picture_ckeditor_settings'),
+    'page arguments' => array('picture_admin_settings'),
     'access arguments' => array('administer pictures'),
     'file' => 'picture.admin.inc',
     'weight' => 0,
