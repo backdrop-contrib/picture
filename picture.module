@@ -735,6 +735,11 @@ function theme_picture_formatter_colorbox($variables) {
   }
   $output = theme('picture', $item);
 
+  // If an error happened skip further processing.
+  if (empty($output)) {
+    return $output;
+  }
+
   if (isset($variables['colorbox_group'])) {
     $item['breakpoints'] = $variables['colorbox_group'];
     $item['style_name'] = $variables['colorbox_image_style'];
@@ -796,7 +801,11 @@ function theme_picture($variables) {
 
   $sources = array();
   $output = array();
-  $image = image_load($variables['uri']);
+  if (($image = image_load($variables['uri'])) === FALSE) {
+    watchdog('Picture', 'Unable to load image: %image', array('%image' => $variables['uri']));
+    // If the image couldn't be loaded return nothing.
+    return NULL;
+  }
 
   // All breakpoints and multipliers.
   foreach ($variables['breakpoints'] as $breakpoint_name => $multipliers) {
