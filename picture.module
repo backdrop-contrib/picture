@@ -942,7 +942,7 @@ function theme_picture($variables) {
  *   - attributes: Associative array of attributes to be placed in the img tag.
  */
 function theme_image_srcset($variables) {
-  $attributes = $variables['attributes'];
+  $attributes = isset($variables['attributes']) ? $variables['attributes'] : array();
   if (isset($variables['path']) && !empty($variables['path'])) {
     $attributes['src'] = file_create_url($variables['path']);
   }
