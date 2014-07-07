@@ -20,7 +20,7 @@ function picture_select_breakpoint_group_form($form, &$form_state) {
       '#required' => TRUE,
       '#description' => t('Select a breakpoint group.'),
       '#options' => $options,
-      '#default_value' => $form_state['item']->getBreakpointGroup() ? $form_state['item']->getBreakpointGroup()->name : NULL,
+      '#default_value' => $form_state['item']->getBreakpointGroup() ? $form_state['item']->getBreakpointGroup()->machine_name : NULL,
     );
   }
   else {
@@ -65,7 +65,7 @@ function picture_mapping_form(&$form, &$form_state) {
     '#required' => TRUE,
     '#description' => t('Select a breakpoint group.'),
     '#options' => $options,
-    '#default_value' => $picture_mapping->getBreakpointGroup()->name,
+    '#default_value' => $picture_mapping->getBreakpointGroup()->machine_name,
     '#ajax' => array(
       'callback' => 'picture_mapping_form_change_breakpoint_group',
       'wrapper' => 'picture-mapping-container',
