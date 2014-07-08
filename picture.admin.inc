@@ -238,6 +238,17 @@ function picture_admin_settings() {
     );
   }
 
+  $form['picture_js_scope'] = array(
+    '#title' => t('Picture JavaScript scope'),
+    '#description' => t('For performance reasons, JS should be loaded in the footer. However, you can move the Picture module\'s JS to the header so that it loads before JS from other modules like Views Slideshow.'),
+    '#type' => 'radios',
+    '#options' => array(
+      'header' => t('Header'),
+      'footer' => t('Footer'),
+    ),
+    '#default_value' => variable_get('picture_js_scope', 'footer'),
+  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Save',
@@ -287,6 +298,7 @@ function picture_admin_settings_submit($form, &$form_state) {
   if (isset($form_state['values']['picture_updated_to_file_entity_2']) && $form_state['values']['picture_updated_to_file_entity_2']) {
     variable_set('picture_updated_to_file_entity_2', _picture_update_to_file_entity_2());
   }
+  variable_set('picture_js_scope', $form_state['values']['picture_js_scope']);
   drupal_set_message(t('Your settings have been saved'));
 }
 

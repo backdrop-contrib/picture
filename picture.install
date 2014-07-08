@@ -73,6 +73,8 @@ function picture_schema() {
 function picture_uninstall() {
   variable_del('picture_ckeditor_mappings');
   variable_del('picture_ckeditor_label');
+  variable_del('picture_updated_to_file_entity_2');
+  variable_del('picture_js_scope');
 }
 
 /**
