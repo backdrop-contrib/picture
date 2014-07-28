@@ -170,3 +170,23 @@ function picture_update_7202() {
     }
   }
 }
+
+/**
+ * Update ckeditor settings to the new plugin path.
+ */
+function picture_update_7203() {
+  if (module_exists('ckeditor')) {
+    module_load_include('inc', 'ckeditor', 'includes/ckeditor.admin');
+    $result = db_select('ckeditor_settings', 'ck')
+      ->fields('ck')
+      ->execute()
+      ->fetchAll();
+    foreach ($result as $res) {
+      $res->settings = ckeditor_admin_values_to_settings(unserialize($res->settings));
+      db_update('ckeditor_settings')
+        ->fields(array('settings' => $res->settings))
+        ->condition('name', $res->name)
+        ->execute();
+    }
+  }
+}
