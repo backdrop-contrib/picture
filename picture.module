@@ -38,6 +38,26 @@ function picture_help($path, $arg) {
 }
 
 /**
+ * Implements hook_requirements().
+ */
+function picture_requirements($phase) {
+  $requirements = array();
+  if (module_exists('colorbox')) {
+    $info = system_get_info('module', 'colorbox');
+    $requirements['picture_colorbox'] = array(
+      'title' => t('Picture: Colorbox module version.'),
+      'value' => $info['version'],
+      'severity' => REQUIREMENT_OK,
+    );
+    if (version_compare($info['version'], '7.x-2.5') < 0) {
+      $requirements['picture_colorbox']['description'] = t('The Colorbox module must be version 7.x-2.5 or higher in order to work with the Picture module.');
+      $requirements['picture_colorbox']['severity'] = REQUIREMENT_ERROR;
+    }
+  }
+  return $requirements;
+}
+
+/**
  * Implements hook_permission().
  */
 function picture_permission() {
