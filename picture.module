@@ -1405,7 +1405,7 @@ function picture_get_mapping_breakpoints(PictureMapping $picture_mapping, &$fall
         $multipliers = array_intersect_key($multipliers, $breakpoint->multipliers);
         foreach ($multipliers as $multiplier => $mapping_definition) {
           // Make sure the multiplier still exists.
-          if (!$picture_mapping::isEmptyMappingDefinition($mapping_definition)) {
+          if (!PictureMapping::isEmptyMappingDefinition($mapping_definition)) {
             if ($mapping_definition['mapping_type'] == 'image_style') {
               $image_styles[] = $mapping_definition['image_style'];
             }
