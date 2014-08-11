@@ -93,6 +93,7 @@ function flexslider_picture_field_formatter_view($entity_type, $entity, $field, 
  */
 function flexslider_picture_form_ctools_export_ui_edit_item_form_alter(&$form, &$form_state) {
   if ($form_state['plugin']['schema'] == 'flexslider_optionset') {
+    $form['image_style']['#tree'] = TRUE;
     $form['image_style']['imagestyle_type'] = array(
       '#type' => 'radios',
       '#title' => t('Image type'),
