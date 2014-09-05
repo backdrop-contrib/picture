@@ -4,6 +4,7 @@
  * @file
  * Picture formatter.
  */
+
 define('PICTURE_EMPTY_IMAGE', '_empty image_');
 define('PICTURE_ORIGINAL_IMAGE', '_original image_');
 
@@ -233,6 +234,16 @@ function picture_theme() {
         'title' => NULL,
         'attributes' => array(),
         'srcset' => array(),
+        'sizes' => NULL,
+      ),
+    ),
+    'picture_sizes_formatter' => array(
+      'variables' => array(
+        'item' => NULL,
+        'path' => NULL,
+        'image_styles' => array(),
+        'fallback_image_style' => NULL,
+        'sizes' => NULL,
       ),
     ),
   );
@@ -260,6 +271,24 @@ function picture_field_formatter_info() {
         ),
       ),
     ),
+    'picture_sizes_formatter' => array(
+      'label' => t('Image with sizes'),
+      'field types' => array('image'),
+      'settings' => array(
+        'sizes' => '',
+        'image_styles' => array(),
+        'fallback_image_style' => '',
+        'image_link' => '',
+        'colorbox_settings' => array(
+          'colorbox_group' => '',
+          'colorbox_gallery' => 'post',
+          'colorbox_gallery_custom' => '',
+          'colorbox_caption' => 'auto',
+          'colorbox_caption_custom' => '',
+          'colorbox_multivalue_index' => NULL,
+        ),
+      ),
+    )
   );
 
   return $formatters;
@@ -270,9 +299,18 @@ function picture_field_formatter_info() {
  */
 function picture_field_formatter_settings_form($field, $instance, $view_mode, $form, &$form_state) {
   $display = $instance['display'][$view_mode];
+  $function = "picture_field_formatter_settings_{$display['type']}_form";
   $settings = $display['settings'];
-  $options = picture_get_mapping_options();
+  return $function($field, $instance, $settings);
+}
 
+/**
+ * Helper function.
+ *
+ * @see picture_field_formatter_settings_form()
+ */
+function picture_field_formatter_settings_picture_form($field, $instance, $settings) {
+  $options = picture_get_mapping_options();
   if ($options) {
     $element['picture_mapping'] = array(
       '#title' => t('Picture mapping'),
@@ -405,7 +443,8 @@ function picture_field_formatter_settings_form($field, $instance, $view_mode, $f
     );
 
     // Allow users to hide or set a custom recursion limit.
-    // The module token_tweaks sets a global recursion limit that can not be bypassed.
+    // The module token_tweaks sets a global recursion limit that can not be
+    // bypassed.
     if (module_exists('token') && $recursion_limit = min(variable_get('token_tree_recursion_limit', 3), variable_get('colorbox_token_recursion_limit', 3))) {
       $element['colorbox_settings']['colorbox_token'] = array(
         '#type' => 'fieldset',
@@ -439,6 +478,63 @@ function picture_field_formatter_settings_form($field, $instance, $view_mode, $f
 }
 
 /**
+ * Helper function.
+ *
+ * @see picture_field_formatter_settings_form()
+ */
+function picture_field_formatter_settings_picture_sizes_formatter_form($field, $instance, $settings) {
+  $element = array();
+  $element['sizes'] = array(
+    '#title' => t('Sizes'),
+    '#type' => 'textfield',
+    '#description' => t(
+      'The value of the sizes attribute. See !link for more information.',
+      array(
+      '!link' => l(t('the spec'), 'http://www.whatwg.org/specs/web-apps/current-work/multipage/embedded-content.html#introduction-3:viewport-based-selection-2')
+      )
+    ),
+    '#default_value' => $settings['sizes'],
+    '#required' => TRUE,
+  );
+
+  $image_styles = image_style_options(FALSE);
+  $image_styles[PICTURE_EMPTY_IMAGE] = t('Empty image');
+  $image_styles[PICTURE_ORIGINAL_IMAGE] = t('Original image');
+
+  $element['image_styles'] = array(
+    '#title' => t('Image styles'),
+    '#type' => 'checkboxes',
+    '#default_value' => $settings['image_styles'],
+    '#options' => $image_styles,
+    '#required' => TRUE,
+  );
+
+  $element['fallback_image_style'] = array(
+    '#title' => t('Fallback image style'),
+    '#type' => 'select',
+    '#default_value' => $settings['image_styles'],
+    '#options' => $image_styles,
+    '#required' => TRUE,
+  );
+
+  $link_types = picture_link_types($instance);
+  unset($link_types['colorbox']);
+
+  $element['image_link'] = array(
+    '#title' => t('Link image to'),
+    '#type' => 'select',
+    '#default_value' => $settings['image_link'],
+    '#empty_option' => t('Nothing'),
+    '#options' => $link_types,
+    '#attributes' => array(
+      'class' => array('picture-image-link'),
+    ),
+  );
+
+  return $element;
+}
+
+/**
  * Returns a list of picture mappings for use in a select list.
  */
 function picture_get_mapping_options() {
@@ -446,7 +542,7 @@ function picture_get_mapping_options() {
   $picture_mappings = picture_mapping_load_all();
   if ($picture_mappings && !empty($picture_mappings)) {
     foreach ($picture_mappings as $picture_mapping) {
-      // Exclude old mappings
+      // Exclude old mappings.
       if ($picture_mapping instanceof PictureMapping && (!isset($picture_mapping->disabled) || !$picture_mapping->disabled) && $picture_mapping->hasMappings()) {
         $picture_mapping_options[$picture_mapping->getMachineName()] = $picture_mapping->label();
       }
@@ -460,8 +556,17 @@ function picture_get_mapping_options() {
  */
 function picture_field_formatter_settings_summary($field, $instance, $view_mode) {
   $display = $instance['display'][$view_mode];
+  $function = "picture_field_formatter_settings_{$display['type']}_summary";
   $settings = $display['settings'];
+  return $function($field, $instance, $settings);
+}
 
+/**
+ * Helper function.
+ *
+ * @see picture_field_formatter_settings_summary()
+ */
+function picture_field_formatter_settings_picture_summary($field, $instance, $settings) {
   $summary = array();
 
   $picture_mapping = picture_mapping_load($settings['picture_mapping']);
@@ -485,7 +590,6 @@ function picture_field_formatter_settings_summary($field, $instance, $view_mode)
   else {
     $summary[] = t('Select a responsive image mapping.');
   }
-
 
   // Display the settings for the colorbox if chosen.
   if ($settings['image_link'] == 'colorbox') {
@@ -520,9 +624,51 @@ function picture_field_formatter_settings_summary($field, $instance, $view_mode)
 }
 
 /**
+ * Helper function.
+ *
+ * @see picture_field_formatter_settings_form()
+ */
+function picture_field_formatter_settings_picture_sizes_formatter_summary($field, $instance, $settings) {
+  $summary = array();
+  $summary[] = t('Sizes: @sizes', array('@sizes' => $settings['sizes']));
+
+  $image_styles = image_style_options(FALSE);
+  unset($image_styles['']);
+  $image_styles[PICTURE_EMPTY_IMAGE] = t('Empty image');
+  $image_styles[PICTURE_ORIGINAL_IMAGE] = t('Original image');
+  $selected_styles = array_filter($settings['image_styles']);
+  $summary[] = t(
+    'Image styles: @styles',
+    array(
+      '@styles' => implode(', ', array_intersect_key($image_styles, $selected_styles)),
+    )
+  );
+
+  $summary[] = t('Fallback image style: @style', array('@style' => $image_styles[$settings['fallback_image_style']]));
+
+  $link_types = picture_link_types($instance);
+  // Display this setting only if image is linked.
+  if (isset($link_types[$settings['image_link']])) {
+    $summary[] = filter_xss_admin($link_types[$settings['image_link']]);
+  }
+
+  return implode('<br />', $summary);
+}
+
+/**
  * Implements hook_field_formatter_view().
  */
 function picture_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $function = "picture_field_formatter_{$display['type']}_view";
+  return $function($entity_type, $entity, $field, $instance, $langcode, $items, $display);
+}
+
+/**
+ * Helper function.
+ *
+ * @see picture_field_formatter_view()
+ */
+function picture_field_formatter_picture_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $element = array();
   $settings = $display['settings'];
   // Check if the formatter involves a link.
@@ -588,11 +734,13 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
     }
     $element[$delta] = array(
       '#theme' => $formatter,
-      '#attached' => array('library' => array(
-        array('picture', 'picturefill_head'),
-        array('picture', 'picturefill'),
-        array('picture', 'picture.ajax'),
-      )),
+      '#attached' => array(
+        'library' => array(
+          array('picture', 'picturefill_head'),
+          array('picture', 'picturefill'),
+          array('picture', 'picture.ajax'),
+        ),
+      ),
       '#item' => $item,
       '#image_style' => $fallback_image_style,
       '#breakpoints' => $breakpoint_styles,
@@ -629,18 +777,23 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
         case 'post':
           $gallery_id = 'gallery-' . $entity_id;
           break;
+
         case 'page':
           $gallery_id = 'gallery-all';
           break;
+
         case 'field_post':
           $gallery_id = 'gallery-' . $entity_id . '-' . $colorbox_group_field;
           break;
+
         case 'field_page':
           $gallery_id = 'gallery-' . $colorbox_group_field;
           break;
+
         case 'custom':
           $gallery_id = $colorbox_settings['colorbox_gallery_custom'];
           break;
+
         default:
           $gallery_id = '';
       }
@@ -665,18 +818,23 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
             $caption = '';
           }
           break;
+
         case 'title':
           $caption = $item['title'];
           break;
+
         case 'alt':
           $caption = $item['alt'];
           break;
+
         case 'node_title':
           $caption = $entity_title;
           break;
+
         case 'custom':
           $caption = token_replace($colorbox_settings['colorbox_caption_custom'], array($entity_type => $entity, 'file' => (object) $item), array('clear' => TRUE));
           break;
+
         default:
           $caption = '';
       }
@@ -693,6 +851,78 @@ function picture_field_formatter_view($entity_type, $entity, $field, $instance, 
     }
   }
   return $element;
+}
+
+/**
+ * Helper function.
+ *
+ * @see picture_field_formatter_view()
+ */
+function picture_field_formatter_picture_sizes_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $elements = array();
+  $settings = $display['settings'];
+  // Check if the formatter involves a link.
+  $image_link = $display['settings']['image_link'];
+  if ($image_link == 'content') {
+    $uri = entity_uri($entity_type, $entity);
+  }
+  elseif ($image_link == 'file') {
+    $link_file = TRUE;
+  }
+  elseif ($image_link) {
+    if (isset($entity->$image_link)) {
+      // Support for field translations.
+      $language = field_language($entity_type, $entity, $field['field_name']);
+      $link_field = $entity->$image_link;
+
+      if (isset($link_field[$language])) {
+        $link_values = $link_field[$language];
+      }
+    }
+  }
+
+  $fallback_image_style = '';
+
+  // Check if the user defined a custom fallback image style.
+  if ($settings['fallback_image_style']) {
+    $fallback_image_style = $settings['fallback_image_style'];
+  }
+
+  foreach ($items as $delta => $item) {
+    if (isset($link_file)) {
+      $uri = array(
+        'path' => file_create_url($item['uri']),
+        'options' => array(),
+      );
+    }
+    // Handle multiple link with image values.
+    if (isset($link_values)) {
+      if (isset($link_values[$delta]['url'])) {
+        $uri = array(
+          'path' => $link_values[$delta]['url'],
+          'options' => array('attributes' => $link_values[$delta]['attributes']),
+        );
+        // Handle query fragment if there is any.
+        if (!empty($link_values[$delta]['query'])) {
+          $uri['options']['query'] = $link_values[$delta]['query'];
+        }
+      }
+      // If there are more image values than link values unset the link.
+      else {
+        unset($uri);
+      }
+    }
+    $elements[$delta] = array(
+      '#theme' => 'picture_sizes_formatter',
+      '#item' => $item,
+      '#image_styles' => array_filter($settings['image_styles']),
+      '#fallback_image_style' => $settings['fallback_image_style'],
+      '#sizes' => $settings['sizes'],
+      '#path' => isset($uri) ? $uri : '',
+    );
+
+  }
+  return $elements;
 }
 
 /**
@@ -730,6 +960,58 @@ function theme_picture_formatter($variables) {
   }
 
   return drupal_render($responsive_image);
+}
+
+/**
+ * Theme pictue sizes formatter.
+ */
+function theme_picture_sizes_formatter($variables) {
+  $image = array(
+    '#theme' => 'image_srcset',
+  );
+
+  $item = $variables['item'];
+
+  // Do not output an empty 'title' attribute.
+  if (isset($item['title']) && drupal_strlen($item['title']) > 0) {
+    $image['#title'] = $item['title'];
+  }
+
+  if (isset($item['attributes'])) {
+    $image['#attributes'] = $item['attributes'];
+  }
+
+  $image['#uri'] = _picture_image_style_url($variables['fallback_image_style'], $item['uri']);
+  $image["#alt"] = $item['alt'];
+  $image['#sizes'] = $variables['sizes'];
+
+  if (isset($variables['path'])) {
+    $image['#path'] = $variables['#path'];
+  }
+
+  $srcset = array();
+
+  foreach ($variables['image_styles'] as $image_style_name) {
+    $dims = array(
+      'width' => $item['width'],
+      'height' => $item['height'],
+    );
+    // Get the dimensions.
+    $dimensions = picture_get_image_dimensions(
+      $image_style_name,
+      $dims
+    );
+
+    // Add the image source with its width descriptor.
+    // http://www.w3.org/html/wg/drafts/html/master/embedded-content.html#image-candidate-string
+    $srcset[] = array(
+      'uri' => _picture_image_style_url($image_style_name, $path),
+      'width' => $dimensions['width'] . 'w',
+    );
+  }
+  $image['#srcset'] = $srcset;
+  dpm($image);
+  return drupal_render($image);
 }
 
 /**
@@ -945,6 +1227,7 @@ function theme_picture($variables) {
  *   - path: Either the path of the image file (relative to base_path()) or a
  *     full URL.
  *   - srcset: Array of multiple URI's and sizes/multipliers.
+ *   - sizes: The value for the sizes attribute.
  *   - width: The width of the image (if known).
  *   - height: The height of the image (if known).
  *   - alt: The alternative text for text-based browsers. HTML 4 and XHTML 1.0
@@ -993,7 +1276,7 @@ function theme_image_srcset($variables) {
     }
     $attributes['srcset'] = implode(', ', $srcsets);
   }
-  foreach (array('width', 'height', 'alt', 'title') as $key) {
+  foreach (array('width', 'height', 'alt', 'title', 'sizes') as $key) {
 
     if (isset($variables[$key])) {
       $attributes[$key] = $variables[$key];
