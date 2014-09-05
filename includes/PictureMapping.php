@@ -191,7 +191,7 @@ class PictureMapping {
     $mapping_found = FALSE;
     foreach ($this->mapping as $multipliers) {
       foreach ($multipliers as $mapping_definition) {
-        if (!$this::isEmptyMappingDefinition($mapping_definition)) {
+        if (!PictureMapping::isEmptyMappingDefinition($mapping_definition)) {
           $mapping_found = TRUE;
           break 2;
         }
