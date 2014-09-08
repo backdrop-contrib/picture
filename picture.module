@@ -227,7 +227,7 @@ function picture_theme() {
     'image_srcset' => array(
       'variables' => array(
         'uri' => NULL,
-        'data_uri' => NULL,
+        'path' => NULL,
         'width' => NULL,
         'height' => NULL,
         'alt' => '',
@@ -986,7 +986,7 @@ function theme_picture_sizes_formatter($variables) {
   $image['#sizes'] = $variables['sizes'];
 
   if (isset($variables['path'])) {
-    $image['#path'] = $variables['#path'];
+    $image['#path'] = $variables['path'];
   }
 
   $srcset = array();
@@ -1005,12 +1005,11 @@ function theme_picture_sizes_formatter($variables) {
     // Add the image source with its width descriptor.
     // http://www.w3.org/html/wg/drafts/html/master/embedded-content.html#image-candidate-string
     $srcset[] = array(
-      'uri' => _picture_image_style_url($image_style_name, $path),
+      'uri' => _picture_image_style_url($image_style_name, $item['uri']),
       'width' => $dimensions['width'] . 'w',
     );
   }
   $image['#srcset'] = $srcset;
-  dpm($image);
   return drupal_render($image);
 }
 
@@ -1179,33 +1178,21 @@ function theme_picture($variables) {
     $output[] = '<!--[if IE 9]></video><![endif]-->';
 
     // Fallback image.
-    if ($variables['style_name'] !== PICTURE_EMPTY_IMAGE) {
-      $dimensions = array(
-        'width' => $image->info['width'],
-        'height' => $image->info['height'],
-      );
-      picture_get_image_dimensions($variables['style_name'], $dimensions);
-      $fallback_image = array(
-        '#theme' => 'image_srcset',
-        '#srcset' => array(
-          array(
-            'uri' => _picture_image_style_url($variables['style_name'], $variables['uri']),
-            'width' => $dimensions['width'] . 'w',
-          ),
+    $dimensions = array(
+      'width' => $image->info['width'],
+      'height' => $image->info['height'],
+    );
+    picture_get_image_dimensions($variables['style_name'], $dimensions);
+    $fallback_image = array(
+      '#theme' => 'image_srcset',
+      '#srcset' => array(
+        array(
+          'uri' => _picture_image_style_url($variables['style_name'], $variables['uri']),
+          'width' => $dimensions['width'] . 'w',
         ),
-      );
-    }
-    else {
-      $fallback_image = array(
-        '#theme' => 'image_srcset',
-        '#srcset' => array(
-          array(
-            'data_uri' => _picture_image_style_url($variables['style_name'], $variables['uri']),
-            'width' => '1w',
-          ),
-        ),
-      );
-    }
+      ),
+    );
+
     $fallback_image += array(
       '#alt' => isset($attributes['alt']) ? $attributes['alt'] : '',
       '#title' => isset($attributes['title']) ? $attributes['title'] : '',
@@ -1246,32 +1233,34 @@ function theme_picture($variables) {
  */
 function theme_image_srcset($variables) {
   $attributes = isset($variables['attributes']) ? $variables['attributes'] : array();
-  if (isset($variables['path']) && !empty($variables['path'])) {
-    $attributes['src'] = file_create_url($variables['path']);
+  if (isset($variables['uri']) && !empty($variables['uri'])) {
+    // TODO: remove when https://www.drupal.org/node/1342504 is fixed.
+    if (strpos($variables['uri'], 'data:') === 0) {
+      $attributes['src'] = $variables['uri'];
+    }
+    else {
+      $attributes['src'] = file_create_url($variables['uri']);
+    }
   }
   if (isset($variables['srcset']) && !empty($variables['srcset'])) {
     $srcsets = array();
-    foreach ($variables['srcset'] as $srcset) {
+    foreach ($variables['srcset'] as $src) {
       // URI is mandatory.
-      if (isset($srcset['uri']) && !empty($srcset['uri'])) {
-        $new_source = file_create_url($srcset['uri']);
-        if (isset($srcset['width']) && !empty($srcset['width'])) {
-          $new_source .= ' ' . $srcset['width'];
+      if (isset($src['uri']) && !empty($src['uri'])) {
+        // TODO: remove when https://www.drupal.org/node/1342504 is fixed.
+        if (strpos($src['uri'], 'data:') === 0) {
+          $source = $src['uri'];
         }
-        elseif (isset($srcset['multiplier']) && !empty($srcset['multiplier'])) {
-          $new_source .= ' ' . $srcset['multiplier'];
+        else {
+          $source = file_create_url($src['uri']);
         }
-        $srcsets[] = $new_source;
-      }
-      elseif (isset($srcset['data_uri']) && !empty($srcset['data_uri'])) {
-        $new_source = $srcset['data_uri'];
-        if (isset($srcset['width']) && !empty($srcset['width'])) {
-          $new_source .= ' ' . $srcset['width'];
+        if (isset($src['width']) && !empty($src['width'])) {
+          $source .= ' ' . $src['width'];
         }
-        elseif (isset($srcset['multiplier']) && !empty($srcset['multiplier'])) {
-          $new_source .= ' ' . $srcset['multiplier'];
+        elseif (isset($src['multiplier']) && !empty($src['multiplier'])) {
+          $source .= ' ' . $src['multiplier'];
         }
-        $srcsets[] = $new_source;
+        $srcsets[] = $source;
       }
     }
     $attributes['srcset'] = implode(', ', $srcsets);
@@ -1282,7 +1271,10 @@ function theme_image_srcset($variables) {
       $attributes[$key] = $variables[$key];
     }
   }
-  return '<img' . drupal_attributes($attributes) . ' />';
+  if (isset($variables['path']) && !empty($variables['path'])) {
+    return l('<img ' . drupal_attributes($attributes) . ' />', $variables['path']['path'], array('html' => TRUE) + $variables['path']['options']);
+  }
+  return '<img ' . drupal_attributes($attributes) . ' />';
 }
 
 /**
