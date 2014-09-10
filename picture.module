@@ -693,7 +693,8 @@ function picture_field_formatter_picture_view($entity_type, $entity, $field, $in
   $fallback_image_style = $settings['fallback_image_style'];
   // Support old display settings from 7.x-1.x.
   $mapping_name = isset($display['settings']['picture_mapping']) && !empty($display['settings']['picture_mapping']) ? $display['settings']['picture_mapping'] : $display['settings']['picture_group'];
-  $picture_mapping = picture_mapping_load($mapping_name);
+  // If we haven't saved a picture mapping for this field previously and this isn't a field formatter screen (i.e. panels), load a default mapping.
+  $picture_mapping = isset($mapping_name) && !empty($mapping_name) ? picture_mapping_load($mapping_name) : reset(picture_mapping_load_all());
   $breakpoint_styles = picture_get_mapping_breakpoints($picture_mapping, $fallback_image_style);
 
   // Assume regular display.
