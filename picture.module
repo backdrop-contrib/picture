@@ -1468,23 +1468,23 @@ function picture_image_uri($src) {
   // Remove leading or trailing slashes.
   $src = trim($src, '/');
 
-  // List all visible stream wrappers. Make sure they're also local since the
-  // getDirectoryPath method exists only for classes that extend
-  // DrupalLocalStreamWrapper.
-  $local_visible_stream_wrappers = array_intersect_key(file_get_stream_wrappers(STREAM_WRAPPERS_LOCAL), file_get_stream_wrappers(STREAM_WRAPPERS_VISIBLE));
+  // List all visible stream wrappers.
+  $visible_stream_wrappers = array_intersect_key(file_get_stream_wrappers(STREAM_WRAPPERS_WRITE), file_get_stream_wrappers(STREAM_WRAPPERS_VISIBLE));
   $needles = array();
   $matches = array();
-  foreach ($local_visible_stream_wrappers as $scheme => $data) {
+  foreach ($visible_stream_wrappers as $scheme => $data) {
     $class = file_stream_wrapper_get_class($scheme);
     $stream_wrapper = new $class();
     // Trim leading or trailing slashes since the Directory could be root
     // relative.
-    $needles[$scheme] = trim($base_path . $stream_wrapper->getDirectoryPath(), '/');
+    if (method_exists($stream_wrapper, 'getDirectoryPath')) {
+      $needles[$scheme] = trim($base_path . $stream_wrapper->getDirectoryPath(), '/');
 
-    // Check whether the file stream directory is at the beginning of
-    // the image src. Use === since strpos could return false.
-    if (!empty($needles[$scheme]) && strpos($src, $needles[$scheme]) === 0) {
-      $matches[$scheme] = $needles[$scheme];
+      // Check whether the file stream directory is at the beginning of
+      // the image src. Use === since strpos could return false.
+      if (!empty($needles[$scheme]) && strpos($src, $needles[$scheme]) === 0) {
+        $matches[$scheme] = $needles[$scheme];
+      }
     }
   }
 
