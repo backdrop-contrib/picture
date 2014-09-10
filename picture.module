@@ -966,51 +966,13 @@ function theme_picture_formatter($variables) {
  * Theme pictue sizes formatter.
  */
 function theme_picture_sizes_formatter($variables) {
-  $image = array(
-    '#theme' => 'image_srcset',
+  $variables['image_style'] = $variables['fallback_image_style'];
+  $variables['breakpoints'][BREAKPOINTS_SOURCE_TYPE_MODULE . '.picture.empty_srcset']['1x'] = array(
+    'mapping_type' => 'sizes',
+    'sizes' => $variables['sizes'],
+    'sizes_image_styles' => $variables['image_styles'],
   );
-
-  $item = $variables['item'];
-
-  // Do not output an empty 'title' attribute.
-  if (isset($item['title']) && drupal_strlen($item['title']) > 0) {
-    $image['#title'] = $item['title'];
-  }
-
-  if (isset($item['attributes'])) {
-    $image['#attributes'] = $item['attributes'];
-  }
-
-  $image['#uri'] = _picture_image_style_url($variables['fallback_image_style'], $item['uri']);
-  $image["#alt"] = $item['alt'];
-  $image['#sizes'] = $variables['sizes'];
-
-  if (isset($variables['path'])) {
-    $image['#path'] = $variables['path'];
-  }
-
-  $srcset = array();
-
-  foreach ($variables['image_styles'] as $image_style_name) {
-    $dims = array(
-      'width' => $item['width'],
-      'height' => $item['height'],
-    );
-    // Get the dimensions.
-    $dimensions = picture_get_image_dimensions(
-      $image_style_name,
-      $dims
-    );
-
-    // Add the image source with its width descriptor.
-    // http://www.w3.org/html/wg/drafts/html/master/embedded-content.html#image-candidate-string
-    $srcset[] = array(
-      'uri' => _picture_image_style_url($image_style_name, $item['uri']),
-      'width' => $dimensions['width'] . 'w',
-    );
-  }
-  $image['#srcset'] = $srcset;
-  return drupal_render($image);
+  return theme_picture_formatter($variables);
 }
 
 /**
@@ -1744,4 +1706,37 @@ function picture_mapping_create($set_defaults) {
 
 function picture_mapping_export(PictureMapping $mapping, $indent) {
   return $mapping->export($indent);
+}
+
+/**
+ * Implements hook_ctools_plugin_api().
+ */
+function picture_ctools_plugin_api($module = NULL, $api = NULL) {
+  if ($module == "breakpoints" && $api == "default_breakpoints") {
+    return array("version" => "1");
+  }
+}
+
+/**
+ * Implements hook_default_breakpoints().
+ */
+function picture_default_breakpoints() {
+  $export = array();
+
+  $breakpoint = new stdClass();
+  $breakpoint->disabled = FALSE; /* Edit this to true to make a default breakpoint disabled initially */
+  $breakpoint->api_version = 1;
+  $breakpoint->machine_name = BREAKPOINTS_SOURCE_TYPE_MODULE . '.picture.empty_srcset';
+  $breakpoint->name = 'Empty srcset';
+  $breakpoint->breakpoint = '';
+  $breakpoint->source = 'picture';
+  $breakpoint->source_type = BREAKPOINTS_SOURCE_TYPE_MODULE;
+  $breakpoint->status = 1;
+  $breakpoint->weight = 0;
+  $breakpoint->multipliers = array(
+    '1x' => '1x',
+  );
+  $export[BREAKPOINTS_SOURCE_TYPE_MODULE . '.picture.empty_srcset'] = $breakpoint;
+
+  return $export;
 }
