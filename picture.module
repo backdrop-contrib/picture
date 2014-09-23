@@ -1092,7 +1092,7 @@ function theme_picture($variables) {
               //$image_style->transformMimeType($derivative_mime_type);
               //$derivative_mime_types[] = $derivative_mime_type;
 
-              $srcset[] = _picture_image_style_url($image_style_name, $variables['uri']) . ' ' . $dimensions['width'] . 'w';
+              $srcset[$dimensions['width']] = _picture_image_style_url($image_style_name, $variables['uri']) . ' ' . $dimensions['width'] . 'w';
               $sizes = array_merge(explode(',', $mapping_definition['sizes']), $sizes);
             }
             break;
@@ -1101,16 +1101,19 @@ function theme_picture($variables) {
             // $derivative_mime_type = $mime_type;
             // $image_style->transformMimeType($derivative_mime_type);
             // $derivative_mime_types[] = $derivative_mime_type;
-            $srcset[] = _picture_image_style_url($mapping_definition['image_style'], $variables['uri']) . ' ' . $multiplier;
+            $srcset[$multiplier] = _picture_image_style_url($mapping_definition['image_style'], $variables['uri']) . ' ' . $multiplier;
             break;
         }
       }
+
+      // Sort srcset.
+      ksort($srcset);
 
       $sources[] = array(
         '#theme' => 'picture_source',
         '#srcset' => implode(', ', array_unique($srcset)),
         '#media' => $breakpoint->breakpoint,
-        '#sizes' => implode(',', array_unique($sizes)),
+        '#sizes' => implode(', ', array_unique($sizes)),
       );
     }
   }
@@ -1210,6 +1213,7 @@ function theme_image_srcset($variables) {
     foreach ($variables['srcset'] as $src) {
       // URI is mandatory.
       if (isset($src['uri']) && !empty($src['uri'])) {
+        $key = '';
         // TODO: remove when https://www.drupal.org/node/1342504 is fixed.
         if (strpos($src['uri'], 'data:') === 0) {
           $source = $src['uri'];
@@ -1219,13 +1223,16 @@ function theme_image_srcset($variables) {
         }
         if (isset($src['width']) && !empty($src['width'])) {
           $source .= ' ' . $src['width'];
+          $key = $src['width'];
         }
         elseif (isset($src['multiplier']) && !empty($src['multiplier'])) {
           $source .= ' ' . $src['multiplier'];
+          $key = $src['multiplier'];
         }
-        $srcsets[] = $source;
+        $srcsets[$key] = $source;
       }
     }
+    ksort($srcsets);
     $attributes['srcset'] = implode(', ', $srcsets);
   }
   foreach (array('width', 'height', 'alt', 'title', 'sizes') as $key) {
