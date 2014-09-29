@@ -39,6 +39,26 @@ function picture_help($path, $arg) {
 }
 
 /**
+ * Implements hook_flush_caches().
+ */
+function picture_flush_caches() {
+  // After update.php, caches are flushed. Check if file_entity has updated to
+  // version 2.
+  module_load_include('admin.inc', 'picture');
+  _picture_update_to_file_entity_2();
+}
+
+/**
+ * Implement hook_modules_enabled().
+ */
+function picture_modules_enabled($modules) {
+  if (in_array('file_entity', $modules)) {
+    module_load_include('admin.inc', 'picture');
+    _picture_update_to_file_entity_2();
+  }
+}
+
+/**
  * Implements hook_requirements().
  */
 function picture_requirements($phase) {
