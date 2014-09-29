@@ -1559,7 +1559,7 @@ function picture_wysiwyg_plugin($editor, $version) {
       'path' => drupal_get_path('module', 'picture') .'/ckeditor/plugins/',
       'load' => TRUE,
       'extensions' => array('picture_ckeditor' => t('Responsive images with the Picture Module')),
-      'url' => 'http://drupal.org/projects/picture',
+      'url' => 'https://www.drupal.org/project/picture',
     ));
   }
 }
