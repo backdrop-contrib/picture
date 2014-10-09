@@ -141,48 +141,102 @@ function picture_mapping_save(PictureMapping $mapping) {
  */
 function picture_library() {
   $libraries = array();
-  $libraries['picturefill_head'] = array(
-    'title' => t('Picturefill head fix'),
-    'version' => '2.0',
-    'js' => array(
-      'document.createElement( "picture" );' => array(
-        'type' => 'inline',
-        'weight' => -10,
-        'group' => JS_DEFAULT,
-        'scope' => 'header',
-        'need_jquery' => FALSE,
-      ),
-    ),
-  );
-  $libraries['picturefill'] = array(
-    'title' => t('Picturefill'),
-    'website' => 'https://github.com/scottjehl/picturefill',
-    'version' => '2.0',
-    'js' => array(
-      drupal_get_path('module', 'picture') . '/picturefill2/picturefill.js' => array(
-        'type' => 'file',
-        'weight' => -10,
-        'group' => JS_DEFAULT,
-        'scope' => variable_get('picture_js_scope', 'footer'),
-        'need_jquery' => FALSE,
-        'async' => TRUE,
-      ),
-    ),
-  );
-  $libraries['picture.ajax'] = array(
-    'title' => t('Ajax support for picture'),
-    'version' => VERSION,
-    'js' => array(
-      drupal_get_path('module', 'picture') . '/picture.js' => array(
-        'type' => 'file',
-        'weight' => -10,
-        'group' => JS_DEFAULT,
-        'scope' => variable_get('picture_js_scope', 'footer'),
-        'need_jquery' => FALSE,
-        'async' => TRUE,
-      ),
-    ),
-  );
+  switch (variable_get('picture_polyfill_version', 'min')) {
+    case 'min':
+      $libraries['picturefill_head'] = array(
+        'title' => t('Picturefill head fix'),
+        'version' => '2.0',
+        'js' => array(
+          'document.createElement( "picture" );' => array(
+            'type' => 'inline',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'scope' => 'header',
+            'need_jquery' => FALSE,
+          ),
+        ),
+      );
+
+      $libraries['picturefill'] = array(
+        'title' => t('Picturefill'),
+        'website' => 'https://github.com/scottjehl/picturefill',
+        'version' => '2.0',
+        'js' => array(
+          drupal_get_path('module', 'picture') . '/picturefill2/picturefill.min.js' => array(
+            'type' => 'file',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'scope' => variable_get('picture_js_scope', 'footer'),
+            'need_jquery' => FALSE,
+            'async' => TRUE,
+          ),
+        ),
+      );
+
+      $libraries['picture.ajax'] = array(
+        'title' => t('Ajax support for picture'),
+        'version' => VERSION,
+        'js' => array(
+          drupal_get_path('module', 'picture') . '/picture.min.js' => array(
+            'type' => 'file',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'scope' => variable_get('picture_js_scope', 'footer'),
+            'need_jquery' => FALSE,
+            'async' => TRUE,
+          ),
+        ),
+      );
+      break;
+
+    case 'dev':
+      $libraries['picturefill_head'] = array(
+        'title' => t('Picturefill head fix'),
+        'version' => '2.0',
+        'js' => array(
+          'document.createElement( "picture" );' => array(
+            'type' => 'inline',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'scope' => 'header',
+            'need_jquery' => FALSE,
+          ),
+        ),
+      );
+
+      $libraries['picturefill'] = array(
+        'title' => t('Picturefill'),
+        'website' => 'https://github.com/scottjehl/picturefill',
+        'version' => '2.0',
+        'js' => array(
+          drupal_get_path('module', 'picture') . '/picturefill2/picturefill.js' => array(
+            'type' => 'file',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'scope' => variable_get('picture_js_scope', 'footer'),
+            'need_jquery' => FALSE,
+            'async' => TRUE,
+          ),
+        ),
+      );
+
+      $libraries['picture.ajax'] = array(
+        'title' => t('Ajax support for picture'),
+        'version' => VERSION,
+        'js' => array(
+          drupal_get_path('module', 'picture') . '/picture.js' => array(
+            'type' => 'file',
+            'weight' => -10,
+            'group' => JS_DEFAULT,
+            'scope' => variable_get('picture_js_scope', 'footer'),
+            'need_jquery' => FALSE,
+            'async' => TRUE,
+          ),
+        ),
+      );
+      break;
+  }
+
   return $libraries;
 }
 
