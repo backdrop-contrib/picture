@@ -54,7 +54,8 @@ function picture_flush_caches() {
 function picture_modules_enabled($modules) {
   if (in_array('file_entity', $modules)) {
     module_load_include('admin.inc', 'picture');
-    _picture_update_to_file_entity_2();
+    module_load_include('module', 'file_entity');
+    variable_set('picture_updated_to_file_entity_2', _picture_update_to_file_entity_2());
   }
 }
 
