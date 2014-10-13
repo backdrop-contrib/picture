@@ -81,6 +81,8 @@ class PictureMapping {
        $data['id'] = $this->id;
     }
     $return = drupal_write_record('picture_mapping', $data, $update);
+    module_load_include('info.inc', 'field');
+    field_info_cache_clear();
     $this->setValues(ctools_export_get_schema('picture_mapping'), $data);
     $this->loadBreakpointGroup();
     return $return;

@@ -327,12 +327,14 @@ function picture_theme() {
  * Implements hook_field_formatter_info().
  */
 function picture_field_formatter_info() {
-  $formatters = array(
-    'picture' => array(
+  $formatters = array();
+  $mappings = array_keys(picture_get_mapping_options());
+  if ($mappings) {
+    $formatters['picture'] = array(
       'label' => t('Picture'),
       'field types' => array('image'),
       'settings' => array(
-        'picture_mapping' => '',
+        'picture_mapping' => reset($mappings),
         'fallback_image_style' => '',
         'image_link' => '',
         'colorbox_settings' => array(
@@ -343,26 +345,26 @@ function picture_field_formatter_info() {
           'colorbox_caption_custom' => '',
           'colorbox_multivalue_index' => NULL,
         ),
+      ),
+    );
+  }
+  $formatters['picture_sizes_formatter'] = array(
+    'label' => t('Image with sizes'),
+    'field types' => array('image'),
+    'settings' => array(
+      'sizes' => '',
+      'image_styles' => array(),
+      'fallback_image_style' => '',
+      'image_link' => '',
+      'colorbox_settings' => array(
+        'colorbox_group' => '',
+        'colorbox_gallery' => 'post',
+        'colorbox_gallery_custom' => '',
+        'colorbox_caption' => 'auto',
+        'colorbox_caption_custom' => '',
+        'colorbox_multivalue_index' => NULL,
       ),
     ),
-    'picture_sizes_formatter' => array(
-      'label' => t('Image with sizes'),
-      'field types' => array('image'),
-      'settings' => array(
-        'sizes' => '',
-        'image_styles' => array(),
-        'fallback_image_style' => '',
-        'image_link' => '',
-        'colorbox_settings' => array(
-          'colorbox_group' => '',
-          'colorbox_gallery' => 'post',
-          'colorbox_gallery_custom' => '',
-          'colorbox_caption' => 'auto',
-          'colorbox_caption_custom' => '',
-          'colorbox_multivalue_index' => NULL,
-        ),
-      ),
-    )
   );
 
   return $formatters;
