@@ -145,7 +145,7 @@ function picture_library() {
     case 'min':
       $libraries['picturefill_head'] = array(
         'title' => t('Picturefill head fix'),
-        'version' => '2.0',
+        'version' => '2.1.0',
         'js' => array(
           'document.createElement( "picture" );' => array(
             'type' => 'inline',
