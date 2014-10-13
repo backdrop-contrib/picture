@@ -561,6 +561,14 @@ function picture_field_formatter_settings_picture_form($field, $instance, $setti
  */
 function picture_field_formatter_settings_picture_sizes_formatter_form($field, $instance, $settings) {
   $element = array();
+  if ($instance['entity_type'] == 'file') {
+    if (empty($settings['sizes'])) {
+      $settings['sizes'] = '(min-width: 0px)';
+    }
+    if (empty(array_filter($settings['image_styles']))) {
+      $settings['image_styles'][PICTURE_EMPTY_IMAGE] = PICTURE_EMPTY_IMAGE;
+    }
+  }
   $element['sizes'] = array(
     '#title' => t('Sizes'),
     '#type' => 'textfield',
