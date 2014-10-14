@@ -565,7 +565,8 @@ function picture_field_formatter_settings_picture_sizes_formatter_form($field, $
     if (empty($settings['sizes'])) {
       $settings['sizes'] = '(min-width: 0px)';
     }
-    if (empty(array_filter($settings['image_styles']))) {
+    $styles = array_filter($settings['image_styles']);
+    if (empty($styles)) {
       $settings['image_styles'][PICTURE_EMPTY_IMAGE] = PICTURE_EMPTY_IMAGE;
     }
   }
