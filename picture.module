@@ -1458,6 +1458,10 @@ function _picture_filter_prepare_image($image) {
   $fallback_image_style = '';
   $mapping_id = isset($attributes['data-picture-mapping']) ? $attributes['data-picture-mapping'] : $attributes['data-picture-group'];
   $mappings = picture_mapping_load($mapping_id);
+  // Make sure we have valid mappings.
+  if (empty($mappings)) {
+    return FALSE;
+  }
   $breakpoint_styles = picture_get_mapping_breakpoints($mappings, $fallback_image_style);
 
   // Make sure we have a src attribute.
