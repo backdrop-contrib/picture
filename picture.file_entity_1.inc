@@ -115,7 +115,7 @@ function picture_file_formatter_picture_settings($form, &$form_state, $settings)
     foreach ($picture_mappings as $machine_name => $picture_mapping) {
       $breakpoint_group = $picture_mapping->getBreakpointGroup();
       if ($breakpoint_group) {
-        $picture_group_options[$machine_name] = $breakpoint_group->name;
+        $picture_group_options[$machine_name] = $picture_mapping->label;
       }
     }
   }
