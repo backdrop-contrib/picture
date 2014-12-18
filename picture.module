@@ -1170,10 +1170,23 @@ function theme_picture($variables) {
 
   $sources = array();
   $output = array();
-  if (($image_info = image_get_info($variables['uri'])) === FALSE) {
-    watchdog('Picture', 'Unable to load image: %image', array('%image' => $variables['uri']));
-    // If the image couldn't be loaded return nothing.
-    return NULL;
+  // If we know width and height we use them, if not we should get image info
+  if (!empty($variables['width']) && !empty($variables['height'])) {
+    $dimensions = array(
+      'width' => $variables['width'],
+      'height' => $variables['height'],
+    );
+  }
+  else {
+    if (($image_info = image_get_info($variables['uri'])) === FALSE) {
+      watchdog('Picture', 'Unable to load image: %image', array('%image' => $variables['uri']));
+      // If the image couldn't be loaded return nothing.
+      return NULL;
+    }
+    $dimensions = array(
+      'width' => $image_info['width'],
+      'height' => $image_info['height'],
+    );
   }
 
   // All breakpoints and multipliers.
@@ -1187,10 +1200,7 @@ function theme_picture($variables) {
         switch ($mapping_definition['mapping_type']) {
           case 'sizes':
             foreach (array_filter($mapping_definition['sizes_image_styles']) as $image_style_name) {
-              $dimensions = array(
-                'width' => $image_info['width'],
-                'height' => $image_info['height'],
-              );
+
               picture_get_image_dimensions($image_style_name, $dimensions);
               // Get mime type.
               //$derivative_mime_type = $mime_type;
@@ -1249,10 +1259,6 @@ function theme_picture($variables) {
     $output[] = '<!--[if IE 9]></video><![endif]-->';
 
     // Fallback image.
-    $dimensions = array(
-      'width' => $image_info['width'],
-      'height' => $image_info['height'],
-    );
     picture_get_image_dimensions($variables['style_name'], $dimensions);
     $srcset = array('uri' => _picture_image_style_url($variables['style_name'], $variables['uri']));
     if (!empty($dimensions['width'])) {
