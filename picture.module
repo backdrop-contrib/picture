@@ -1254,14 +1254,13 @@ function theme_picture($variables) {
       'height' => $image_info['height'],
     );
     picture_get_image_dimensions($variables['style_name'], $dimensions);
+    $srcset = array('uri' => _picture_image_style_url($variables['style_name'], $variables['uri']));
+    if (!empty($dimensions['width'])) {
+      $srcset['width'] = $dimensions['width'] . 'w';
+    }
     $fallback_image = array(
       '#theme' => 'image_srcset',
-      '#srcset' => array(
-        array(
-          'uri' => _picture_image_style_url($variables['style_name'], $variables['uri']),
-          'width' => $dimensions['width'] . 'w',
-        ),
-      ),
+      '#srcset' => array($srcset),
     );
 
     $fallback_image += array(
