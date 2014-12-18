@@ -138,19 +138,21 @@ class PictureMapping {
       $breakpoints = $breakpoint_group->breakpoints;
       foreach ($breakpoints as $breakpoint_id) {
         $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint_id);
-        // Get the mapping for the default multiplier.
-        $all_mappings[$breakpoint_id]['1x'] = '';
-        if (isset($loaded_mappings[$breakpoint->machine_name]['1x'])) {
-          $all_mappings[$breakpoint_id]['1x'] = $loaded_mappings[$breakpoint->machine_name]['1x'];
-        }
+        if ($breakpoint) {
+          // Get the mapping for the default multiplier.
+          $all_mappings[$breakpoint_id]['1x'] = '';
+          if (isset($loaded_mappings[$breakpoint->machine_name]['1x'])) {
+            $all_mappings[$breakpoint_id]['1x'] = $loaded_mappings[$breakpoint->machine_name]['1x'];
+          }
 
-        // Get the mapping for the other multipliers.
-        if (isset($breakpoint->multipliers) && !empty($breakpoint->multipliers)) {
-          foreach ($breakpoint->multipliers as $multiplier => $status) {
-            if ($status) {
-              $all_mappings[$breakpoint_id][$multiplier] = '';
-              if (isset($loaded_mappings[$breakpoint->machine_name][$multiplier])) {
-                $all_mappings[$breakpoint_id][$multiplier] = $loaded_mappings[$breakpoint->machine_name][$multiplier];
+          // Get the mapping for the other multipliers.
+          if (isset($breakpoint->multipliers) && !empty($breakpoint->multipliers)) {
+            foreach ($breakpoint->multipliers as $multiplier => $status) {
+              if ($status) {
+                $all_mappings[$breakpoint_id][$multiplier] = '';
+                if (isset($loaded_mappings[$breakpoint->machine_name][$multiplier])) {
+                  $all_mappings[$breakpoint_id][$multiplier] = $loaded_mappings[$breakpoint->machine_name][$multiplier];
+                }
               }
             }
           }
