@@ -23,6 +23,10 @@ function template_preprocess_flexslider_picture_list(&$vars) {
     // Get the breakpoints based on the mapping.
     $fallback_image_style = $optionset->fallback;
     $mappings = picture_mapping_load($optionset->mapping);
+    if (!$mappings) {
+      trigger_error("Unable to load picture mapping {$optionset->mapping}.", E_USER_ERROR);
+      return;
+    }
     $breakpoint_styles = picture_get_mapping_breakpoints($mappings, $fallback_image_style);
 
     // If colorbox is enabled build additional configuration.
@@ -36,10 +40,16 @@ function template_preprocess_flexslider_picture_list(&$vars) {
 
       $colorbox_fallback_image_style = $optionset->options['colorboxFallbackImageStyle'];
       $mappings = picture_mapping_load($optionset->options['colorboxImageStyle']);
-      $colorbox_breakpoints = picture_get_mapping_breakpoints($mappings, $colorbox_fallback_image_style);
-      // Grouping ID for the colorbox gallery. Use more_entropy to ensure the
-      // php function works on every environment (cygwin).
-      $colorbox_group_id = uniqid('flexgroup', TRUE);
+      if (!$mappings) {
+        trigger_error("Unable to load picture mapping {$optionset->options['colorboxImageStyle']}.", E_USER_ERROR);
+        $optionset->options['colorboxEnabled'] = FALSE;
+      }
+      else {
+        $colorbox_breakpoints = picture_get_mapping_breakpoints($mappings, $colorbox_fallback_image_style);
+        // Grouping ID for the colorbox gallery. Use more_entropy to ensure the
+        // php function works on every environment (cygwin).
+        $colorbox_group_id = uniqid('flexgroup', TRUE);
+      }
     }
 
     // Prepare the item slides to be passed to render().

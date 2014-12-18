@@ -780,7 +780,22 @@ function picture_field_formatter_picture_view($entity_type, $entity, $field, $in
   // Support old display settings from 7.x-1.x.
   $mapping_name = isset($display['settings']['picture_mapping']) && !empty($display['settings']['picture_mapping']) ? $display['settings']['picture_mapping'] : $display['settings']['picture_group'];
   // If we haven't saved a picture mapping for this field previously and this isn't a field formatter screen (i.e. panels), load a default mapping.
-  $picture_mapping = isset($mapping_name) && !empty($mapping_name) ? picture_mapping_load($mapping_name) : reset(picture_mapping_load_all());
+  $picture_mapping = FALSE;
+  if (isset($mapping_name) && !empty($mapping_name)) {
+    $picture_mapping = picture_mapping_load($mapping_name);
+    if (!$picture_mapping) {
+      trigger_error("Unable to load picture mapping $mapping_name.", E_USER_ERROR);
+      return $element;
+    }
+  }
+  else {
+    $all_mappings = picture_mapping_load_all();
+    $picture_mapping = reset($all_mappings);
+    if (!$picture_mapping) {
+      trigger_error("No picture mappings have been defined yet.", E_USER_ERROR);
+      return $element;
+    }
+  }
   $breakpoint_styles = picture_get_mapping_breakpoints($picture_mapping, $fallback_image_style);
 
   // Assume regular display.
@@ -792,6 +807,10 @@ function picture_field_formatter_picture_view($entity_type, $entity, $field, $in
   if (module_exists('colorbox') && $display['settings']['image_link'] == 'colorbox') {
     $formatter = 'picture_formatter_colorbox';
     $mappings = picture_mapping_load($display['settings']['colorbox_settings']['colorbox_group']);
+    if (!$mappings) {
+      trigger_error("Unable to load picture mapping {$display['settings']['colorbox_settings']['colorbox_group']}.", E_USER_ERROR);
+      return $element;
+    }
     $colorbox_breakpoints = picture_get_mapping_breakpoints($mappings, $colorbox_fallback_image_style);
   }
 

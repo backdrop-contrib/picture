@@ -46,6 +46,10 @@ function picture_file_formatter_picture_view($file, $display, $langcode) {
     $fallback_image_style = '';
     $group_name = $display['settings']['picture_group'];
     $mappings = picture_mapping_load($group_name);
+    if (!$mappings) {
+      trigger_error("Unable to load picture mapping $group_name.", E_USER_ERROR);
+      return;
+    }
     $breakpoint_styles = picture_get_mapping_breakpoints($mappings, $fallback_image_style);
 
     if (isset($display['settings']['fallback_image_style']) && !empty($display['settings']['fallback_image_style'])) {
