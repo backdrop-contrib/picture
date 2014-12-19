@@ -1130,7 +1130,10 @@ function theme_picture_formatter_colorbox($variables) {
     }
 
     // Do not load picture automatically.
-    $colorbox = str_replace('span data-picture=""', 'span data-picture-lazy="lazy"', $colorbox);
+    $colorbox = str_replace('<picture', '<span lazyload="lazyload"', $colorbox);
+    $colorbox = str_replace('</picture>', '</span>', $colorbox);
+    $colorbox = str_replace(' srcset="', ' data-srcset="', $colorbox);
+
     $output = l($output, current_path(), $options) . $colorbox;
   }
   return $output;
