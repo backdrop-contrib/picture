@@ -1170,7 +1170,7 @@ function theme_picture($variables) {
 
   $sources = array();
   $output = array();
-  // If we know width and height we use them, if not we should get image info
+  // If we know width and height we use them, if not we should get image info.
   if (!empty($variables['width']) && !empty($variables['height'])) {
     $dimensions = array(
       'width' => $variables['width'],
@@ -1200,14 +1200,14 @@ function theme_picture($variables) {
         switch ($mapping_definition['mapping_type']) {
           case 'sizes':
             foreach (array_filter($mapping_definition['sizes_image_styles']) as $image_style_name) {
-
-              picture_get_image_dimensions($image_style_name, $dimensions);
+              $dimensions_clone = $dimensions;
+              picture_get_image_dimensions($image_style_name, $dimensions_clone);
               // Get mime type.
               //$derivative_mime_type = $mime_type;
               //$image_style->transformMimeType($derivative_mime_type);
               //$derivative_mime_types[] = $derivative_mime_type;
 
-              $srcset[$dimensions['width']] = _picture_image_style_url($image_style_name, $variables['uri']) . ' ' . $dimensions['width'] . 'w';
+              $srcset[$dimensions_clone['width']] = _picture_image_style_url($image_style_name, $variables['uri']) . ' ' . $dimensions_clone['width'] . 'w';
               $sizes = array_merge(explode(',', $mapping_definition['sizes']), $sizes);
             }
             break;
@@ -1275,9 +1275,10 @@ function theme_picture($variables) {
     $srcset = array(
       'uri' => $src,
     );
-    picture_get_image_dimensions($variables['style_name'], $dimensions);
-    if (!empty($dimensions['width'])) {
-      $srcset['width'] = $dimensions['width'] . 'w';
+    $dimensions_clone = $dimensions;
+    picture_get_image_dimensions($variables['style_name'], $dimensions_clone);
+    if (!empty($dimensions_clone['width'])) {
+      $srcset['width'] = $dimensions_clone['width'] . 'w';
     }
     $plus_ie8_fallback = array(
       '#theme' => 'image_srcset',
