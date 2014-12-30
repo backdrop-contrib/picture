@@ -1265,7 +1265,7 @@ function theme_picture($variables) {
     // Fallback image for < IE9.
     $min_ie9_fallback = array(
       '#theme' => 'image',
-      '#src' => $src,
+      '#path' => $src,
       '#alt' => isset($attributes['alt']) ? $attributes['alt'] : '',
       '#title' => isset($attributes['title']) ? $attributes['title'] : '',
       '#attributes' => array_diff_key($attributes, array('alt' => '', 'title' => '')),
