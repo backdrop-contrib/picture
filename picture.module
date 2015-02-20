@@ -598,7 +598,7 @@ function picture_field_formatter_settings_picture_sizes_formatter_form($field, $
   $element['fallback_image_style'] = array(
     '#title' => t('Fallback image style'),
     '#type' => 'select',
-    '#default_value' => $settings['image_styles'],
+    '#default_value' => $settings['fallback_image_style'],
     '#options' => $image_styles,
     '#required' => TRUE,
   );
