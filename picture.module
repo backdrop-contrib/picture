@@ -429,7 +429,7 @@ function picture_field_formatter_settings_picture_form($field, $instance, $setti
       '#collapsible' => TRUE,
       '#states' => array(
         'visible' => array(
-          ':input[name$="[settings][image_link]"].picture-image-link' => array('value' => 'colorbox'),
+          ':input[name$="' . $field['field_name'] . '][settings_edit_form][settings][image_link]"].picture-image-link' => array('value' => 'colorbox'),
         ),
       ),
     );
