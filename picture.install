@@ -72,7 +72,7 @@ function picture_schema() {
  */
 function picture_install() {
   module_load_include('admin.inc', 'picture');
-  _picture_update_to_file_entity_2();
+  variable_set('picture_updated_to_file_entity_2', _picture_update_to_file_entity_2());
 }
 
 /**
