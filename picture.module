@@ -131,7 +131,7 @@ function picture_library() {
     case 'min':
       $libraries['picturefill_head'] = array(
         'title' => t('Picturefill head fix'),
-        'version' => '2.1.0',
+        'version' => '2.3.1',
         'js' => array(
           'document.createElement( "picture" );' => array(
             'type' => 'inline',
@@ -146,7 +146,7 @@ function picture_library() {
       $libraries['picturefill'] = array(
         'title' => t('Picturefill'),
         'website' => 'https://github.com/scottjehl/picturefill',
-        'version' => '2.0',
+        'version' => '2.3.1',
         'js' => array(
           drupal_get_path('module', 'picture') . '/picturefill2/picturefill.min.js' => array(
             'type' => 'file',
@@ -178,7 +178,7 @@ function picture_library() {
     case 'dev':
       $libraries['picturefill_head'] = array(
         'title' => t('Picturefill head fix'),
-        'version' => '2.0',
+        'version' => '2.3.1',
         'js' => array(
           'document.createElement( "picture" );' => array(
             'type' => 'inline',
@@ -193,7 +193,7 @@ function picture_library() {
       $libraries['picturefill'] = array(
         'title' => t('Picturefill'),
         'website' => 'https://github.com/scottjehl/picturefill',
-        'version' => '2.0',
+        'version' => '2.3.1',
         'js' => array(
           drupal_get_path('module', 'picture') . '/picturefill2/picturefill.js' => array(
             'type' => 'file',
