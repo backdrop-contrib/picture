@@ -1036,6 +1036,7 @@ function theme_picture_formatter($variables) {
     '#breakpoints' => $variables['breakpoints'],
     '#uri' => $item['uri'],
     '#alt' => isset($item['alt']) ? $item['alt'] : '',
+    '#attributes' => isset($item['attributes']) ? $item['attributes'] : NULL,
   );
   if (isset($item['title']) && drupal_strlen($item['title']) != 0) {
     $responsive_image['#title'] = $item['title'];
