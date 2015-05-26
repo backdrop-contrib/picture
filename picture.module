@@ -1324,7 +1324,14 @@ function theme_picture(array $variables) {
  *   - attributes: Associative array of attributes to be placed in the img tag.
  */
 function theme_image_srcset(array $variables) {
+  // Sizes is mandatory, so make sure the key is set, default is 100vw.
+  if (!isset($variables['sizes']) || empty($variables['sizes'])) {
+    $attributes['sizes'] = '100vw';
+  }
+
+  // Make sure we have an array.
   $attributes = isset($variables['attributes']) ? $variables['attributes'] : array();
+
   if (isset($variables['uri']) && !empty($variables['uri'])) {
     // TODO: remove when https://www.drupal.org/node/1342504 is fixed.
     if (strpos($variables['uri'], 'data:') === 0) {
@@ -1362,7 +1369,6 @@ function theme_image_srcset(array $variables) {
     $attributes['srcset'] = implode(', ', $srcsets);
   }
   foreach (array('width', 'height', 'alt', 'title', 'sizes') as $key) {
-
     if (isset($variables[$key])) {
       $attributes[$key] = $variables[$key];
     }
