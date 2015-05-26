@@ -209,7 +209,9 @@ function picture_admin_settings() {
       );
       $form[$machine_name]['css'] = array(
         '#type' => 'item',
-        '#markup' => 'Consider using the selector <code>span[data-picture-mapping="' . $machine_name . '"]</code> in your theme CSS.',
+        '#markup' => t('Consider using the selector <code>span[data-picture-mapping="@machine_name"]</code> in your theme CSS.', array(
+          '@machine_name' => $machine_name,
+        )),
       );
       $form[$machine_name]['weight'] = array(
         '#type' => 'select',
