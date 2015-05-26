@@ -1248,7 +1248,7 @@ function theme_picture(array $variables) {
     $output[] = '<!--[if IE 9]></video><![endif]-->';
     $src = _picture_image_style_url($variables['style_name'], $variables['uri']);
 
-    if (variable_get('picture_fallback_method', 'src')) {
+    if (variable_get('picture_fallback_method', 'src') === 'src') {
       $min_ie9_fallback = array(
         '#theme' => 'image',
         '#path' => $src,
