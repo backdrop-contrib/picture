@@ -254,6 +254,7 @@ function picture_theme() {
         'title' => NULL,
         'attributes' => array(),
         'breakpoints' => array(),
+        'timestamp' => NULL,
       ),
     ),
     'picture_formatter' => array(
@@ -1037,6 +1038,7 @@ function theme_picture_formatter($variables) {
     '#uri' => $item['uri'],
     '#alt' => isset($item['alt']) ? $item['alt'] : '',
     '#attributes' => isset($item['attributes']) ? $item['attributes'] : NULL,
+    '#timestamp' => $item['timestamp'],
   );
   if (isset($item['title']) && drupal_strlen($item['title']) != 0) {
     $responsive_image['#title'] = $item['title'];
@@ -1196,7 +1198,7 @@ function theme_picture(array $variables) {
               // $derivative_mime_type = $mime_type;
               // $image_style->transformMimeType($derivative_mime_type);
               // $derivative_mime_types[] = $derivative_mime_type;
-              $srcset[$dimensions_clone['width']] = _picture_image_style_url($image_style_name, $variables['uri']) . ' ' . $dimensions_clone['width'] . 'w';
+              $srcset[$dimensions_clone['width']] = _picture_image_style_url($image_style_name, $variables['uri'], $variables['timestamp']) . ' ' . $dimensions_clone['width'] . 'w';
               $sizes = array_merge(explode(',', $mapping_definition['sizes']), $sizes);
             }
             break;
@@ -1206,7 +1208,7 @@ function theme_picture(array $variables) {
             // $derivative_mime_type = $mime_type;
             // $image_style->transformMimeType($derivative_mime_type);
             // $derivative_mime_types[] = $derivative_mime_type;
-            $srcset[$multiplier] = _picture_image_style_url($mapping_definition['image_style'], $variables['uri']) . ' ' . $multiplier;
+            $srcset[$multiplier] = _picture_image_style_url($mapping_definition['image_style'], $variables['uri'], $variables['timestamp']) . ' ' . $multiplier;
             break;
         }
       }
@@ -1247,7 +1249,7 @@ function theme_picture(array $variables) {
     $output[] = '<!--[if IE 9]><video style="display: none;"><![endif]-->';
     $output = array_merge($output, array_map('drupal_render', $sources));
     $output[] = '<!--[if IE 9]></video><![endif]-->';
-    $src = _picture_image_style_url($variables['style_name'], $variables['uri']);
+    $src = _picture_image_style_url($variables['style_name'], $variables['uri'], $variables['timestamp']);
 
     if (variable_get('picture_fallback_method', 'src') === 'src') {
       $min_ie9_fallback = array(
@@ -1739,14 +1741,21 @@ function picture_ckeditor_plugin() {
 /**
  * Wrapper around image_style_url() so we can return an empty image.
  */
-function _picture_image_style_url($style_name, $path) {
+function _picture_image_style_url($style_name, $path, $timestamp = NULL) {
   if ($style_name == PICTURE_EMPTY_IMAGE) {
     return 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
   }
   if ($style_name == PICTURE_ORIGINAL_IMAGE) {
-    return file_create_url($path);
+    $url = file_create_url($path);
   }
-  return image_style_url($style_name, $path);
+  else {
+    $url = image_style_url($style_name, $path);
+  }
+
+  if (!empty($timestamp)) {
+    $url .= (strpos($url, '?') !== FALSE ? '&' : '?') . drupal_http_build_query(array('timestamp' => $timestamp));
+  }
+  return $url;
 }
 
 /**
