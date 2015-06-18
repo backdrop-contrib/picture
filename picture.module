@@ -1866,6 +1866,9 @@ function picture_link_types($instance) {
  * Picture mapping factory.
  */
 function picture_mapping_object_factory($schema, $data) {
+  if (!class_exists('PictureMapping')) {
+    module_load_include('php', 'picture', 'includes/PictureMapping');
+  }
   $mapping = new PictureMapping();
   $mapping->setValues($schema, $data);
   return $mapping;
