@@ -867,6 +867,9 @@ function picture_field_formatter_picture_view($entity_type, $entity, $field, $in
         $link_values = $link_field[$language];
       }
     }
+    elseif (image_style_load($image_link)) {
+      $link_file = $image_link;
+    }
   }
   $fallback_image_style = $settings['fallback_image_style'];
 
@@ -913,7 +916,7 @@ function picture_field_formatter_picture_view($entity_type, $entity, $field, $in
   foreach ($items as $delta => $item) {
     if (isset($link_file)) {
       $uri = array(
-        'path' => file_create_url($item['uri']),
+        'path' => $link_file === TRUE ? file_create_url($item['uri']) : image_style_url($link_file, $item['uri']),
         'options' => array(),
       );
     }
@@ -1093,12 +1096,15 @@ function picture_field_formatter_picture_sizes_formatter_view($entity_type, $ent
         $link_values = $link_field[$language];
       }
     }
+    elseif (image_style_load($image_link)) {
+      $link_file = $image_link;
+    }
   }
 
   foreach ($items as $delta => $item) {
     if (isset($link_file)) {
       $uri = array(
-        'path' => file_create_url($item['uri']),
+        'path' => $link_file === TRUE ? file_create_url($item['uri']) : image_style_url($link_file, $item['uri']),
         'options' => array(),
       );
     }
@@ -2031,6 +2037,12 @@ function picture_link_types($instance) {
         $link_types[$field_key] = "$field_instance[label] ($field_info[field_name])";
       }
     }
+  }
+
+  // Allow linking to a specific image style.
+  $image_styles = image_style_options(FALSE);
+  foreach ($image_styles as $image_style => $label) {
+    $link_types[$image_style] = t('Image style: @style', array('@style' => $label));
   }
   return $link_types;
 }
