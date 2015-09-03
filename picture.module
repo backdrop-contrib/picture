@@ -1403,7 +1403,10 @@ function theme_picture(array $variables) {
     $src = _picture_image_style_url($variables['style_name'], $variables['uri'], $variables['timestamp']);
 
     if (!empty($variables['lazyload'])) {
-      if (!is_array($attributes['class'])) {
+      if (!isset($attributes['class'])) {
+        $attributes['class'] = array();
+      }
+      elseif (!is_array($attributes['class'])) {
         $attributes['class'] = (array)$attributes['class'];
       }
       $attributes['class'][] = 'lazyload';
