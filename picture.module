@@ -1162,7 +1162,7 @@ function theme_picture_formatter($variables) {
     '#uri' => $item['uri'],
     '#alt' => isset($item['alt']) ? $item['alt'] : '',
     '#attributes' => isset($item['attributes']) ? $item['attributes'] : NULL,
-    '#timestamp' => $item['timestamp'],
+    '#timestamp' => isset($item['timestamp']) ? $item['timestamp'] : NULL,
     '#lazyload' => !empty($variables['lazyload']),
     '#lazyload_aspect_ratio' => !empty($variables['lazyload_aspect_ratio']),
   );
