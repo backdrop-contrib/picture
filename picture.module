@@ -662,6 +662,7 @@ function picture_field_formatter_settings_picture_sizes_formatter_form($field, $
   $element['sizes'] = array(
     '#title' => t('Sizes'),
     '#type' => 'textfield',
+    '#maxlength' => 1024,
     '#description' => t(
       'The value of the sizes attribute. See !link for more information.',
       array(

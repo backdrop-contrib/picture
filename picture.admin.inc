@@ -114,6 +114,7 @@ function picture_mapping_form(&$form, &$form_state) {
         '#type' => 'select',
         '#title' => t('Image style'),
         '#options' => $image_styles,
+        '#maxlength' => 1024,
         '#default_value' => isset($mapping_definition['image_style']) ? $mapping_definition['image_style'] : '',
         '#description' => t('Select an image style for this breakpoint.'),
         '#states' => array(
