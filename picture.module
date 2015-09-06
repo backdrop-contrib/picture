@@ -853,7 +853,12 @@ function picture_field_formatter_picture_view($entity_type, $entity, $field, $in
   // Check if the formatter involves a link.
   $image_link = $display['settings']['image_link'];
   if ($image_link == 'content') {
-    $uri = entity_uri($entity_type, $entity);
+    if (isset($entity->referencing_entity) && isset($entity->referencing_entity_type)) {
+      $uri = entity_uri($entity->referencing_entity_type, $entity->referencing_entity);
+    }
+    else {
+      $uri = entity_uri($entity_type, $entity);
+    }
   }
   elseif ($image_link == 'file') {
     $link_file = TRUE;
