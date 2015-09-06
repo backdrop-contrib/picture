@@ -306,6 +306,17 @@ function picture_admin_settings() {
     '#default_value' => variable_get('picture_fallback_method', 'srcset'),
   );
 
+  $form['picture_img_sizes_output_method'] = array(
+    '#title' => t('"Image with sizes" output method'),
+    '#description' => t('"srcset on Image tag" creates the correct markup, however "picture element" will prevent duplicate downloads.'),
+    '#type' => 'radios',
+    '#options' => array(
+      'img_srcset' => t('srcset on Image tag'),
+      'picture_element' => t('Picture element'),
+    ),
+    '#default_value' => variable_get('picture_img_sizes_output_method', 'picture_element'),
+  );
+
   $form['submit'] = array(
     '#type' => 'submit',
     '#value' => 'Save',
@@ -362,6 +373,7 @@ function picture_admin_settings_submit($form, &$form_state) {
   variable_set('picture_js_scope', $form_state['values']['picture_js_scope']);
   variable_set('picture_polyfill_version', $form_state['values']['picture_polyfill_version']);
   variable_set('picture_fallback_method', $form_state['values']['picture_fallback_method']);
+  variable_set('picture_img_sizes_output_method', $form_state['values']['picture_img_sizes_output_method']);
   drupal_set_message(t('Your settings have been saved'));
 }
 

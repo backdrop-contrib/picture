@@ -1191,15 +1191,46 @@ function theme_picture_formatter($variables) {
  * Theme pictue sizes formatter.
  */
 function theme_picture_sizes_formatter($variables) {
+  $output_method = variable_get('picture_img_sizes_output_method', 'picture_element');
   $variables['image_style'] = $variables['fallback_image_style'];
-  $variables['breakpoints'][BREAKPOINTS_SOURCE_TYPE_MODULE . '.picture.empty_srcset']['1x'] = array(
-    'mapping_type' => 'sizes',
-    'sizes' => $variables['sizes'],
-    'sizes_image_styles' => $variables['image_styles'],
-    'lazyload' => !empty($variables['lazyload']),
-    'lazyload_aspect_ratio' => !empty($variables['lazyload_aspect_ratio']),
-  );
-  return theme('picture_formatter', $variables);
+
+  if ($output_method == 'picture_element') {
+    $variables['breakpoints'][BREAKPOINTS_SOURCE_TYPE_MODULE . '.picture.empty_srcset']['1x'] = array(
+      'mapping_type' => 'sizes',
+      'sizes' => $variables['sizes'],
+      'sizes_image_styles' => $variables['image_styles'],
+      'lazyload' => !empty($variables['lazyload']),
+      'lazyload_aspect_ratio' => !empty($variables['lazyload_aspect_ratio']),
+    );
+    return theme('picture_formatter', $variables);
+  }
+
+  if ($output_method == 'img_srcset') {
+    $image = $variables['item'];
+
+    // Map image attributes
+    $variables['uri'] = image_style_path($variables['fallback_image_style'], $image['uri']);
+
+    if (!empty($image['alt'])) {
+      $variables['alt'] = $image['alt'];
+    }
+    if (!empty($image['title'])) {
+      $variables['title'] = $image['title'];
+    }
+
+    // Set up image source options
+    $variables['srcset'] = array();
+    foreach($variables['image_styles'] as $image_style) {
+      $image_style_uri = image_style_path($image_style, $image['uri']);
+      $image_style_info = image_get_info($image_style_uri);
+
+      $variables['srcset'][] = array(
+        'uri' => $image_style_uri,
+        'width' => $image_style_info['width'] . 'w',
+      );
+    }
+    return theme('image_srcset', $variables);
+  }
 }
 
 /**
