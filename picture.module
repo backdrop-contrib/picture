@@ -1769,8 +1769,8 @@ function _picture_filter_prepare_image($image) {
       'data-picture-mapping' => $mapping_id,
     ) + $attributes,
     '#breakpoints' => $breakpoint_styles,
-    '#lazyload' => $picture_mappings[$mapping_id]['lazyload'],
-    '#lazyload_aspect_ratio' => $picture_mappings[$mapping_id]['lazyload_aspect_ratio'],
+    '#lazyload' => isset($picture_mappings[$mapping_id]['lazyload']) ? $picture_mappings[$mapping_id]['lazyload'] : FALSE,
+    '#lazyload_aspect_ratio' => isset($picture_mappings[$mapping_id]['lazyload_aspect_ratio']) ? $picture_mappings[$mapping_id]['lazyload_aspect_ratio'] : FALSE,
   );
   return $image_render_array;
 }
