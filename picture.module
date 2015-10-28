@@ -864,10 +864,10 @@ function picture_field_formatter_picture_view($entity_type, $entity, $field, $in
     $link_file = TRUE;
   }
   elseif ($image_link) {
-    if (isset($entity->$image_link)) {
+    if (isset($entity->{$image_link})) {
       // Support for field translations.
-      $language = field_language($entity_type, $entity, $field['field_name']);
-      $link_field = $entity->$image_link;
+      $language = field_language($entity_type, $entity, $image_link, $langcode);
+      $link_field = $entity->{$image_link};
 
       if (isset($link_field[$language])) {
         $link_values = $link_field[$language];
@@ -1093,10 +1093,10 @@ function picture_field_formatter_picture_sizes_formatter_view($entity_type, $ent
     $link_file = TRUE;
   }
   elseif ($image_link) {
-    if (isset($entity->$image_link)) {
+    if (isset($entity->{$image_link})) {
       // Support for field translations.
-      $language = field_language($entity_type, $entity, $field['field_name']);
-      $link_field = $entity->$image_link;
+      $language = field_language($entity_type, $entity, $image_link, $langcode);
+      $link_field = $entity->{$image_link};
 
       if (isset($link_field[$language])) {
         $link_values = $link_field[$language];
