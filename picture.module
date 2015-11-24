@@ -1575,7 +1575,8 @@ function theme_image_srcset(array $variables) {
         }
         elseif (isset($src['multiplier']) && !empty($src['multiplier'])) {
           $source .= ' ' . $src['multiplier'];
-          $key = (int) ((float) drupal_substr($src['multiplier'], -1) * 100);
+          // Convert 1x to 100, 1.5x to 150  and so on.
+          $key = (int) ((float) drupal_substr($src['multiplier'], 0, -1) * 100);
         }
         $srcsets[$key] = $source;
       }
