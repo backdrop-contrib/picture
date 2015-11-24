@@ -1836,6 +1836,7 @@ function picture_page_build(&$page) {
       'picture' => array(
         'mappings' => $mappings,
         'label' => variable_get('picture_ckeditor_label', 'Image size (required)'),
+        'ckeditorDefaultMapping' => variable_get('picture_ckeditor_default_mapping', 'not_set'),
       )), 'setting');
   }
 }
