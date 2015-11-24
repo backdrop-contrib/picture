@@ -1990,9 +1990,20 @@ function _picture_image_style_url($style_name, $path, $timestamp = NULL) {
     $url = image_style_url($style_name, $path);
   }
 
+  $token_query = array();
   if (!empty($timestamp)) {
-    $url .= (strpos($url, '?') !== FALSE ? '&' : '?') . drupal_http_build_query(array('timestamp' => $timestamp));
+    $token_query['timestamp'] = $timestamp;
   }
+
+  // Allow modules to alter the $token_query for the given style.
+  $context = array('uri' => $url, 'style_name' => $style_name, 'path' => $path);
+  drupal_alter('image_style_uri_token_query', $token_query, $context);
+
+  // Append the query string with the token, if necessary.
+  if ($token_query) {
+    $url .= (strpos($url, '?') !== FALSE ? '&' : '?') . drupal_http_build_query($token_query);
+  }
+
   return $url;
 }
 
