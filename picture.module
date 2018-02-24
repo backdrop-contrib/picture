@@ -383,6 +383,8 @@ function picture_theme() {
         'fallback_image_style' => NULL,
         'sizes' => NULL,
         'attributes' => array(),
+        'lazyload_data_attributes' => NULL,
+        'lazyload_class' => NULL,
       ),
     ),
   );
@@ -424,6 +426,8 @@ function picture_field_formatter_info() {
       'fallback_image_style' => PICTURE_EMPTY_IMAGE,
       'lazyload' => '',
       'lazyload_aspect_ratio' => '',
+      'lazyload_data_attributes' => 0,
+      'lazyload_class' => '',
       'image_link' => '',
       'colorbox_settings' => array(
         'colorbox_group' => '',
@@ -709,6 +713,22 @@ function picture_field_formatter_settings_picture_sizes_formatter_form($field, $
     '#attributes' => array(
       'class' => array('picture-image-link'),
     ),
+  );
+
+  $element['lazyload_data_attributes'] = array(
+    '#title' => t('Lazyload using data attributes'),
+    '#type' => 'select',
+    '#default_value' => $settings['lazyload_data_attributes'],
+    '#options' => array(
+      0 => t('No'),
+      1 => t('Yes'),
+    ),
+  );
+
+  $element['lazyload_class'] = array(
+    '#title' => t('Lazyload class'),
+    '#type' => 'textfield',
+    '#default_value' => $settings['lazyload_class'],
   );
 
   return $element;
@@ -1085,6 +1105,7 @@ function picture_field_formatter_picture_view($entity_type, $entity, $field, $in
 function picture_field_formatter_picture_sizes_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $elements = array();
   $settings = $display['settings'];
+
   // Check if the formatter involves a link.
   $image_link = $display['settings']['image_link'];
   if ($image_link == 'content') {
@@ -1139,6 +1160,8 @@ function picture_field_formatter_picture_sizes_formatter_view($entity_type, $ent
       '#fallback_image_style' => $settings['fallback_image_style'] ? $settings['fallback_image_style'] : PICTURE_EMPTY_IMAGE,
       '#sizes' => $settings['sizes'],
       '#path' => isset($uri) ? $uri : '',
+      '#lazyload_data_attributes' => $settings['lazyload_data_attributes'],
+      '#lazyload_class' => $settings['lazyload_class'],
     );
 
   }
@@ -1227,6 +1250,17 @@ function theme_picture_sizes_formatter($variables) {
       $variables['attributes'] = $image['attributes'];
     }
 
+    // Check for lazyload_data_attributes.
+    if (isset($variables['lazyload_data_attributes']) && $variables['lazyload_data_attributes']) {
+      if (!isset($variables['attributes'])) {
+        $variables['attributes'] = array();
+      }
+      if (!isset($variables['attributes']['class'])) {
+        $variables['attributes']['class'] = array();
+      }
+      $variables['attributes']['class'] = array_merge($variables['attributes']['class'], explode(',', $variables['lazyload_class']));
+    }
+
     // Set up image source options.
     $variables['srcset'] = array();
     // Get the dimensions of the original image.
@@ -1248,7 +1282,12 @@ function theme_picture_sizes_formatter($variables) {
         'width' => $dimensions['width'] . 'w',
       );
     }
-    return theme('image_srcset', $variables);
+
+    $output = theme('image_srcset', $variables);
+    if (isset($variables['lazyload_data_attributes']) && $variables['lazyload_data_attributes']) {
+      $output = str_replace(array('src="', 'srcset="'), array('data-src="', 'data-srcset="'), $output);
+    }
+    return $output;
   }
 }
 
