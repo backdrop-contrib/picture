@@ -382,6 +382,7 @@ function picture_theme() {
         'image_styles' => array(),
         'fallback_image_style' => NULL,
         'sizes' => NULL,
+        'attributes' => array(),
       ),
     ),
   );
@@ -1221,6 +1222,9 @@ function theme_picture_sizes_formatter($variables) {
     }
     if (!empty($image['title'])) {
       $variables['title'] = $image['title'];
+    }
+    if (!empty($image['attributes'])) {
+      $variables['attributes'] = $image['attributes'];
     }
 
     // Set up image source options.
