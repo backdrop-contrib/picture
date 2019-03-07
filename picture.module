@@ -135,8 +135,8 @@ function picture_library() {
         'js' => array(
           'document.createElement( "picture" );' => array(
             'type' => 'inline',
-            'weight' => -10,
-            'group' => JS_DEFAULT,
+            'weight' => -20,
+            'group' => JS_LIBRARY,
             'scope' => 'header',
             'need_jquery' => FALSE,
           ),
@@ -153,8 +153,7 @@ function picture_library() {
             'weight' => -10,
             'group' => JS_DEFAULT,
             'scope' => variable_get('picture_js_scope', 'footer'),
-            'need_jquery' => FALSE,
-            'async' => TRUE,
+            'need_jquery' => FALSE
           ),
         ),
       );
@@ -168,8 +167,7 @@ function picture_library() {
             'weight' => -10,
             'group' => JS_DEFAULT,
             'scope' => variable_get('picture_js_scope', 'footer'),
-            'need_jquery' => FALSE,
-            'async' => TRUE,
+            'need_jquery' => FALSE
           ),
         ),
       );
@@ -180,11 +178,9 @@ function picture_library() {
         'js' => array(
           drupal_get_path('module', 'picture') . '/lazysizes/lazysizes.min.js' => array(
             'type' => 'file',
-            // file has async, put before all files to prevent JS concatenation breaking
             'weight' => -20,
             'group' => JS_LIBRARY,
-            'need_jquery' => FALSE,
-            'async' => TRUE,
+            'need_jquery' => FALSE
           ),
         ),
       );
@@ -197,8 +193,7 @@ function picture_library() {
             'type' => 'file',
             'weight' => -10,
             'group' => JS_LIBRARY,
-            'need_jquery' => FALSE,
-            'async' => TRUE,
+            'need_jquery' => FALSE
           ),
         ),
         'css' => array(
@@ -235,8 +230,7 @@ function picture_library() {
             'weight' => -10,
             'group' => JS_DEFAULT,
             'scope' => variable_get('picture_js_scope', 'footer'),
-            'need_jquery' => FALSE,
-            'async' => TRUE,
+            'need_jquery' => FALSE
           ),
         ),
       );
@@ -250,8 +244,7 @@ function picture_library() {
             'weight' => -10,
             'group' => JS_DEFAULT,
             'scope' => variable_get('picture_js_scope', 'footer'),
-            'need_jquery' => FALSE,
-            'async' => TRUE,
+            'need_jquery' => FALSE
           ),
         ),
       );
@@ -265,8 +258,7 @@ function picture_library() {
             // file has async, put before all files to prevent JS concatenation breaking
             'weight' => -20,
             'group' => JS_LIBRARY,
-            'need_jquery' => FALSE,
-            'async' => TRUE,
+            'need_jquery' => FALSE
           ),
         ),
       );
@@ -280,8 +272,7 @@ function picture_library() {
             'type' => 'file',
             'weight' => -10,
             'group' => JS_LIBRARY,
-            'need_jquery' => FALSE,
-            'async' => TRUE,
+            'need_jquery' => FALSE
           ),
         ),
         'css' => array(
