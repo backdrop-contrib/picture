@@ -1797,6 +1797,11 @@ function _picture_filter_prepare_image($image) {
   $title = isset($attributes['title']) ? $attributes['title'] : '';
   unset($attributes['title']);
 
+  // Ensure that class attributes are properly split into array.
+  if (!empty($attributes['class']) && !is_array($attributes['class'])) {
+    $attributes['class'] = array_filter(explode(' ', $attributes['class']));
+  }
+
   // Make sure we have map src to uri.
   $uri = picture_image_uri($src);
   if (!$uri) {
