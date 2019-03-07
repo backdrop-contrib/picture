@@ -1812,6 +1812,8 @@ function _picture_filter_prepare_image($image) {
     return FALSE;
   }
 
+  $picture_mappings = variable_get('picture_ckeditor_mappings', array());
+
   // Use srcset if possible and allowed.
   if (variable_get('picture_use_sizes_in_wysiwyg', FALSE)) {
     $bps = picture_get_mapping_breakpoints($mappings);
@@ -1849,7 +1851,6 @@ function _picture_filter_prepare_image($image) {
     }
   }
 
-  $picture_mappings = variable_get('picture_ckeditor_mappings', array());
   $image_render_array = array(
     '#theme' => 'picture',
     '#style_name' => $picture_mappings[$mapping_id]['fallback'],
