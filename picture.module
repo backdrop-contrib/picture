@@ -373,6 +373,7 @@ function picture_theme() {
         'attributes' => array(),
         'srcset' => array(),
         'sizes' => NULL,
+        'lazyload' => NULL,
       ),
     ),
     'picture_sizes_formatter' => array(
@@ -1513,6 +1514,7 @@ function theme_picture(array $variables) {
         '#alt' => isset($attributes['alt']) ? $attributes['alt'] : '',
         '#title' => isset($attributes['title']) ? $attributes['title'] : '',
         '#attributes' => array_diff_key($attributes, array('alt' => '', 'title' => '')),
+        '#lazyload' => !empty($variables['lazyload']),
       );
       $output[] = drupal_render($min_ie9_fallback);
     }
@@ -1524,6 +1526,7 @@ function theme_picture(array $variables) {
         '#alt' => isset($attributes['alt']) ? $attributes['alt'] : '',
         '#title' => isset($attributes['title']) ? $attributes['title'] : '',
         '#attributes' => array_diff_key($attributes, array('alt' => '', 'title' => '')),
+        '#lazyload' => !empty($variables['lazyload']),
       );
       $output[] = '<!--[if lt IE 9]>';
       $output[] = drupal_render($min_ie9_fallback);
@@ -1544,6 +1547,7 @@ function theme_picture(array $variables) {
         '#alt' => isset($attributes['alt']) ? $attributes['alt'] : '',
         '#title' => isset($attributes['title']) ? $attributes['title'] : '',
         '#attributes' => array_diff_key($attributes, array('alt' => '', 'title' => '')),
+        '#lazyload' => !empty($variables['lazyload']),
       );
       $output[] = '<!--[if !lt IE 9]><!-->';
       $output[] = drupal_render($plus_ie8_fallback);
@@ -1591,12 +1595,14 @@ function theme_image_srcset(array $variables) {
   $attributes = isset($variables['attributes']) ? $variables['attributes'] : array();
 
   if (isset($variables['uri']) && !empty($variables['uri'])) {
+    $attr_name = !empty($variables['lazyload']) ? 'data-src' : 'src';
+
     // TODO: remove when https://www.drupal.org/node/1342504 is fixed.
     if (strpos($variables['uri'], 'data:') === 0) {
-      $attributes['src'] = $variables['uri'];
+      $attributes[$attr_name] = $variables['uri'];
     }
     else {
-      $attributes['src'] = file_create_url($variables['uri']);
+      $attributes[$attr_name] = file_create_url($variables['uri']);
     }
   }
   if (isset($variables['srcset']) && !empty($variables['srcset'])) {
@@ -1625,7 +1631,8 @@ function theme_image_srcset(array $variables) {
       }
     }
     ksort($srcsets);
-    $attributes['srcset'] = implode(', ', $srcsets);
+    $attr_name = !empty($variables['lazyload']) ? 'data-srcset' : 'srcset';
+    $attributes[$attr_name] = implode(', ', $srcsets);
   }
   foreach (array('width', 'height', 'alt', 'title', 'sizes') as $key) {
     if (isset($variables[$key])) {
