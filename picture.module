@@ -1721,11 +1721,9 @@ function picture_filter_info() {
 function _picture_filter_process($text, $filter) {
 
   // Find all img tags with a data-picture-mapping attribute.
-  preg_match_all('/<img.*?data-picture-mapping=".*?>/i', $text, $images1);
-  preg_match_all('/<img.*?data-picture-group=".*?>/i', $text, $images2);
-  $images = array_merge($images1[0], $images2[0]);
+  preg_match_all('/<img [^>]*data-picture-(mapping|group)\s*=\s*["\'][^>]*>/i', $text, $images);
   if (!empty($images)) {
-    foreach ($images as $image) {
+    foreach ($images[0] as $image) {
       // Create the render array expected by theme_picture_formatter.
       $image_render_array = _picture_filter_prepare_image($image);
       if (!$image_render_array) {
