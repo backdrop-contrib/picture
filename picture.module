@@ -1810,6 +1810,44 @@ function _picture_filter_prepare_image($image) {
     // It's not an image.
     return FALSE;
   }
+
+  // Use srcset if possible and allowed.
+  if (variable_get('picture_use_sizes_in_wysiwyg', FALSE)) {
+    $bps = picture_get_mapping_breakpoints($mappings);
+    $bp = reset($bps);
+    $info = reset($bp);
+    if (count($bps) == 1 && count($bp) == 1 && $info['mapping_type'] === 'sizes') {
+      $image_styles = $info['sizes_image_styles'];
+      $image_render_array = array(
+        '#theme' => 'image_srcset',
+      );
+
+      // Map image attributes.
+      $image_render_array['#uri'] = _picture_image_style_url($picture_mappings[$mapping_id]['fallback'], $uri);
+
+      // Set up image source options.
+      $image_render_array['#srcset'] = array();
+      foreach ($image_styles as $image_style) {
+        $image_style_uri = _picture_image_style_url($image_style, $uri);
+        $dimensions = array(
+          'width' => $image_info['width'],
+          'height' => $image_info['height'],
+        );
+        // Let the the image style transform the dimensions. This way we avoid the
+        // performance cost of actually having to generate the derivative. The
+        // image style can transform the dimensions without the derivative having
+        // to exist.
+        $dimensions = picture_get_image_dimensions($image_style, $dimensions);
+
+        $image_render_array['#srcset'][] = array(
+          'uri' => $image_style_uri,
+          'width' => $dimensions['width'] . 'w',
+        );
+      }
+      return $image_render_array;
+    }
+  }
+
   $picture_mappings = variable_get('picture_ckeditor_mappings', array());
   $image_render_array = array(
     '#theme' => 'picture',
