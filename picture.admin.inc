@@ -313,13 +313,13 @@ function picture_admin_settings() {
 
   $form['picture_fallback_method'] = array(
     '#title' => t('Picture fallback method'),
-    '#description' => t('Use the fallback method, the defualt is to use srcset since it avoids double downloads, but src is the right method and will also work if the browser does not support javascript.'),
+    '#description' => t('Use the fallback method, the default is to use srcset since it avoids double downloads, but src is the right method and will also work if the browser does not support javascript.'),
     '#type' => 'radios',
     '#options' => array(
       'src' => t('src fallback'),
       'srcset' => t('srcset fallback'),
     ),
-    '#default_value' => variable_get('picture_fallback_method', 'srcset'),
+    '#default_value' => variable_get('picture_fallback_method', 'src'),
   );
 
   $form['picture_img_sizes_output_method'] = array(
