@@ -1823,6 +1823,7 @@ function _picture_filter_prepare_image($image) {
       $image_styles = $info['sizes_image_styles'];
       $image_render_array = array(
         '#theme' => 'image_srcset',
+        '#sizes' => $info['sizes'],
       );
 
       // Map image attributes.
@@ -1847,6 +1848,7 @@ function _picture_filter_prepare_image($image) {
           'width' => $dimensions['width'] . 'w',
         );
       }
+
       return $image_render_array;
     }
   }
@@ -1915,11 +1917,17 @@ function picture_page_build(&$page) {
   }
 
   if (!empty($mappings)) {
+    $label = variable_get('picture_ckeditor_label', 'Image size');
+    if (variable_get('picture_ckeditor_required', TRUE)) {
+      $label .= ' (required)';
+    }
+
     $mappings[] = array('Not Set', 'not_set');
     drupal_add_js(array(
       'picture' => array(
+        'required' => variable_get('picture_ckeditor_required', TRUE),
         'mappings' => $mappings,
-        'label' => variable_get('picture_ckeditor_label', 'Image size (required)'),
+        'label' => $label,
         'ckeditorDefaultMapping' => variable_get('picture_ckeditor_default_mapping', 'not_set'),
       )), 'setting');
   }
