@@ -5,7 +5,12 @@
 ( function(){
   CKEDITOR.plugins.add('picture_ckeditor',
   {
-      init : function(editor)
+    onLoad: function() {
+      debugger;
+      CKEDITOR.addCss(Drupal.settings.picture.editorCSS);
+    },
+
+    init : function(editor)
       {
 
         // Used later to ensure the required features have been enabled in the

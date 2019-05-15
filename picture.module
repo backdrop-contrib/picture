@@ -1849,6 +1849,10 @@ function _picture_filter_prepare_image($image) {
         );
       }
 
+      $image_render_array['#attributes'] = array(
+        'data-picture-mapping' => $mapping_id,
+      ) + $attributes;
+
       return $image_render_array;
     }
   }
@@ -1929,8 +1933,61 @@ function picture_page_build(&$page) {
         'mappings' => $mappings,
         'label' => $label,
         'ckeditorDefaultMapping' => variable_get('picture_ckeditor_default_mapping', 'not_set'),
+        'editorCSS' => picture_ckeditor_css(),
       )), 'setting');
+
+    // Do not add inline css, unless when editing.
+    if (!isset($page['content']['system_main']['#node_edit_form']) || !$page['content']['system_main']['#node_edit_form']) {
+      return;
+    }
+
+    drupal_add_css(picture_ckeditor_css('.ImagePreviewBox'), 'inline');
   }
+}
+
+/**
+ * Generate css to handle more realistic display of image styles.
+ */
+function picture_ckeditor_css($prefix = '') {
+  $image_styles = image_styles();
+  $picture_mappings = picture_mapping_load_all();
+  $ckeditor_mappings = variable_get('picture_ckeditor_mappings', array());
+  $mappings = array();
+
+  foreach ($ckeditor_mappings as $machine_name => $parameters) {
+    if (!array_key_exists($machine_name, $picture_mappings)) {
+      return;
+    }
+
+    if ($parameters['enabled'] != 1) {
+      return;
+    }
+
+    if (array_key_exists($parameters['fallback'], $image_styles)) {
+      $dimensions = array(
+        'width' => 1000,
+        'height' => 1000,
+      );
+
+      // Transform dimensions.
+      image_style_transform_dimensions($parameters['fallback'], $dimensions);
+
+      // Add unit if needed.
+      if (strpos($dimensions['width'], '%') === FALSE) {
+        $dimensions['width'] .= 'px';
+      }
+      if (strpos($dimensions['height'], '%') === FALSE) {
+        $dimensions['height'] .= 'px';
+      }
+
+      $mappings[$machine_name] = $prefix . ' [data-picture-mapping="' . $machine_name . '"] {';
+      $mappings[$machine_name] .= ' width: ' . $dimensions['width'] . ';';
+      $mappings[$machine_name] .= ' height: ' . $dimensions['height'] . ';';
+      $mappings[$machine_name] .= '}';
+    }
+  }
+
+  return implode("\n", $mappings);
 }
 
 /**
