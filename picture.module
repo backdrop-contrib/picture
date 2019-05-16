@@ -1819,6 +1819,22 @@ function _picture_filter_prepare_image($image) {
     $bps = picture_get_mapping_breakpoints($mappings);
     $bp = reset($bps);
     $info = reset($bp);
+
+    if (count($bps) == 1 && count($bp) == 1 && $info['mapping_type'] === 'image_style') {
+      $image_render_array = array(
+        '#theme' => 'image_style',
+        '#path' => $uri,
+        '#style_name' => $info['image_style'],
+        '#alt' => $alt,
+        '#title' => $title,
+        '#attributes' => array(
+          'data-picture-mapping' => $mapping_id,
+        ) + $attributes,
+      );
+
+      return $image_render_array;
+    }
+
     if (count($bps) == 1 && count($bp) == 1 && $info['mapping_type'] === 'sizes') {
       $image_styles = $info['sizes_image_styles'];
       $image_render_array = array(
