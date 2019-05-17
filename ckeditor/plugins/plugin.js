@@ -6,10 +6,8 @@
   CKEDITOR.plugins.add('picture_ckeditor',
   {
     onLoad: function() {
-      debugger;
       CKEDITOR.addCss(Drupal.settings.picture.editorCSS);
     },
-
     init : function(editor)
       {
 
