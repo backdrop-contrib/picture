@@ -1972,11 +1972,11 @@ function picture_ckeditor_css($prefix = '') {
 
   foreach ($ckeditor_mappings as $machine_name => $parameters) {
     if (!array_key_exists($machine_name, $picture_mappings)) {
-      return;
+      continue;
     }
 
     if ($parameters['enabled'] != 1) {
-      return;
+      continue;
     }
 
     if (array_key_exists($parameters['fallback'], $image_styles)) {
