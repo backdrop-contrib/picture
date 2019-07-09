@@ -1809,7 +1809,6 @@ function _picture_filter_prepare_image($image) {
   $image_info = image_get_info($uri);
   // Check if stage_file_proxy is active.
   if (!$image_info && module_exists('stage_file_proxy')) {
-    dpm('stage_file_proxy');
     $local = stage_file_proxy_process_file_uri($uri);
     $image_info = image_get_info($uri);
   }
