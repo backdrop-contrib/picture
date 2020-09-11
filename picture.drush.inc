@@ -6,7 +6,7 @@
  */
 
 /**
- * Implementation of hook_drush_command().
+ * Implements hook_drush_command().
  */
 function picture_drush_command() {
   $items['picture-mapping-flush'] = array(
@@ -26,7 +26,7 @@ function picture_drush_command() {
 
 function drush_picture_mapping_flush($name = NULL) {
   if (empty($name)) {
-    $choices = drupal_map_assoc(array_keys(picture_get_mapping_options()));
+    $choices = backdrop_map_assoc(array_keys(picture_get_mapping_options()));
     if ($choice = drush_choice($choices, dt("Choose a picture mapping to flush."))) {
       $name = $choice;
     }

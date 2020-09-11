@@ -95,15 +95,15 @@ function picture_file_formatter_picture_view($file, $display, $langcode) {
 
       if (!empty($display['settings']['lazyload_aspect_ratio'])) {
         $libraries[] = array('picture', 'lazysizes_aspect_ratio');
-      };
+      }
 
-    };
+    }
 
 
     $element = array(
       '#theme' => 'picture_formatter',
       '#attached' => array(
-        'library' => $libraries
+        'library' => $libraries,
       ),
       '#item' => array(
         'style_name' => $fallback_image_style,
@@ -175,8 +175,8 @@ function picture_file_formatter_picture_settings($form, &$form_state, $settings)
       'visible' => array(
         ':input[name="displays[file_picture][settings][lazyload]"]' => array('checked' => TRUE),
         ':input[name="displays[file_picture][settings][fallback_image_style]"]' => array('value' => PICTURE_EMPTY_IMAGE),
-      )
-    )
+      ),
+    ),
   );
 
   $element['alt'] = array(

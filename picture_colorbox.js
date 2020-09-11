@@ -1,5 +1,5 @@
 (function ($) {
-  Drupal.behaviors.pictureLazyloadPictures = {
+  Backdrop.behaviors.pictureLazyloadPictures = {
     attach: function (context, settings) {
       $(context).bind('cbox_load', function () {
         var href = $.colorbox.element()[0].hash;

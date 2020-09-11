@@ -10,14 +10,14 @@
  */
 function flexslider_picture_theme_registry_alter(&$registry) {
   $registry['flexslider_list']['file'] = 'flexslider_picture.theme.inc';
-  $registry['flexslider_list']['theme_path'] = drupal_get_path('module', 'flexslider_picture') . '/theme';
+  $registry['flexslider_list']['theme_path'] = backdrop_get_path('module', 'flexslider_picture') . '/theme';
   $registry['flexslider_list']['function'] = 'theme_flexslider_picture_list';
   $default_processor = array_search('template_preprocess_flexslider_list', $registry['flexslider_list']['preprocess functions']);
   $registry['flexslider_list']['preprocess functions'][(int) $default_processor] = 'template_preprocess_flexslider_picture_list';
   $registry['flexslider_list']['includes'][] = $registry['flexslider_list']['theme_path'] . '/' . $registry['flexslider_list']['file'];
 
   $registry['flexslider_list_item']['file'] = 'flexslider_picture.theme.inc';
-  $registry['flexslider_list_item']['theme_path'] = drupal_get_path('module', 'flexslider_picture') . '/theme';
+  $registry['flexslider_list_item']['theme_path'] = backdrop_get_path('module', 'flexslider_picture') . '/theme';
   $default_processor = array_search('template_process_flexslider_list_item', $registry['flexslider_list_item']['process functions']);
   $registry['flexslider_list_item']['process functions'][(int) $default_processor] = 'template_process_flexslider_picture_list_item';
   $registry['flexslider_list_item']['includes'][] = $registry['flexslider_list_item']['theme_path'] . '/' . $registry['flexslider_list_item']['file'];
@@ -197,7 +197,7 @@ function flexslider_picture_form_ctools_export_ui_edit_item_form_alter(&$form, &
  * Submit callback.
  */
 function _flexslider_picture_ctools_export_ui_edit_item_form_submit($form, &$form_state) {
-  $fields = array_intersect_key($form_state['values']['image_style'], drupal_map_assoc(array(
+  $fields = array_intersect_key($form_state['values']['image_style'], backdrop_map_assoc(array(
     'imagestyle_type',
     'mapping',
     'fallback',

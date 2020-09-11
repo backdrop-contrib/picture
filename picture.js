@@ -1,7 +1,7 @@
-if (typeof Drupal !== 'undefined' && typeof jQuery !== 'undefined') {
-  // Only load if Drupal and jQuery are defined.
+if (typeof Backdrop !== 'undefined' && typeof jQuery !== 'undefined') {
+  // Only load if Backdrop and jQuery are defined.
   (function ($) {
-    Drupal.behaviors.picture = {
+    Backdrop.behaviors.picture = {
       attach: function (context) {
         // Don't load if there's native picture element support.
         if (!('HTMLPictureElement' in window)) {

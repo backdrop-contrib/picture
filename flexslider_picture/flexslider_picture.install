@@ -120,40 +120,8 @@ function flexslider_picture_schema_alter(&$schema) {
   );
 }
 
-/**
- * Add the 'fallback' column to the {flexslider_picture_optionset} table.
- */
-function flexslider_picture_update_7001() {
-  if (!db_field_exists('flexslider_picture_optionset', 'fallback')) {
-    db_add_field(
-      'flexslider_picture_optionset',
-      'fallback',
-      array(
-        'description' => 'The style machine name.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      )
-    );
-  }
-}
+// TODO The old hook_update_N functions cannot be applied to Backdrop.
+function flexslider_picture_update_7001() { }
 
-/**
- * Add flexslider_picture_optionsets for existing flexslider optionsets.
- */
-function flexslider_picture_update_7201() {
-  // For each existing flexslider config, add a record in
-  // {flexslider_picture_optionset}.
-  $q = db_select('flexslider_optionset', 'f');
-  $q->addField('f', 'name', 'flexslider_optionset');
-  $q->addExpression("'image_style'", 'imagestyle_type');
-  $q->addExpression("''", 'mapping');
-  $q->addExpression("''", 'fallback');
-  db_insert('flexslider_picture_optionset')->fields(array(
-    'flexslider_optionset',
-    'imagestyle_type',
-    'mapping',
-    'fallback',
-  ))->from($q)->execute();
-}
+// TODO The old hook_update_N functions cannot be applied to Backdrop.
+function flexslider_picture_update_7201() { }

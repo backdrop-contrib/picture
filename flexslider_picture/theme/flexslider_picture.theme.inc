@@ -32,10 +32,11 @@ function template_preprocess_flexslider_picture_list(array &$vars) {
     // If colorbox is enabled build additional configuration.
     if (!empty($optionset->options['colorboxEnabled'])) {
       // Add additional necessary scripts and styles.
-      drupal_add_js(drupal_get_path('module', 'picture') . '/picture_colorbox.js');
-      drupal_add_css(drupal_get_path('module', 'picture') . '/picture_colorbox.css');
+      backdrop_add_js(backdrop_get_path('module', 'picture') . '/picture_colorbox.js');
+      backdrop_add_css(backdrop_get_path('module', 'picture') . '/picture_colorbox.css');
+      // TODO This variable was probably removed in Backdrop without replacement.
       if (!variable_get('colorbox_inline', 0)) {
-        drupal_add_js(drupal_get_path('module', 'colorbox') . '/js/colorbox_inline.js');
+        backdrop_add_js(backdrop_get_path('module', 'colorbox') . '/js/colorbox_inline.js');
       }
 
       $colorbox_fallback_image_style = $optionset->options['colorboxFallbackImageStyle'];
@@ -119,6 +120,7 @@ function template_process_flexslider_picture_list_item(&$vars) {
  * Theme callback.
  */
 function theme_flexslider_picture_list(&$vars) {
+  // TODO: Should this theme flexslider_picture_list be declared in hook_theme()?
   if (!empty($vars['picture_formatter_enabled'])) {
     // Reference configuration variables.
     $attributes = &$vars['settings']['attributes'];
@@ -127,7 +129,7 @@ function theme_flexslider_picture_list(&$vars) {
 
     // Build the list.
     if (!empty($vars['items'])) {
-      $output .= "<$type" . drupal_attributes($attributes) . '>';
+      $output .= "<$type" . backdrop_attributes($attributes) . '>';
       foreach ($vars['items'] as $item) {
         $slide = render($item['slide']);
         $output .= theme('flexslider_list_item', array(

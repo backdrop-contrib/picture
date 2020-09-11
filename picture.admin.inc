@@ -182,6 +182,7 @@ function picture_mapping_form_validate($form, &$form_state) {
  * Chooses which picture groups are available in the CKEditor image dialog.
  */
 function picture_admin_settings() {
+  $config = config('picture.settings');
   $form = array();
   $picture_mappings = picture_get_mapping_options();
 
@@ -195,7 +196,7 @@ function picture_admin_settings() {
     );
 
     // Retrieve pre-existing settings.
-    $ckeditor_mappings = variable_get('picture_ckeditor_mappings', array());
+    $ckeditor_mappings = $config->get('picture_ckeditor_mappings');
 
     // Make option list for CKEditor default mapping.
     $ckeditor_default_mapping_options = array('not_set' => 'Not Set');
@@ -226,14 +227,14 @@ function picture_admin_settings() {
       $form[$machine_name]['weight'] = array(
         '#type' => 'select',
         '#title' => t('Weight'),
-        '#options' => drupal_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
+        '#options' => backdrop_map_assoc(array(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)),
         '#default_value' => isset($ckeditor_mappings[$machine_name]) ? $ckeditor_mappings[$machine_name]['weight'] : 1,
         '#description' => t('Control the sort order of picture mappings in the CKEditor "size" drop-down. Higher weights sink to the bottom of the list.'),
       );
       $form[$machine_name]['fallback'] = array(
         '#type' => 'select',
         '#title' => t('Fallback image style'),
-        '#options' => drupal_map_assoc(array_keys(image_styles())) + array(
+        '#options' => backdrop_map_assoc(array_keys(image_styles())) + array(
           PICTURE_EMPTY_IMAGE => t('Empty image'),
         ),
         '#default_value' => isset($ckeditor_mappings[$machine_name]) ? $ckeditor_mappings[$machine_name]['fallback'] : NULL,
@@ -265,13 +266,13 @@ function picture_admin_settings() {
       '#type' => 'textfield',
       '#title' => t('Label in the CKEditor image dialog'),
       '#description' => t('This sets the label for the drop-down select box containing these picture mappings in the CKEditor image dialog'),
-      '#default_value' => variable_get('picture_ckeditor_label', 'Image size (required)'),
+      '#default_value' => $config->get('picture_ckeditor_label'),
     );
     $form['ckeditor_default_mapping'] = array(
       '#type' => 'select',
       '#title' => t('Default CKEditor Picture Mapping'),
       '#options' => $ckeditor_default_mapping_options,
-      '#default_value' => variable_get('picture_ckeditor_default_mapping', 'not_set'),
+      '#default_value' => $config->get('picture_ckeditor_default_mapping'),
       '#description' => t('This sets the default picture mapping in CKEditor'),
     );
   }
@@ -280,11 +281,11 @@ function picture_admin_settings() {
       '#markup' => t('No picture mappings found. !create', array('!create' => l(t('Create one now.'), 'admin/config/media/picture/add'))),
     );
   }
-  if (module_exists('file_entity') && function_exists('file_type_load_all') && !variable_get('picture_updated_to_file_entity_2', FALSE)) {
+  if (module_exists('file_entity') && function_exists('file_type_load_all') && !$config->get('picture_updated_to_file_entity_2')) {
     $form['picture_updated_to_file_entity_2'] = array(
       '#type' => 'checkbox',
       '#title' => t('Update the file formatter to version 2 of the File Entity module'),
-      '#default_value' => variable_get('picture_updated_to_file_entity_2', FALSE),
+      '#default_value' => $config->get('picture_updated_to_file_entity_2'),
     );
   }
 
@@ -296,7 +297,7 @@ function picture_admin_settings() {
       'header' => t('Header'),
       'footer' => t('Footer'),
     ),
-    '#default_value' => variable_get('picture_js_scope', 'footer'),
+    '#default_value' => $config->get('picture_js_scope'),
   );
 
   $form['picture_polyfill_version'] = array(
@@ -308,7 +309,7 @@ function picture_admin_settings() {
       'dev' => t('Development polyfill'),
       'own' => t('Use custom polyfill'),
     ),
-    '#default_value' => variable_get('picture_polyfill_version', 'min'),
+    '#default_value' => $config->get('picture_polyfill_version'),
   );
 
   $form['picture_fallback_method'] = array(
@@ -319,7 +320,7 @@ function picture_admin_settings() {
       'src' => t('src fallback'),
       'srcset' => t('srcset fallback'),
     ),
-    '#default_value' => variable_get('picture_fallback_method', 'src'),
+    '#default_value' => $config->get('picture_fallback_method'),
   );
 
   $form['picture_img_sizes_output_method'] = array(
@@ -330,7 +331,7 @@ function picture_admin_settings() {
       'img_srcset' => t('srcset on Image tag'),
       'picture_element' => t('Picture element'),
     ),
-    '#default_value' => variable_get('picture_img_sizes_output_method', 'picture_element'),
+    '#default_value' => $config->get('picture_img_sizes_output_method'),
   );
 
   $form['submit'] = array(
@@ -378,20 +379,20 @@ function picture_admin_settings_submit($form, &$form_state) {
     }
 
     uasort($ckeditor_mappings, 'picture_compare_weights');
-    variable_set('picture_ckeditor_mappings', $ckeditor_mappings);
-    variable_set('picture_ckeditor_label', $form_state['values']['ckeditor_label']);
-    variable_set('picture_ckeditor_default_mapping', $form_state['values']['ckeditor_default_mapping']);
+    config_set('picture.settings', 'picture_ckeditor_mappings', $ckeditor_mappings);
+    config_set('picture.settings', 'picture_ckeditor_label', $form_state['values']['ckeditor_label']);
+    config_set('picture.settings', 'picture_ckeditor_default_mapping', $form_state['values']['ckeditor_default_mapping']);
   }
 
   if (isset($form_state['values']['picture_updated_to_file_entity_2']) && $form_state['values']['picture_updated_to_file_entity_2']) {
-    variable_set('picture_updated_to_file_entity_2', _picture_update_to_file_entity_2());
+    config_set('picture.settings', 'picture_updated_to_file_entity_2', _picture_update_to_file_entity_2());
   }
 
-  variable_set('picture_js_scope', $form_state['values']['picture_js_scope']);
-  variable_set('picture_polyfill_version', $form_state['values']['picture_polyfill_version']);
-  variable_set('picture_fallback_method', $form_state['values']['picture_fallback_method']);
-  variable_set('picture_img_sizes_output_method', $form_state['values']['picture_img_sizes_output_method']);
-  drupal_set_message(t('Your settings have been saved'));
+  config_set('picture.settings', 'picture_js_scope', $form_state['values']['picture_js_scope']);
+  config_set('picture.settings', 'picture_polyfill_version', $form_state['values']['picture_polyfill_version']);
+  config_set('picture.settings', 'picture_fallback_method', $form_state['values']['picture_fallback_method']);
+  config_set('picture.settings', 'picture_img_sizes_output_method', $form_state['values']['picture_img_sizes_output_method']);
+  backdrop_set_message(t('Your settings have been saved'));
 }
 
 /**
@@ -403,7 +404,7 @@ function _picture_update_to_file_entity_2() {
     return FALSE;
   }
   // Picture was already updated.
-  if (variable_get('picture_updated_to_file_entity_2', FALSE)) {
+  if (config_get('picture.settings', 'picture_updated_to_file_entity_2')) {
     return TRUE;
   }
   $entity_info = entity_get_info('file');

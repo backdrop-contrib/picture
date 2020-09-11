@@ -6,7 +6,7 @@
   CKEDITOR.plugins.add('picture_ckeditor',
   {
     onLoad: function() {
-      CKEDITOR.addCss(Drupal.settings.picture.editorCSS);
+      CKEDITOR.addCss(Backdrop.settings.picture.editorCSS);
     },
     init : function(editor)
       {
@@ -14,7 +14,7 @@
         // Used later to ensure the required features have been enabled in the
         // Advanced Content Filter.
         features = {};
-        if (Drupal.settings.picture.required) {
+        if (Backdrop.settings.picture.required) {
           features = {
             'imageSize': { 'requiredContent': 'img[data-picture-mapping]' },
             'imageAlign': { 'requiredContent': 'img[data-picture-align]' }
@@ -46,7 +46,7 @@
           var dialogName = event.data.name;
           // The definition holds the structured data that is used to eventually
           // build the dialog and we can use it to customize just about anything.
-          // In Drupal terms, it's sort of like CKEditor's version of a Forms API and
+          // In Backdrop terms, it's sort of like CKEditor's version of a Forms API and
           // what we're doing here is a bit like a hook_form_alter.
           var dialogDefinition = event.data.definition;
 
@@ -68,22 +68,22 @@
             infoTab.add({
               type: 'select',
               id: 'imageSize',
-              label: Drupal.settings.picture.label,
-              items: Drupal.settings.picture.mappings,
-              'default': Drupal.settings.picture.ckeditorDefaultMapping,
+              label: Backdrop.settings.picture.label,
+              items: Backdrop.settings.picture.mappings,
+              'default': Backdrop.settings.picture.ckeditorDefaultMapping,
               requiredContent: features.imageSize.requiredContent,
               setup: function(widget) {
                 mapping = widget.parts.image.getAttribute('data-picture-mapping');
-                this.setValue(mapping ? mapping : Drupal.settings.picture.ckeditorDefaultMapping);
+                this.setValue(mapping ? mapping : Backdrop.settings.picture.ckeditorDefaultMapping);
               },
               // Create a custom data-picture-mapping attribute.
               commit: function(widget) {
                 widget.parts.image.setAttribute('data-picture-mapping', this.getValue());
               },
               validate: function() {
-                if (Drupal.settings.picture.required) {
+                if (Backdrop.settings.picture.required) {
                   if (this.getValue() == 'not_set') {
-                    var message = 'Please make a selection from ' + Drupal.settings.picture.label;
+                    var message = 'Please make a selection from ' + Backdrop.settings.picture.label;
                     alert(message);
                     return false;
                   }
@@ -156,9 +156,9 @@
             infoTab.add({
               type: 'select',
               id: 'imageSize',
-              label: Drupal.settings.picture.label,
-              items: Drupal.settings.picture.mappings,
-              'default': Drupal.settings.picture.ckeditorDefaultMapping,
+              label: Backdrop.settings.picture.label,
+              items: Backdrop.settings.picture.mappings,
+              'default': Backdrop.settings.picture.ckeditorDefaultMapping,
               onChange: function() {
                 var dialog = this.getDialog();
                 var element = dialog.originalElement;
@@ -184,9 +184,9 @@
                 }
               },
               validate: function() {
-                if (Drupal.settings.picture.required) {
+                if (Backdrop.settings.picture.required) {
                   if (this.getValue() == 'not_set') {
-                    var message = 'Please make a selection from ' + Drupal.settings.picture.label;
+                    var message = 'Please make a selection from ' + Backdrop.settings.picture.label;
                     alert(message);
                     return false;
                   }
@@ -263,7 +263,7 @@
               'imageSize'
             );
 
-            // Improve the alt field label. Copied from Drupal's image field.
+            // Improve the alt field label. Copied from Backdrop's image field.
             altText.label = 'The alt attribute may be used by search engines, and screen readers.';
 
             // Remove a bunch of extraneous fields. These properties will be set in
