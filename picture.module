@@ -8,39 +8,8 @@
 define('PICTURE_EMPTY_IMAGE', '_empty image_');
 define('PICTURE_ORIGINAL_IMAGE', '_original image_');
 
-if (!config_get('picture.settings', 'picture_updated_to_file_entity_2')) {
+if (!config_get('picture.settings', 'updated_to_file_entity_2')) {
   module_load_include('file_entity_1.inc', 'picture');
-}
-
-/**
- * Implements hook_help().
- */
-function picture_help($path, $arg) {
-  $output = '';
-  switch ($path) {
-    case 'admin/help#picture':
-      $output .= '<h3>' . t('About') . '</h3>';
-      $output .= '<p>' . t('The Picture module provides an image formatter and breakpoint mappings to output responsive images using the HTML5 picture tag. For more information, see the <a href="!picture">online documentation for the Picture module</a>.', array('!picture' => 'https://drupal.org/documentation/modules/picture')) . '</p>';
-      $output .= '<h3>' . t('Uses') . '</h3>';
-      $output .= '<dl>';
-      $output .= '<dt>' . t('Defining picture mappings') . '</dt>';
-      $output .= '<dd>' . t('By creating picture mappings you define the image styles that are being used to output images at certain breakpoints. On the <a href="!picture_mapping">Picture mappings</a> page, click <em>Add picture mapping</em> to create a new mapping. First chose a label and a breakpoint group and click Save. After that you can choose the image styles that will be used for each breakpoint. Image styles can be defined on the <a href="!image_styles">Image styles page</a> that is provided by the <a href="!image_help">Image module</a>. Breakpoints are defined in the info files of the theme or you can create custom breakpoints. See the <a href="!breakpoint_help">help page of the Breakpoint module</a> for more information.', array(
-        '!picture_mapping' => url('admin/config/media/picture'),
-        '!image_styles' => url('admin/config/media/image-styles'),
-        '!image_help' => url('admin/help/image'),
-        '!breakpoint_help' => url('admin/help/breakpoints'),
-      )) . '</dd>';
-      $output .= '<dt>' . t('Using picture mappings in Image fields') . '</dt>';
-      $output .= '<dd>' . t('After defining responsive image mappings, you can use them in the display settings for your Image fields, so that the site displays responsive images using the HTML5 picture tag. Open the Manage display page for the entity type (content type, taxonomy vocabulary, etc.) that the Image field is attached to. Choose the format <em>Picture</em>, click the Edit icon, and select one of the picture mappings that you have created. For general information on how to manage fields and their display see the <a href="!field_ui">help page of the Field UI module</a>.', array('!field_ui' => url('admin/help/field_ui'))) . '</dd>';
-      $output .= '</dl>';
-      break;
-
-    case 'admin/config/media/picture':
-      $output .= '<p>' . t('A picture mapping associates an image style with each breakpoint defined by your theme.') . '</p>';
-      break;
-
-  }
-  return $output;
 }
 
 /**
@@ -50,7 +19,7 @@ function picture_flush_caches() {
   // After update.php, caches are flushed. Check if file_entity has updated to
   // version 2.
   module_load_include('admin.inc', 'picture');
-  config_set('picture.settings', 'picture_updated_to_file_entity_2', _picture_update_to_file_entity_2());
+  config_set('picture.settings', 'updated_to_file_entity_2', _picture_update_to_file_entity_2());
 }
 
 /**
@@ -60,7 +29,7 @@ function picture_modules_enabled($modules) {
   if (in_array('file_entity', $modules)) {
     module_load_include('admin.inc', 'picture');
     module_load_include('module', 'file_entity');
-    config_set('picture.settings', 'picture_updated_to_file_entity_2', _picture_update_to_file_entity_2());
+    config_set('picture.settings', 'updated_to_file_entity_2', _picture_update_to_file_entity_2());
   }
 }
 
@@ -81,6 +50,16 @@ function picture_permission() {
  */
 function picture_menu() {
   $items = array();
+  $items['admin/config/media/picture'] = array(
+    'title' => 'Picture mappings',
+    'type' => MENU_NORMAL_ITEM,
+    'description' => 'A picture mapping associates an image style with each breakpoint defined by your theme.',
+    'page callback' => 'backdrop_get_form',
+    'page arguments' => array('picture_mapping_list'),
+    'access arguments' => array('administer pictures'),
+    'file' => 'picture.admin.inc',
+    'weight' => 0,
+  );
   $items['admin/config/media/picture/settings'] = array(
     'title' => 'Settings',
     'type' => MENU_LOCAL_TASK,
@@ -89,7 +68,7 @@ function picture_menu() {
     'page arguments' => array('picture_admin_settings'),
     'access arguments' => array('administer pictures'),
     'file' => 'picture.admin.inc',
-    'weight' => 0,
+    'weight' => 1,
   );
   return $items;
 }
@@ -98,9 +77,10 @@ function picture_menu() {
  * Load mappings.
  */
 function picture_mapping_load($name) {
-  ctools_include('export');
+  // ctools_include('export');
   if ($name) {
-    $mappings = ctools_export_load_object('picture_mapping', 'names', array($name));
+    // TODO: Convert to CMI
+    // $mappings = ctools_export_load_object('picture_mapping', 'names', array($name));
     $mapping = isset($mappings[$name]) ? $mappings[$name] : FALSE;
     return $mapping;
   }
@@ -111,8 +91,9 @@ function picture_mapping_load($name) {
  * Load all mappings.
  */
 function picture_mapping_load_all() {
-  ctools_include('export');
-  return ctools_export_load_object('picture_mapping');
+  // ctools_include('export');
+  // TODO: Convert to CMI
+  // return ctools_export_load_object('picture_mapping');
 }
 
 /**
@@ -127,9 +108,10 @@ function picture_mapping_save(PictureMapping $mapping) {
  */
 function picture_config_info() {
   $prefixes['picture.settings'] = array(
-    'label' => t('Module name settings'),
+    'label' => t('Picture settings'),
     'group' => t('Configuration'),
   );
+  return $prefixes;
 }
 
 /**
@@ -138,7 +120,7 @@ function picture_config_info() {
 function picture_library() {
   $config = config('picture.settings');
   $libraries = array();
-  switch ($config->get('picture_polyfill_version')) {
+  switch ($config->get('polyfill_version')) {
     case 'min':
       $libraries['picturefill_head'] = array(
         'title' => t('Picturefill head fix'),
@@ -159,11 +141,11 @@ function picture_library() {
         'website' => 'https://github.com/scottjehl/picturefill',
         'version' => '3.0.1',
         'js' => array(
-          backdrop_get_path('module', 'picture') . '/picturefill/picturefill.min.js' => array(
+          backdrop_get_path('module', 'picture') . '/js/picturefill/picturefill.min.js' => array(
             'type' => 'file',
             'weight' => -10,
             'group' => JS_DEFAULT,
-            'scope' => $config->get('picture_js_scope'),
+            'scope' => $config->get('js_scope'),
             'need_jquery' => FALSE,
           ),
         ),
@@ -173,11 +155,11 @@ function picture_library() {
         'title' => t('Ajax support for picture'),
         'version' => VERSION,
         'js' => array(
-          backdrop_get_path('module', 'picture') . '/picture.min.js' => array(
+          backdrop_get_path('module', 'picture') . '/js/picture.min.js' => array(
             'type' => 'file',
             'weight' => -10,
             'group' => JS_DEFAULT,
-            'scope' => $config->get('picture_js_scope'),
+            'scope' => $config->get('js_scope'),
             'need_jquery' => FALSE,
           ),
         ),
@@ -236,11 +218,11 @@ function picture_library() {
         'website' => 'https://github.com/scottjehl/picturefill',
         'version' => '3.0.1',
         'js' => array(
-          backdrop_get_path('module', 'picture') . '/picturefill/picturefill.js' => array(
+          backdrop_get_path('module', 'picture') . '/js/picturefill/picturefill.js' => array(
             'type' => 'file',
             'weight' => -10,
             'group' => JS_DEFAULT,
-            'scope' => $config->get('picture_js_scope'),
+            'scope' => $config->get('js_scope'),
             'need_jquery' => FALSE,
           ),
         ),
@@ -250,11 +232,11 @@ function picture_library() {
         'title' => t('Ajax support for picture'),
         'version' => VERSION,
         'js' => array(
-          backdrop_get_path('module', 'picture') . '/picture.js' => array(
+          backdrop_get_path('module', 'picture') . '/js/picture.js' => array(
             'type' => 'file',
             'weight' => -10,
             'group' => JS_DEFAULT,
-            'scope' => $config->get('picture_js_scope'),
+            'scope' => $config->get('js_scope'),
             'need_jquery' => FALSE,
           ),
         ),
@@ -1000,8 +982,8 @@ function picture_field_formatter_picture_view($entity_type, $entity, $field, $in
 
     // Add css and js for colorbox.
     if ($formatter == 'picture_formatter_colorbox') {
-      $element[$delta]['#attached']['css'][backdrop_get_path('module', 'picture') . '/picture_colorbox.css'] = array('type' => 'file');
-      $element[$delta]['#attached']['js'][backdrop_get_path('module', 'picture') . '/picture_colorbox.js'] = array('type' => 'file');
+      $element[$delta]['#attached']['css'][backdrop_get_path('module', 'picture') . '/css/picture_colorbox.css'] = array('type' => 'file');
+      $element[$delta]['#attached']['js'][backdrop_get_path('module', 'picture') . '/js/picture_colorbox.js'] = array('type' => 'file');
       // TODO This variable was probably removed in Backdrop without replacement.
       if (!variable_get('colorbox_inline', 0)) {
         $element[$delta]['#attached']['js'][backdrop_get_path('module', 'colorbox') . '/js/colorbox_inline.js'] = array('type' => 'file');
@@ -1229,7 +1211,7 @@ function theme_picture_formatter($variables) {
  * Theme pictue sizes formatter.
  */
 function theme_picture_sizes_formatter($variables) {
-  $output_method = config_get('picture.settings', 'picture_img_sizes_output_method');
+  $output_method = config_get('picture.settings', 'img_sizes_output_method');
   $variables['image_style'] = $variables['fallback_image_style'];
 
   if ($output_method == 'picture_element') {
@@ -1836,10 +1818,10 @@ function _picture_filter_prepare_image($image) {
     return FALSE;
   }
 
-  $picture_mappings = $config->get('picture_ckeditor_mappings');
+  $picture_mappings = $config->get('ckeditor_mappings');
 
   // Use srcset if possible and allowed.
-  if ($config->get('picture_use_sizes_in_wysiwyg')) {
+  if ($config->get('use_sizes_in_wysiwyg')) {
     $bps = picture_get_mapping_breakpoints($mappings);
     $bp = reset($bps);
     $info = reset($bp);
@@ -1940,7 +1922,7 @@ function picture_page_build(&$page) {
 
   // Integrate with the WYSIWYG module, and the CKEditor module.
   $picture_mappings = picture_get_mapping_options();
-  $ckeditor_mappings = $config->get('picture_ckeditor_mappings');
+  $ckeditor_mappings = $config->get('ckeditor_mappings');
   $mappings = array();
 
   // CKEditor library expects an array of options formatted as
@@ -1962,18 +1944,18 @@ function picture_page_build(&$page) {
   }
 
   if (!empty($mappings)) {
-    $label = $config->get('picture_ckeditor_label');
-    if ($config->get('picture_ckeditor_required')) {
+    $label = $config->get('ckeditor_label');
+    if ($config->get('ckeditor_required')) {
       $label .= ' (required)';
     }
 
     $mappings[] = array('Not Set', 'not_set');
     backdrop_add_js(array(
       'picture' => array(
-        'required' => $config->get('picture_ckeditor_required'),
+        'required' => $config->get('ckeditor_required'),
         'mappings' => $mappings,
         'label' => $label,
-        'ckeditorDefaultMapping' => $config->get('picture_ckeditor_default_mapping'),
+        'ckeditorDefaultMapping' => $config->get('ckeditor_default_mapping'),
         'editorCSS' => picture_ckeditor_css(),
       ),
     ), 'setting');
@@ -1993,7 +1975,7 @@ function picture_page_build(&$page) {
 function picture_ckeditor_css($prefix = '') {
   $image_styles = image_styles();
   $picture_mappings = picture_mapping_load_all();
-  $ckeditor_mappings = config_get('picture.settings', 'picture_ckeditor_mappings');
+  $ckeditor_mappings = config_get('picture.settings', 'ckeditor_mappings');
   $mappings = array();
 
   foreach ($ckeditor_mappings as $machine_name => $parameters) {
@@ -2145,7 +2127,7 @@ function picture_wysiwyg_plugin($editor, $version) {
         'path' => backdrop_get_path('module', 'picture') . '/ckeditor/plugins/',
         'load' => TRUE,
         'extensions' => array('picture_ckeditor' => t('Responsive images with the Picture Module')),
-        'url' => 'https://www.drupal.org/project/picture',
+        'url' => 'https://www.backdropcms.org/project/picture',
       ),
     );
   }
@@ -2330,8 +2312,8 @@ function picture_mapping_object_factory($schema, $data) {
  * Create picture mapping.
  */
 function picture_mapping_create($set_defaults) {
-  $schema = ctools_export_get_schema('picture_mapping');
-  $data = ctools_export_new_object('picture_mapping', $set_defaults);
+  //$schema = ctools_export_get_schema('picture_mapping');
+  //$data = ctools_export_new_object('picture_mapping', $set_defaults);
   return picture_mapping_object_factory($schema, $data);
 }
 

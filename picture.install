@@ -72,23 +72,19 @@ function picture_schema() {
  */
 function picture_install() {
   module_load_include('admin.inc', 'picture');
-  config_set('picture.settings', 'picture_updated_to_file_entity_2', _picture_update_to_file_entity_2());
-  // Dynamically generated variable data was detected on the following lines.
-  // /picture/picture.module line 1976
-  // /picture/picture.module line 1946
-  // /picture/picture.install line 147
+  config_set('picture.settings', 'updated_to_file_entity_2', _picture_update_to_file_entity_2());
 }
 
 /**
  * Implements hook_uninstall().
  */
 function picture_uninstall() {
-  config_clear('picture.settings', 'picture_ckeditor_mappings');
-  config_clear('picture.settings', 'picture_ckeditor_label');
-  config_clear('picture.settings', 'picture_updated_to_file_entity_2');
-  config_clear('picture.settings', 'picture_js_scope');
-  config_clear('picture.settings', 'picture_polyfill_version');
-  config_clear('picture.settings', 'picture_fallback_method');
+  config_clear('picture.settings', 'ckeditor_mappings');
+  config_clear('picture.settings', 'ckeditor_label');
+  config_clear('picture.settings', 'updated_to_file_entity_2');
+  config_clear('picture.settings', 'js_scope');
+  config_clear('picture.settings', 'polyfill_version');
+  config_clear('picture.settings', 'fallback_method');
 
   if (module_exists('file_entity') && function_exists('file_type_load_all')) {
     // Delete field formatter settings.
@@ -128,25 +124,13 @@ function picture_requirements($phase) {
       'value' => $info['version'],
       'severity' => REQUIREMENT_OK,
     );
-    if (version_compare($info['version'], '7.x-2.5') < 0) {
-      $requirements['picture_colorbox']['description'] = $t('The Colorbox module must be version 7.x-2.5 or higher in order to work with the Picture module.');
+    if (version_compare($info['version'], '1.x-2.5') < 0) {
+      $requirements['picture_colorbox']['description'] = $t('The Colorbox module must be version 1.x-2.5 or higher in order to work with the Picture module.');
       $requirements['picture_colorbox']['severity'] = REQUIREMENT_ERROR;
     }
   }
   return $requirements;
 }
-
-// TODO The old hook_update_N functions cannot be applied to Backdrop.
-function picture_update_7200() { }
-
-// TODO The old hook_update_N functions cannot be applied to Backdrop.
-function picture_update_7201() { }
-
-// TODO The old hook_update_N functions cannot be applied to Backdrop.
-function picture_update_7202() { }
-
-// TODO The old hook_update_N functions cannot be applied to Backdrop.
-function picture_update_7203() { }
 
 /**
  * Implements hook_update_last_removed().
@@ -160,17 +144,17 @@ function picture_update_last_removed() {
  */
 function picture_update_1000() {
   $config = config('picture.settings');
-  $config->set('picture_ckeditor_mappings', update_variable_get('picture_ckeditor_mappings', 'dynamic value in file /picture/picture.module line 1976'));
-  $config->set('picture_ckeditor_label', update_variable_get('picture_ckeditor_label', 'dynamic value in file /picture/picture.module line 1946'));
-  $config->set('picture_ckeditor_default_mapping', update_variable_get('picture_ckeditor_default_mapping', 'not_set'));
-  $config->set('picture_updated_to_file_entity_2', update_variable_get('picture_updated_to_file_entity_2', 'FALSE'));
-  $config->set('picture_js_scope', update_variable_get('picture_js_scope', 'footer'));
-  $config->set('picture_polyfill_version', update_variable_get('picture_polyfill_version', 'min'));
-  $config->set('picture_fallback_method', update_variable_get('picture_fallback_method', 'src'));
-  $config->set('picture_img_sizes_output_method', update_variable_get('picture_img_sizes_output_method', 'picture_element'));
-  $config->set('picture_ckeditor_groups', update_variable_get('picture_ckeditor_groups', 'dynamic value in file /picture/picture.install line 147'));
-  $config->set('picture_use_sizes_in_wysiwyg', update_variable_get('picture_use_sizes_in_wysiwyg', 'FALSE'));
-  $config->set('picture_ckeditor_required', update_variable_get('picture_ckeditor_required', 'TRUE'));
+  $config->set('ckeditor_mappings', update_variable_get('picture_ckeditor_mappings', ''));
+  $config->set('ckeditor_label', update_variable_get('picture_ckeditor_label', ''));
+  $config->set('ckeditor_default_mapping', update_variable_get('picture_ckeditor_default_mapping', 'not_set'));
+  $config->set('updated_to_file_entity_2', update_variable_get('picture_updated_to_file_entity_2', 0));
+  $config->set('js_scope', update_variable_get('picture_js_scope', 'footer'));
+  $config->set('polyfill_version', update_variable_get('picture_polyfill_version', 'min'));
+  $config->set('fallback_method', update_variable_get('picture_fallback_method', 'src'));
+  $config->set('img_sizes_output_method', update_variable_get('picture_img_sizes_output_method', 'picture_element'));
+  $config->set('ckeditor_groups', update_variable_get('picture_ckeditor_groups', ''));
+  $config->set('use_sizes_in_wysiwyg', update_variable_get('picture_use_sizes_in_wysiwyg', 0));
+  $config->set('ckeditor_required', update_variable_get('picture_ckeditor_required', 1));
   update_variable_del('picture_ckeditor_mappings');
   update_variable_del('picture_ckeditor_label');
   update_variable_del('picture_ckeditor_default_mapping');

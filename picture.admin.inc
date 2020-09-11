@@ -54,6 +54,17 @@ function picture_select_breakpoint_group_form_submit($form, &$form_state) {
 }
 
 /**
+ * List all picture mappings.
+ */
+function picture_mapping_list() {
+  $form = array(
+    '#markup' => '<p>We need to build this page to list all picture mappings, since Ctools is removed.</p>',
+  );
+  
+  return $form;
+}
+
+/**
  * Build picture mapping form.
  */
 function picture_mapping_form(&$form, &$form_state) {
@@ -71,7 +82,7 @@ function picture_mapping_form(&$form, &$form_state) {
     '#required' => TRUE,
     '#description' => t('Select a breakpoint group.'),
     '#options' => $options,
-    '#default_value' => $picture_mapping->getBreakpointGroup()->machine_name,
+    '#default_value' => $picture_mapping->getBreakpointGroup() ? $picture_mapping->getBreakpointGroup()->machine_name : NULL,
     '#ajax' => array(
       'callback' => 'picture_mapping_form_change_breakpoint_group',
       'wrapper' => 'picture-mapping-container',
