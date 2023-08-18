@@ -4,8 +4,6 @@
   "preset_type": "mapping",
   "machine_name": "default",
   "title": "Defaults",
-  "data": {
-    "breakpoint_group": "core",
-    "mapping": ""
-  }
+  "breakpoint_group": "core",
+  "mapping": {}
 }
