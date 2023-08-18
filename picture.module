@@ -2280,10 +2280,10 @@ function picture_mapping_object_factory($schema, $data) {
 }
 
 /**
- * Create picture mapping.
+ * Get the default data structure/schema.
  */
-function picture_mapping_create($set_defaults) {
-  $schema = array(
+function picture_get_schema() {
+  return array(
     'machine_name' => '',
     'title' => '',
     'data' => array(
@@ -2291,27 +2291,18 @@ function picture_mapping_create($set_defaults) {
       'mapping' => '',
     ),
   );
+}
+
+/**
+ * Create picture mapping.
+ */
+function picture_mapping_create($set_defaults) {
+  $schema = picture_get_schema();
   $data = (object) $schema;
   foreach ($set_defaults as $key => $value) {
     $data->{$key} = $value;
   }
   return picture_mapping_object_factory($schema, $data);
-}
-
-/**
- * Export picture mapping.
- */
-function picture_mapping_export(PictureMapping $mapping, $indent) {
-  return $mapping->export($indent);
-}
-
-/**
- * Implements hook_ctools_plugin_api().
- */
-function picture_ctools_plugin_api($module = NULL, $api = NULL) {
-  if ($module == "breakpoints" && $api == "default_breakpoints") {
-    return array("version" => "1");
-  }
 }
 
 /**
@@ -2377,15 +2368,9 @@ function picture_preset_form($preset_type, $id) {
     $config = config('picture.' . $preset_type . '.' . $id);
     $mapping = $config->get();
 
-    $parser_form = picture_mapping_get_form(!empty($mapping) ? $mapping : array());
-
-    // General settings for playback - formerly in the configuration section.
-    $form['data'] = array(
-      '#type' => 'vertical_tabs',
-      '#title' => t('Playback settings'),
-      '#tree' => TRUE,
-    ) + $parser_form;
-
+    $form = picture_mapping_get_form(
+      defaults: !empty($mapping) ? $mapping : array(),
+    );
   }
 
   return $form;
@@ -2395,9 +2380,8 @@ function picture_preset_form($preset_type, $id) {
  * Build picture mapping form with defaults.
  *
  */
-function picture_mapping_get_form($defaults) {
-  $form = array();
-  $picture_mapping = picture_mapping_create($defaults);
+function picture_mapping_get_form(&$form = array(), &$form_state = array(), $defaults = array()) {
+  $picture_mapping = (!empty($form_state)) ? $form_state['item'] : picture_mapping_create($defaults);
   $form['info']['label']['#required'] = TRUE;
   $form['info']['machine_name']['#title'] = t('Machine name');
   $groups = breakpoints_breakpoint_group_load_all();

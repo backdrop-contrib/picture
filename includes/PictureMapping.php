@@ -37,11 +37,6 @@ class PictureMapping {
   protected $breakpoint_group = '';
 
   /**
-   * Boolean flag, used internally.
-   */
-  protected $isExporting = FALSE;
-
-  /**
    * Set data values based on schema.
    *
    * @see picture_mapping_object_factory()
@@ -49,25 +44,12 @@ class PictureMapping {
   public function setValues($schema, $data) {
     foreach ($schema['fields'] as $field => $info) {
       if (isset($data->{$field})) {
-        $this->{$field} = !empty($info['serialize']) && is_string($data->{$field}) ? unserialize($data->{$field}) : $data->{$field};
+        $this->{$field} = $data->{$field};
       }
       else {
         $this->{$field} = NULL;
       }
       unset($data->{$field});
-    }
-
-    if (isset($schema['join'])) {
-      foreach ($schema['join'] as $join) {
-        $join_schema = ctools_export_get_schema($join['table']);
-        if (!empty($join['load'])) {
-          foreach ($join['load'] as $field) {
-            $info = $join_schema['fields'][$field];
-            $this->{$field} = empty($info['serialize']) ? $data->{$field} : unserialize($data->{$field});
-            unset($data->field);
-          }
-        }
-      }
     }
 
     foreach ((array) $data as $field => $val) {
@@ -94,7 +76,8 @@ class PictureMapping {
     $return = $config->isNew();
     module_load_include('info.inc', 'field');
     field_info_cache_clear();
-    // $this->setValues(ctools_export_get_schema('picture_mapping'), $data);
+    $schema = picture_get_schema();
+    $this->setValues($schema, $data);
     $this->loadBreakpointGroup();
     return $return;
   }
@@ -338,9 +321,6 @@ class PictureMapping {
         return $this->getMappings();
 
       case 'breakpoint_group':
-        if ($this->isExporting) {
-          return $this->breakpoint_group;
-        }
         return $this->getBreakpointGroup();
 
       default:
@@ -380,22 +360,6 @@ class PictureMapping {
    */
   public function __isset($name) {
     return isset($this->{$name});
-  }
-
-  /**
-   * Export this PictureMapping.
-   *
-   * @return string
-   *   The export string.
-   */
-  public function export($indent = '') {
-    $this->cleanMappings();
-    $this->breakpoint_group = $this->getBreakpointGroup() ? $this->getBreakpointGroup()->machine_name : $this->breakpoint_group;
-    $this->isExporting = TRUE;
-    $export = ctools_export_object('picture_mapping', $this, $indent);
-    $this->isExporting = TRUE;
-    $this->loadBreakpointGroup();
-    return $export;
   }
 
 }
