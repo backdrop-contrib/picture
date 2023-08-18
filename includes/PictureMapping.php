@@ -42,7 +42,7 @@ class PictureMapping {
    * @see picture_mapping_object_factory()
    */
   public function setValues($schema, $data) {
-    foreach ($schema['fields'] as $field => $info) {
+    foreach ($schema as $field => $info) {
       if (isset($data->{$field})) {
         $this->{$field} = $data->{$field};
       }
@@ -51,10 +51,11 @@ class PictureMapping {
       }
       unset($data->{$field});
     }
-
+    /*
     foreach ((array) $data as $field => $val) {
       $this->{$field} = $val;
     }
+    */
     $this->loadBreakpointGroup();
     $this->loadAllMappings();
   }

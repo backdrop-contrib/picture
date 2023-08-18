@@ -62,7 +62,7 @@ function picture_menu() {
  */
 function picture_mapping_load($name) {
   if ($name) {
-    return (object) config_get('picture.mapping.' . $name);
+    return picture_mapping_create(config_get('picture.mapping.' . $name));
   }
   return FALSE;
 }
@@ -74,8 +74,8 @@ function picture_mapping_load_all() {
   $mappings = [];
   $mapping_config_names = config_get_names_with_prefix('picture.mapping.');
   foreach ($mapping_config_names as $mapping_config_name) {
-    $mapping_name = str_replace('picture.mapping.', '', $config_name);
-    $mappings[$mapping_name] = (object) config_get($mapping_config_name);
+    $mapping_name = str_replace('picture.mapping.', '', $mapping_config_name);
+    $mappings[$mapping_name] = picture_mapping_create(config_get($mapping_config_name));
   }
   return $mappings;
 }
@@ -351,6 +351,7 @@ function picture_theme() {
  */
 function picture_field_formatter_info() {
   $formatters = array();
+  $options = picture_get_mapping_options();
   $mappings = array_keys(picture_get_mapping_options());
   if ($mappings) {
     $formatters['picture'] = array(
@@ -2285,11 +2286,9 @@ function picture_mapping_object_factory($schema, $data) {
 function picture_get_schema() {
   return array(
     'machine_name' => '',
-    'title' => '',
-    'data' => array(
-      'breakpoint_group' => '',
-      'mapping' => '',
-    ),
+    'label' => '',
+    'breakpoint_group' => '',
+    'mapping' => array(),
   );
 }
 
@@ -2300,6 +2299,10 @@ function picture_mapping_create($set_defaults) {
   $schema = picture_get_schema();
   $data = (object) $schema;
   foreach ($set_defaults as $key => $value) {
+    // Temp hack (Preset uses title; Picture uses label)
+    if ($key == 'title') {
+      $key = 'label';
+    }
     $data->{$key} = $value;
   }
   return picture_mapping_object_factory($schema, $data);

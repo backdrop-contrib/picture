@@ -3,7 +3,8 @@
   "module": "picture",
   "preset_type": "mapping",
   "machine_name": "default",
-  "title": "Defaults",
+  "label": "Defaults - label",
+  "title": "Defaults - title",
   "breakpoint_group": "core",
   "mapping": {}
 }
