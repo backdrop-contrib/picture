@@ -8,10 +8,6 @@
 define('PICTURE_EMPTY_IMAGE', '_empty image_');
 define('PICTURE_ORIGINAL_IMAGE', '_original image_');
 
-if (!config_get('picture.settings', 'updated_to_file_entity_2')) {
-  module_load_include('file_entity_1.inc', 'picture');
-}
-
 /**
  * Implements hook_flush_caches().
  */
@@ -19,7 +15,6 @@ function picture_flush_caches() {
   // After update.php, caches are flushed. Check if file_entity has updated to
   // version 2.
   module_load_include('admin.inc', 'picture');
-  config_set('picture.settings', 'updated_to_file_entity_2', _picture_update_to_file_entity_2());
 }
 
 /**
@@ -29,7 +24,6 @@ function picture_modules_enabled($modules) {
   if (in_array('file_entity', $modules)) {
     module_load_include('admin.inc', 'picture');
     module_load_include('module', 'file_entity');
-    config_set('picture.settings', 'updated_to_file_entity_2', _picture_update_to_file_entity_2());
   }
 }
 
@@ -50,16 +44,6 @@ function picture_permission() {
  */
 function picture_menu() {
   $items = array();
-  $items['admin/config/media/picture'] = array(
-    'title' => 'Picture mappings',
-    'type' => MENU_NORMAL_ITEM,
-    'description' => 'A picture mapping associates an image style with each breakpoint defined by your theme.',
-    'page callback' => 'backdrop_get_form',
-    'page arguments' => array('picture_mapping_list'),
-    'access arguments' => array('administer pictures'),
-    'file' => 'picture.admin.inc',
-    'weight' => 0,
-  );
   $items['admin/config/media/picture/settings'] = array(
     'title' => 'Settings',
     'type' => MENU_LOCAL_TASK,
@@ -77,12 +61,8 @@ function picture_menu() {
  * Load mappings.
  */
 function picture_mapping_load($name) {
-  // ctools_include('export');
   if ($name) {
-    // TODO: Convert to CMI
-    // $mappings = ctools_export_load_object('picture_mapping', 'names', array($name));
-    $mapping = isset($mappings[$name]) ? $mappings[$name] : FALSE;
-    return $mapping;
+    return (object) config_get('picture.mapping.' . $name);
   }
   return FALSE;
 }
@@ -91,9 +71,13 @@ function picture_mapping_load($name) {
  * Load all mappings.
  */
 function picture_mapping_load_all() {
-  // ctools_include('export');
-  // TODO: Convert to CMI
-  // return ctools_export_load_object('picture_mapping');
+  $mappings = [];
+  $mapping_config_names = config_get_names_with_prefix('picture.mapping.');
+  foreach ($mapping_config_names as $mapping_config_name) {
+    $mapping_name = str_replace('picture.mapping.', '', $config_name);
+    $mappings[$mapping_name] = (object) config_get($mapping_config_name);
+  }
+  return $mappings;
 }
 
 /**
@@ -115,9 +99,9 @@ function picture_config_info() {
 }
 
 /**
- * Implements hook_library().
+ * Implements hook_library_info().
  */
-function picture_library() {
+function picture_library_info() {
   $config = config('picture.settings');
   $libraries = array();
   switch ($config->get('polyfill_version')) {
@@ -248,14 +232,13 @@ function picture_library() {
         'js' => array(
           backdrop_get_path('module', 'picture') . '/lazysizes/lazysizes.js' => array(
             'type' => 'file',
-            // file has async, put before all files to prevent JS concatenation breaking
+            // File has async, put before all files to prevent JS concatenation breaking.
             'weight' => -20,
             'group' => JS_LIBRARY,
             'need_jquery' => FALSE,
           ),
         ),
       );
-
 
       $libraries['lazysizes_aspect_ratio'] = array(
         'title' => t('Aspect ratio plugin for lazysizes'),
@@ -279,18 +262,6 @@ function picture_library() {
   }
 
   return $libraries;
-}
-
-/**
- * Implements hook_ctools_plugin_directory().
- *
- * Lets CTools know which plugin APIs are implemented by picture module.
- */
-function picture_ctools_plugin_directory($owner, $plugin_type) {
-  // Load the export_ui plugin.
-  if ($owner == 'ctools' && $plugin_type == 'export_ui') {
-    return 'ctools/plugins/export_ui';
-  }
 }
 
 /**
@@ -658,8 +629,8 @@ function picture_field_formatter_settings_picture_sizes_formatter_form($field, $
     '#description' => t(
       'The value of the sizes attribute. See !link for more information.',
       array(
-      '!link' => l(t('the spec'), 'http://www.whatwg.org/specs/web-apps/current-work/multipage/embedded-content.html#introduction-3:viewport-based-selection-2'),
-    )
+        '!link' => l(t('the spec'), 'http://www.whatwg.org/specs/web-apps/current-work/multipage/embedded-content.html#introduction-3:viewport-based-selection-2'),
+      )
     ),
     '#default_value' => $settings['sizes'],
     '#required' => TRUE,
@@ -827,8 +798,8 @@ function picture_field_formatter_settings_picture_sizes_formatter_summary($field
   $summary[] = t(
     'Image styles: @styles',
     array(
-    '@styles' => implode(', ', array_intersect_key($image_styles, $selected_styles)),
-  )
+      '@styles' => implode(', ', array_intersect_key($image_styles, $selected_styles)),
+    )
   );
 
   $summary[] = t('Fallback image style: @style', array('@style' => isset($image_styles[$settings['fallback_image_style']]) ? $image_styles[$settings['fallback_image_style']] : $image_styles[PICTURE_EMPTY_IMAGE]));
@@ -1415,7 +1386,7 @@ function theme_picture(array $variables) {
               // Get mime type.
               // $derivative_mime_type = $mime_type;
               // $image_style->transformMimeType($derivative_mime_type);
-              // $derivative_mime_types[] = $derivative_mime_type;
+              // $derivative_mime_types[] = $derivative_mime_type;.
               $srcset[$dimensions_clone['width']] = _picture_image_style_url($image_style_name, $variables['uri'], $variables['timestamp']) . ' ' . $dimensions_clone['width'] . 'w';
               $sizes = array_merge(explode(',', $mapping_definition['sizes']), $sizes);
             }
@@ -1425,7 +1396,7 @@ function theme_picture(array $variables) {
             // Get mime type (not implemented in Backdrop 7.
             // $derivative_mime_type = $mime_type;
             // $image_style->transformMimeType($derivative_mime_type);
-            // $derivative_mime_types[] = $derivative_mime_type;
+            // $derivative_mime_types[] = $derivative_mime_type;.
             $srcset[$multiplier] = _picture_image_style_url($mapping_definition['image_style'], $variables['uri'], $variables['timestamp']) . ' ' . $multiplier;
             break;
         }
@@ -1441,7 +1412,7 @@ function theme_picture(array $variables) {
           'height' => $variables['height'],
         );
         $dimensions = picture_get_image_dimensions($mapping_definition['image_style'], $dimensions);
-        // store as a string, JS plugin will do calculation
+        // Store as a string, JS plugin will do calculation.
         $aspect_ratio = $dimensions['width'] . '/' . $dimensions['height'];
       }
 
@@ -1493,7 +1464,7 @@ function theme_picture(array $variables) {
     }
 
     if (!empty($variables['lazyload_aspect_ratio'])) {
-      // img tag has to have data-aspectratio attribute even if its dummy placeholder
+      // Img tag has to have data-aspectratio attribute even if its dummy placeholder.
       $attributes['data-aspectratio'] = '';
     }
 
@@ -1775,7 +1746,7 @@ function _picture_filter_prepare_image($image) {
     $mapping_id = $attributes['data-picture-group'];
   }
   else {
-    $mapping_id = null;
+    $mapping_id = NULL;
   }
   $mappings = picture_mapping_load($mapping_id);
   // Make sure we have valid mappings.
@@ -2312,8 +2283,18 @@ function picture_mapping_object_factory($schema, $data) {
  * Create picture mapping.
  */
 function picture_mapping_create($set_defaults) {
-  //$schema = ctools_export_get_schema('picture_mapping');
-  //$data = ctools_export_new_object('picture_mapping', $set_defaults);
+  $schema = array(
+    'machine_name' => '',
+    'title' => '',
+    'data' => array(
+      'breakpoint_group' => '',
+      'mapping' => '',
+    ),
+  );
+  $data = (object) $schema;
+  foreach ($set_defaults as $key => $value) {
+    $data->{$key} = $value;
+  }
   return picture_mapping_object_factory($schema, $data);
 }
 
@@ -2364,4 +2345,149 @@ function picture_autoload_info() {
   return array(
     'PictureMapping' => 'includes/PictureMapping.php',
   );
+}
+
+/**
+ * Implements hook_preset_types().
+ */
+function picture_preset_types() {
+  return array(
+    'mapping' => array(
+      'name' => t('Picture mapping'),
+      'name_plural' => t('Picture mappings'),
+      'path' => 'admin/config/media/picture',
+      'path_title' => t('Picture mappings'),
+      'path_description' => t('Manage picture mappings.'),
+      'id_name' => t('Mapping name'),
+      'permission' => 'administer pictures',
+      'individual' => TRUE,
+      'group' => t('Picture mappings'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_preset_form().
+ */
+function picture_preset_form($preset_type, $id) {
+  $form = array();
+
+  if ($preset_type == 'mapping' && !empty($id)) {
+    // Load current mapping.
+    $config = config('picture.' . $preset_type . '.' . $id);
+    $mapping = $config->get();
+
+    $parser_form = picture_mapping_get_form(!empty($mapping) ? $mapping : array());
+
+    // General settings for playback - formerly in the configuration section.
+    $form['data'] = array(
+      '#type' => 'vertical_tabs',
+      '#title' => t('Playback settings'),
+      '#tree' => TRUE,
+    ) + $parser_form;
+
+  }
+
+  return $form;
+}
+
+/**
+ * Build picture mapping form with defaults.
+ *
+ */
+function picture_mapping_get_form($defaults) {
+  $form = array();
+  $picture_mapping = picture_mapping_create($defaults);
+  $form['info']['label']['#required'] = TRUE;
+  $form['info']['machine_name']['#title'] = t('Machine name');
+  $groups = breakpoints_breakpoint_group_load_all();
+  $options = array();
+  foreach ($groups as $group) {
+    $options[$group->machine_name] = $group->name;
+  }
+  $form['breakpoint_group'] = array(
+    '#title' => t('Breakpoint group'),
+    '#type' => 'select',
+    '#required' => TRUE,
+    '#description' => t('Select a breakpoint group.'),
+    '#options' => $options,
+    '#default_value' => $picture_mapping->getBreakpointGroup() ? $picture_mapping->getBreakpointGroup()->machine_name : NULL,
+    '#ajax' => array(
+      'callback' => 'picture_mapping_form_change_breakpoint_group',
+      'wrapper' => 'picture-mapping-container',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+
+  $form['mapping'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'id' => 'picture-mapping-container',
+    ),
+    '#tree' => TRUE,
+  );
+
+  $image_styles = image_style_options(TRUE) + array(
+    PICTURE_EMPTY_IMAGE => t('Empty image'),
+    PICTURE_ORIGINAL_IMAGE => t('Original image'),
+  );
+  foreach ($picture_mapping->getMappings() as $breakpoint_id => $mapping) {
+    foreach ($mapping as $multiplier => $mapping_definition) {
+      $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint_id);
+      $label = $multiplier . ' ' . $breakpoint->name . ' [' . $breakpoint->breakpoint . ']';
+      $form['mapping'][$breakpoint_id][$multiplier] = array(
+        '#type' => 'fieldset',
+        '#title' => check_plain($label),
+      );
+      $form['mapping'][$breakpoint_id][$multiplier]['mapping_type'] = array(
+        '#title' => t('Type'),
+        '#type' => 'radios',
+        '#options' => array(
+          '_none' => t('Do not use this breakpoint'),
+          'image_style' => t('Use image styles'),
+          'sizes' => t('Use the sizes attribute'),
+        ),
+        '#default_value' => isset($mapping_definition['mapping_type']) ? $mapping_definition['mapping_type'] : '_none',
+      );
+      $form['mapping'][$breakpoint_id][$multiplier]['image_style'] = array(
+        '#type' => 'select',
+        '#title' => t('Image style'),
+        '#options' => $image_styles,
+        '#maxlength' => 1024,
+        '#default_value' => isset($mapping_definition['image_style']) ? $mapping_definition['image_style'] : '',
+        '#description' => t('Select an image style for this breakpoint.'),
+        '#states' => array(
+          'visible' => array(
+            ':input[name="mapping[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'image_style'),
+          ),
+        ),
+      );
+      $form['mapping'][$breakpoint_id][$multiplier]['sizes'] = array(
+        '#type' => 'textfield',
+        '#title' => t('Sizes'),
+        '#default_value' => isset($mapping_definition['sizes']) ? $mapping_definition['sizes'] : '',
+        '#description' => t('Enter the value for the sizes attribute (e.g. "(min-width:700px) 700px, 100vw").'),
+        '#states' => array(
+          'visible' => array(
+            ':input[name="mapping[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'sizes'),
+          ),
+        ),
+      );
+      $form['mapping'][$breakpoint_id][$multiplier]['sizes_image_styles'] = array(
+        '#title' => t('Image styles'),
+        '#type' => 'checkboxes',
+        '#options' => array_diff_key($image_styles, array('' => '')),
+        '#default_value' => isset($mapping_definition['sizes_image_styles']) ? $mapping_definition['sizes_image_styles'] : array(),
+        '#states' => array(
+          'visible' => array(
+            ':input[name="mapping[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'sizes'),
+          ),
+        ),
+      );
+
+    }
+  }
+  $form['#tree'] = FALSE;
+  return $form;
 }

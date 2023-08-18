@@ -81,21 +81,20 @@ class PictureMapping {
    * Save the picture mapping.
    *
    * @return false||int
-   *   If the record insert or update failed, returns FALSE. If it succeeded,
-   *   returns SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
+   *   Returns SAVED_NEW or SAVED_UPDATED, depending on the operation performed.
    */
   public function save() {
-    $update = array();
     $this->cleanMappings();
     $data = $this->toArray();
-    if (isset($this->id) && $this->id) {
-      $update = array('id');
-      $data['id'] = $this->id;
+    $config = config('picture.mapping.' . $data['machine_name']);
+    foreach ($data as $key => $data_item) {
+      $config->set($key, $data_item);
     }
-    $return = drupal_write_record('picture_mapping', $data, $update);
+    $config->save();
+    $return = $config->isNew();
     module_load_include('info.inc', 'field');
     field_info_cache_clear();
-    $this->setValues(ctools_export_get_schema('picture_mapping'), $data);
+    // $this->setValues(ctools_export_get_schema('picture_mapping'), $data);
     $this->loadBreakpointGroup();
     return $return;
   }
@@ -211,13 +210,13 @@ class PictureMapping {
    * Check if there are mappings.
    *
    * @return bool
-   *    TRUE if this PictureMapping has mappings, FALSE otherwise.
+   *   TRUE if this PictureMapping has mappings, FALSE otherwise.
    */
   public function hasMappings() {
     $mapping_found = FALSE;
     foreach ($this->mapping as $multipliers) {
       foreach ($multipliers as $mapping_definition) {
-        if (!PictureMapping::isEmptyMappingDefinition($mapping_definition)) {
+        if (!self::isEmptyMappingDefinition($mapping_definition)) {
           $mapping_found = TRUE;
           break 2;
         }
@@ -230,7 +229,7 @@ class PictureMapping {
    * Check if a mapping definition is empty.
    *
    * @return bool
-   *    TRUE if this mapping definition is considered empty, FALSE otherwise.
+   *   TRUE if this mapping definition is considered empty, FALSE otherwise.
    */
   public static function isEmptyMappingDefinition($mapping_definition) {
     if (!empty($mapping_definition) && isset($mapping_definition['mapping_type'])) {
@@ -255,7 +254,7 @@ class PictureMapping {
    * Get the machine name.
    *
    * @return string
-   *    The machine name.
+   *   The machine name.
    */
   public function getMachineName() {
     return $this->machine_name;
@@ -272,7 +271,7 @@ class PictureMapping {
    * Get the picture mappings.
    *
    * @return array
-   *    The mappings.
+   *   The mappings.
    */
   public function getMappings() {
     return $this->mapping;
@@ -296,7 +295,7 @@ class PictureMapping {
    * Get the label.
    *
    * @return string
-   *    The label.
+   *   The label.
    */
   public function label() {
     return $this->label;
@@ -387,7 +386,7 @@ class PictureMapping {
    * Export this PictureMapping.
    *
    * @return string
-   *    The export string.
+   *   The export string.
    */
   public function export($indent = '') {
     $this->cleanMappings();

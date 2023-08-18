@@ -72,7 +72,6 @@ function picture_schema() {
  */
 function picture_install() {
   module_load_include('admin.inc', 'picture');
-  config_set('picture.settings', 'updated_to_file_entity_2', _picture_update_to_file_entity_2());
 }
 
 /**
@@ -81,7 +80,6 @@ function picture_install() {
 function picture_uninstall() {
   config_clear('picture.settings', 'ckeditor_mappings');
   config_clear('picture.settings', 'ckeditor_label');
-  config_clear('picture.settings', 'updated_to_file_entity_2');
   config_clear('picture.settings', 'js_scope');
   config_clear('picture.settings', 'polyfill_version');
   config_clear('picture.settings', 'fallback_method');
@@ -147,7 +145,6 @@ function picture_update_1000() {
   $config->set('ckeditor_mappings', update_variable_get('picture_ckeditor_mappings', ''));
   $config->set('ckeditor_label', update_variable_get('picture_ckeditor_label', ''));
   $config->set('ckeditor_default_mapping', update_variable_get('picture_ckeditor_default_mapping', 'not_set'));
-  $config->set('updated_to_file_entity_2', update_variable_get('picture_updated_to_file_entity_2', 0));
   $config->set('js_scope', update_variable_get('picture_js_scope', 'footer'));
   $config->set('polyfill_version', update_variable_get('picture_polyfill_version', 'min'));
   $config->set('fallback_method', update_variable_get('picture_fallback_method', 'src'));

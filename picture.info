@@ -4,6 +4,7 @@ backdrop = 1.x
 type = module
 dependencies[] = image
 dependencies[] = breakpoints
+dependencies[] = preset
 configure = admin/config/media/picture
 package = Picture
 stylesheets[all][] = css/picture_wysiwyg.css
