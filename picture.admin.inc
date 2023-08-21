@@ -54,116 +54,6 @@ function picture_select_breakpoint_group_form_submit($form, &$form_state) {
 }
 
 /**
- * List all picture mappings.
- */
-function picture_mapping_list() {
-  $form = array(
-    '#markup' => '<p>We need to build this page to list all picture mappings, since Ctools is removed.</p>',
-  );
-  
-  return $form;
-}
-
-/**
- * Build picture mapping form.
- */
-function picture_mapping_form(&$form, &$form_state) {
-  $picture_mapping = $form_state['item'];
-  $form['info']['label']['#required'] = TRUE;
-  $form['info']['machine_name']['#title'] = t('Machine name');
-  $groups = breakpoints_breakpoint_group_load_all();
-  $options = array();
-  foreach ($groups as $group) {
-    $options[$group->machine_name] = $group->name;
-  }
-  $form['breakpoint_group'] = array(
-    '#title' => t('Breakpoint group'),
-    '#type' => 'select',
-    '#required' => TRUE,
-    '#description' => t('Select a breakpoint group.'),
-    '#options' => $options,
-    '#default_value' => $picture_mapping->getBreakpointGroup() ? $picture_mapping->getBreakpointGroup()->machine_name : NULL,
-    '#ajax' => array(
-      'callback' => 'picture_mapping_form_change_breakpoint_group',
-      'wrapper' => 'picture-mapping-container',
-      'method' => 'replace',
-      'effect' => 'fade',
-    ),
-  );
-
-  $form['mapping'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'id' => 'picture-mapping-container',
-    ),
-    '#tree' => TRUE,
-  );
-
-  $image_styles = image_style_options(TRUE) + array(
-    PICTURE_EMPTY_IMAGE => t('Empty image'),
-    PICTURE_ORIGINAL_IMAGE => t('Original image'),
-  );
-  foreach ($picture_mapping->getMappings() as $breakpoint_id => $mapping) {
-    foreach ($mapping as $multiplier => $mapping_definition) {
-      $breakpoint = breakpoints_breakpoint_load_by_fullkey($breakpoint_id);
-      $label = $multiplier . ' ' . $breakpoint->name . ' [' . $breakpoint->breakpoint . ']';
-      $form['mapping'][$breakpoint_id][$multiplier] = array(
-        '#type' => 'fieldset',
-        '#title' => check_plain($label),
-      );
-      $form['mapping'][$breakpoint_id][$multiplier]['mapping_type'] = array(
-        '#title' => t('Type'),
-        '#type' => 'radios',
-        '#options' => array(
-          '_none' => t('Do not use this breakpoint'),
-          'image_style' => t('Use image styles'),
-          'sizes' => t('Use the sizes attribute'),
-        ),
-        '#default_value' => isset($mapping_definition['mapping_type']) ? $mapping_definition['mapping_type'] : '_none',
-      );
-      $form['mapping'][$breakpoint_id][$multiplier]['image_style'] = array(
-        '#type' => 'select',
-        '#title' => t('Image style'),
-        '#options' => $image_styles,
-        '#maxlength' => 1024,
-        '#default_value' => isset($mapping_definition['image_style']) ? $mapping_definition['image_style'] : '',
-        '#description' => t('Select an image style for this breakpoint.'),
-        '#states' => array(
-          'visible' => array(
-            ':input[name="mapping[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'image_style'),
-          ),
-        ),
-      );
-      $form['mapping'][$breakpoint_id][$multiplier]['sizes'] = array(
-        '#type' => 'textfield',
-        '#title' => t('Sizes'),
-        '#default_value' => isset($mapping_definition['sizes']) ? $mapping_definition['sizes'] : '',
-        '#description' => t('Enter the value for the sizes attribute (e.g. "(min-width:700px) 700px, 100vw").'),
-        '#states' => array(
-          'visible' => array(
-            ':input[name="mapping[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'sizes'),
-          ),
-        ),
-      );
-      $form['mapping'][$breakpoint_id][$multiplier]['sizes_image_styles'] = array(
-        '#title' => t('Image styles'),
-        '#type' => 'checkboxes',
-        '#options' => array_diff_key($image_styles, array('' => '')),
-        '#default_value' => isset($mapping_definition['sizes_image_styles']) ? $mapping_definition['sizes_image_styles'] : array(),
-        '#states' => array(
-          'visible' => array(
-            ':input[name="mapping[' . $breakpoint_id . '][' . $multiplier . '][mapping_type]"]' => array('value' => 'sizes'),
-          ),
-        ),
-      );
-
-    }
-  }
-  $form['#tree'] = FALSE;
-  return $form;
-}
-
-/**
  * Helper function for the form.
  */
 function picture_mapping_form_change_breakpoint_group($form, &$form_state) {
@@ -292,13 +182,6 @@ function picture_admin_settings() {
       '#markup' => t('No picture mappings found. !create', array('!create' => l(t('Create one now.'), 'admin/config/media/picture/add'))),
     );
   }
-  if (module_exists('file_entity') && function_exists('file_type_load_all') && !$config->get('picture_updated_to_file_entity_2')) {
-    $form['picture_updated_to_file_entity_2'] = array(
-      '#type' => 'checkbox',
-      '#title' => t('Update the file formatter to version 2 of the File Entity module'),
-      '#default_value' => $config->get('picture_updated_to_file_entity_2'),
-    );
-  }
 
   $form['picture_js_scope'] = array(
     '#title' => t('Picture JavaScript scope'),
@@ -395,58 +278,11 @@ function picture_admin_settings_submit($form, &$form_state) {
     config_set('picture.settings', 'picture_ckeditor_default_mapping', $form_state['values']['ckeditor_default_mapping']);
   }
 
-  if (isset($form_state['values']['picture_updated_to_file_entity_2']) && $form_state['values']['picture_updated_to_file_entity_2']) {
-    config_set('picture.settings', 'picture_updated_to_file_entity_2', _picture_update_to_file_entity_2());
-  }
-
   config_set('picture.settings', 'picture_js_scope', $form_state['values']['picture_js_scope']);
   config_set('picture.settings', 'picture_polyfill_version', $form_state['values']['picture_polyfill_version']);
   config_set('picture.settings', 'picture_fallback_method', $form_state['values']['picture_fallback_method']);
   config_set('picture.settings', 'picture_img_sizes_output_method', $form_state['values']['picture_img_sizes_output_method']);
   backdrop_set_message(t('Your settings have been saved'));
-}
-
-/**
- * Update picture module to version 2 of File Entity module.
- */
-function _picture_update_to_file_entity_2() {
-  // File Entity is not installed or the installed version is not version 2.
-  if (!module_exists('file_entity') || !function_exists('file_type_load_all')) {
-    return FALSE;
-  }
-  // Picture was already updated.
-  if (config_get('picture.settings', 'picture_updated_to_file_entity_2')) {
-    return TRUE;
-  }
-  $entity_info = entity_get_info('file');
-  $types = file_type_load_all();
-  foreach ($types as $file_type) {
-    $view_modes = array('default' => array('label' => t('Default'))) + $entity_info['view modes'];
-    foreach (array_keys($view_modes) as $view_mode) {
-      $current_displays = file_displays_load($file_type->type, $view_mode, TRUE);
-      if (isset($current_displays['file_picture']) && $current_displays['file_picture']->status) {
-        if (!isset($current_displays['file_field_picture']) || !$current_displays['file_field_picture']->status) {
-          $display = file_display_new($file_type->type, $view_mode, 'file_field_picture');
-          $display->settings = $current_displays['file_picture']->settings;
-          unset($display->settings['alt']);
-          unset($display->settings['title']);
-          $display->settings['image_link'] = '';
-          $display->settings['colorbox'] = isset($display->settings['picture_mapping']) ? $display->settings['picture_mapping'] : $display->settings['picture_group'];
-          $display->settings['picture_mapping'] = isset($display->settings['picture_mapping']) ? $display->settings['picture_mapping'] : $display->settings['picture_group'];
-          unset($display->settings['picture_group']);
-          $display->status = 1;
-          file_display_save($display);
-        }
-      }
-      elseif (isset($current_displays['file_field_picture'])) {
-        $display = $current_displays['file_field_picture'];
-        $display->settings['picture_mapping'] = isset($display->settings['picture_mapping']) ? $display->settings['picture_mapping'] : $display->settings['picture_group'];
-        unset($display->settings['picture_group']);
-        file_display_save($display);
-      }
-    }
-  }
-  return TRUE;
 }
 
 /**

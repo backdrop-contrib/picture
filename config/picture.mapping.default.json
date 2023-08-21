@@ -1,0 +1,10 @@
+{
+  "_config_name": "picture.mapping.default",
+  "module": "picture",
+  "preset_type": "mapping",
+  "machine_name": "default",
+  "label": "Defaults - label",
+  "title": "Defaults - title",
+  "breakpoint_group": "core",
+  "mapping": {}
+}

@@ -1,14 +1,13 @@
 {
     "_config_name": "picture.settings",
-    "picture_ckeditor_mappings": "dynamic value in file /picture/picture.module line 1976",
-    "picture_ckeditor_label": "dynamic value in file /picture/picture.module line 1946",
-    "picture_ckeditor_default_mapping": "not_set",
-    "picture_updated_to_file_entity_2": "FALSE",
     "picture_js_scope": "footer",
     "picture_polyfill_version": "min",
     "picture_fallback_method": "src",
     "picture_img_sizes_output_method": "picture_element",
-    "picture_ckeditor_groups": "dynamic value in file /picture/picture.install line 147",
+    "picture_ckeditor_mappings": {},
+    "picture_ckeditor_label": "Image size (required)",
+    "picture_ckeditor_default_mapping": "not_set",
+    "picture_ckeditor_groups": {},
     "picture_use_sizes_in_wysiwyg": "FALSE",
     "picture_ckeditor_required": "TRUE"
 }
