@@ -27,6 +27,7 @@ will use the first matching source tag (reading from top to bottom).
 ## Dependencies
 
 * [Breakpoints](https://github.com/backdrop-contrib/breakpoints)
+* [Preset](https://github.com/backdrop-contrib/preset)
 
 ## Usage
 
