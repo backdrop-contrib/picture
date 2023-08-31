@@ -1450,7 +1450,10 @@ function theme_picture(array $variables) {
   if (!empty($sources)) {
     $output[] = '<picture ' . backdrop_attributes(array_diff_key($attributes, array('alt' => ''))) . '>';
     $output[] = '<!--[if IE 9]><video style="display: none;"><![endif]-->';
-    $output = array_merge($output, array_map('backdrop_render', $sources));
+    foreach ($sources as $delta => $source) {
+      $sources[$delta] = backdrop_render($source);
+    }
+    $output = array_merge($output, $sources);
     $output[] = '<!--[if IE 9]></video><![endif]-->';
     $src = _picture_image_style_url($variables['style_name'], $variables['uri'], $variables['timestamp']);
 
