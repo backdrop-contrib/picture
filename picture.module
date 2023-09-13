@@ -1181,7 +1181,7 @@ function theme_picture_formatter($variables) {
     '#height' => isset($item['height']) ? $item['height'] : NULL,
     '#style_name' => $variables['image_style'],
     '#breakpoints' => $variables['breakpoints'],
-    '#uri' => $item['uri'],
+    '#uri' => isset($item['uri']) ? $item['uri'] : '',
     '#alt' => isset($item['alt']) ? $item['alt'] : '',
     '#attributes' => isset($item['attributes']) ? $item['attributes'] : NULL,
     '#timestamp' => isset($item['timestamp']) ? $item['timestamp'] : NULL,
