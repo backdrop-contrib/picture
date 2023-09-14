@@ -2209,7 +2209,7 @@ function _picture_image_style_url($style_name, $path, $timestamp = NULL) {
     $url .= (strpos($url, '?') !== FALSE ? '&' : '?') . drupal_http_build_query($token_query);
   }
 
-  return $url;
+  return str_replace(' ', '%20', $url);
 }
 
 /**
