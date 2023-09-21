@@ -95,6 +95,11 @@ function picture_config_info() {
     'label' => t('Picture settings'),
     'group' => t('Configuration'),
   );
+  $prefixes['picture.mapping'] = array(
+    'name_key' => 'machine_name',
+    'label_key' => 'title',
+    'group' => t('Picture Mappings'),
+  );
   return $prefixes;
 }
 
