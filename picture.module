@@ -305,6 +305,8 @@ function picture_theme() {
         'colorbox_image_style' => NULL,
         'colorbox_group_id' => NULL,
         'colorbox_caption' => NULL,
+        'lazyload' => NULL,
+        'lazyload_aspect_ratio' => NULL,
       ),
     ),
     'picture_source' => array(
@@ -329,6 +331,7 @@ function picture_theme() {
         'srcset' => array(),
         'sizes' => NULL,
         'lazyload' => NULL,
+        'lazyload_aspect_ratio' => NULL,
       ),
     ),
     'picture_sizes_formatter' => array(
@@ -1152,7 +1155,7 @@ function theme_picture_formatter($variables) {
     '#height' => isset($item['height']) ? $item['height'] : NULL,
     '#style_name' => $variables['image_style'],
     '#breakpoints' => $variables['breakpoints'],
-    '#uri' => $item['uri'],
+    '#uri' => isset($item['uri']) ? $item['uri'] : '',
     '#alt' => isset($item['alt']) ? $item['alt'] : '',
     '#attributes' => isset($item['attributes']) ? $item['attributes'] : NULL,
     '#timestamp' => isset($item['timestamp']) ? $item['timestamp'] : NULL,
@@ -1242,7 +1245,7 @@ function theme_picture_sizes_formatter($variables) {
 
       $variables['srcset'][] = array(
         'uri' => $image_style_uri,
-        'width' => $dimensions['width'] . 'w',
+        'width' => round($dimensions['width']) . 'w',
       );
     }
 
@@ -1263,6 +1266,8 @@ function theme_picture_formatter_colorbox($variables) {
   }
 
   $item = $variables['item'];
+  $item['lazyload'] = $variables['lazyload'];
+  $item['lazyload_aspect_ratio'] = $variables['lazyload_aspect_ratio'];
 
   // Do not output an empty 'title' attribute.
   if (isset($item['title']) && backdrop_strlen($item['title']) == 0) {
@@ -1310,6 +1315,7 @@ function theme_picture_formatter_colorbox($variables) {
     $colorbox = str_replace('<picture', '<span lazyload="lazyload"', $colorbox);
     $colorbox = str_replace('</picture>', '</span>', $colorbox);
     $colorbox = str_replace(' srcset="', ' data-srcset="', $colorbox);
+    $colorbox = str_replace(' src="', ' data-src="', $colorbox);
 
     $output = l($output, current_path(), $options) . $colorbox;
   }
@@ -1387,8 +1393,8 @@ function theme_picture(array $variables) {
               // Get mime type.
               // $derivative_mime_type = $mime_type;
               // $image_style->transformMimeType($derivative_mime_type);
-              // $derivative_mime_types[] = $derivative_mime_type;.
-              $srcset[$dimensions_clone['width']] = _picture_image_style_url($image_style_name, $variables['uri'], $variables['timestamp']) . ' ' . $dimensions_clone['width'] . 'w';
+              // $derivative_mime_types[] = $derivative_mime_type;
+              $srcset[$dimensions_clone['width']] = _picture_image_style_url($image_style_name, $variables['uri'], $variables['timestamp']) . ' ' . round($dimensions_clone['width']) . 'w';
               $sizes = array_merge(explode(',', $mapping_definition['sizes']), $sizes);
             }
             break;
@@ -1473,6 +1479,16 @@ function theme_picture(array $variables) {
     }
 
     if (config_get('picture.settings', 'picture_fallback_method') === 'src') {
+      $aspect_ratio = '';
+      $uri = picture_image_uri($src);
+      if (($image_info = image_get_info($uri)) !== FALSE) {
+        $dimensions = array(
+          'width' => $image_info['width'],
+          'height' => $image_info['height'],
+        );
+        $aspect_ratio = $dimensions['width'] . '/' . $dimensions['height'];
+      }
+
       $min_ie9_fallback = array(
         '#theme' => 'image_srcset',
         '#uri' => $src,
@@ -1480,6 +1496,9 @@ function theme_picture(array $variables) {
         '#title' => isset($attributes['title']) ? $attributes['title'] : '',
         '#attributes' => array_diff_key($attributes, array('alt' => '', 'title' => '')),
         '#lazyload' => !empty($variables['lazyload']),
+        '#lazyload_aspect_ratio' => $aspect_ratio,
+        '#width' => isset($dimensions['width']) ? $dimensions['width'] : NULL,
+        '#height' => isset($dimensions['height']) ? $dimensions['height'] : NULL,
       );
       $output[] = backdrop_render($min_ie9_fallback);
     }
@@ -1504,7 +1523,7 @@ function theme_picture(array $variables) {
       $dimensions_clone = $dimensions;
       picture_get_image_dimensions($variables['style_name'], $dimensions_clone);
       if (!empty($dimensions_clone['width'])) {
-        $srcset['width'] = $dimensions_clone['width'] . 'w';
+        $srcset['width'] = round($dimensions_clone['width']) . 'w';
       }
       $plus_ie8_fallback = array(
         '#theme' => 'image_srcset',
@@ -1565,9 +1584,20 @@ function theme_image_srcset(array $variables) {
     // TODO: remove when https://www.drupal.org/node/1342504 is fixed.
     if (strpos($variables['uri'], 'data:') === 0) {
       $attributes[$attr_name] = $variables['uri'];
+      $uri = $variables['uri'];
     }
     else {
-      $attributes[$attr_name] = file_create_url($variables['uri']);
+      $uri = file_create_url($variables['uri']);
+    }
+
+    if (!empty($variables['lazyload'])) {
+      $attributes['data-src'] = $uri;
+      if (!empty($variables['lazyload_aspect_ratio'])) {
+        $attributes['data-aspectratio'] = $variables['lazyload_aspect_ratio'];
+      }
+    }
+    else {
+      $attributes[$attr_name] = $uri;
     }
   }
   if (isset($variables['srcset']) && !empty($variables['srcset'])) {
@@ -2158,7 +2188,7 @@ function _picture_image_style_url($style_name, $path, $timestamp = NULL) {
     $url .= (strpos($url, '?') !== FALSE ? '&' : '?') . backdrop_http_build_query($token_query);
   }
 
-  return $url;
+  return str_replace(' ', '%20', $url);
 }
 
 /**
