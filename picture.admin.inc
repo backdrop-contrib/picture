@@ -54,13 +54,6 @@ function picture_select_breakpoint_group_form_submit($form, &$form_state) {
 }
 
 /**
- * Helper function for the form.
- */
-function picture_mapping_form_change_breakpoint_group($form, &$form_state) {
-  return $form['mapping'];
-}
-
-/**
  * Validate callback.
  */
 function picture_mapping_form_validate($form, &$form_state) {

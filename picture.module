@@ -2373,11 +2373,10 @@ function picture_preset_form($preset_type, $id) {
     // Load current mapping.
     $config = config('picture.' . $preset_type . '.' . $id);
     $mapping = $config->get();
-
-    $form = picture_mapping_get_form(
-      defaults: !empty($mapping) ? $mapping : array(),
-    );
   }
+  $form = picture_mapping_get_form(
+    defaults: $mapping ?? array(),
+  );
 
   return $form;
 }
@@ -2387,7 +2386,7 @@ function picture_preset_form($preset_type, $id) {
  *
  */
 function picture_mapping_get_form(&$form = array(), &$form_state = array(), $defaults = array()) {
-  $picture_mapping = (!empty($form_state)) ? $form_state['item'] : picture_mapping_create($defaults);
+  $picture_mapping = picture_mapping_create((!empty($form_state['values'])) ? $form_state['values'] : $defaults);
   $form['info']['label']['#required'] = TRUE;
   $form['info']['machine_name']['#title'] = t('Machine name');
   $groups = breakpoints_breakpoint_group_load_all();
@@ -2409,7 +2408,6 @@ function picture_mapping_get_form(&$form = array(), &$form_state = array(), $def
       'effect' => 'fade',
     ),
   );
-
   $form['mapping'] = array(
     '#type' => 'container',
     '#attributes' => array(
@@ -2438,7 +2436,7 @@ function picture_mapping_get_form(&$form = array(), &$form_state = array(), $def
           'image_style' => t('Use image styles'),
           'sizes' => t('Use the sizes attribute'),
         ),
-        '#default_value' => isset($mapping_definition['mapping_type']) ? $mapping_definition['mapping_type'] : '_none',
+        '#default_value' => $mapping_definition['mapping_type'] ?? '_none',
       );
       $form['mapping'][$breakpoint_id][$multiplier]['image_style'] = array(
         '#type' => 'select',
@@ -2480,4 +2478,11 @@ function picture_mapping_get_form(&$form = array(), &$form_state = array(), $def
   }
   $form['#tree'] = FALSE;
   return $form;
+}
+
+/**
+ * Helper function for the form.
+ */
+function picture_mapping_form_change_breakpoint_group($form, &$form_state) {
+  return $form['mapping'];
 }
