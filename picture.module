@@ -2403,15 +2403,14 @@ function picture_preset_types() {
  */
 function picture_preset_form($preset_type, $id) {
   $form = array();
+  $form_state = array();
 
   if ($preset_type == 'mapping' && !empty($id)) {
     // Load current mapping.
     $config = config('picture.' . $preset_type . '.' . $id);
     $mapping = $config->get();
+    picture_mapping_get_form($form, $form_state, !empty($mapping) ? $mapping : array());
   }
-  $form = picture_mapping_get_form(
-    defaults: $mapping ?? array(),
-  );
 
   return $form;
 }
