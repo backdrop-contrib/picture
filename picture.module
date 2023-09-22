@@ -2409,9 +2409,9 @@ function picture_preset_form($preset_type, $id) {
     // Load current mapping.
     $config = config('picture.' . $preset_type . '.' . $id);
     $mapping = $config->get();
-    picture_mapping_get_form($form, $form_state, !empty($mapping) ? $mapping : array());
   }
 
+  picture_mapping_get_form($form, $form_state, !empty($mapping) ? $mapping : array());
   return $form;
 }
 
