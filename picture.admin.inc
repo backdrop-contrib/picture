@@ -90,7 +90,7 @@ function picture_admin_settings() {
     );
 
     // Retrieve pre-existing settings.
-    $ckeditor_mappings = $config->get('picture_ckeditor_mappings');
+    $ckeditor_mappings = $config->get('ckeditor_mappings');
 
     // Make option list for CKEditor default mapping.
     $ckeditor_default_mapping_options = array('not_set' => 'Not Set');
@@ -160,13 +160,13 @@ function picture_admin_settings() {
       '#type' => 'textfield',
       '#title' => t('Label in the CKEditor image dialog'),
       '#description' => t('This sets the label for the drop-down select box containing these picture mappings in the CKEditor image dialog'),
-      '#default_value' => $config->get('picture_ckeditor_label'),
+      '#default_value' => $config->get('ckeditor_label'),
     );
     $form['ckeditor_default_mapping'] = array(
       '#type' => 'select',
       '#title' => t('Default CKEditor Picture Mapping'),
       '#options' => $ckeditor_default_mapping_options,
-      '#default_value' => $config->get('picture_ckeditor_default_mapping'),
+      '#default_value' => $config->get('ckeditor_default_mapping'),
       '#description' => t('This sets the default picture mapping in CKEditor'),
     );
   }
@@ -176,7 +176,7 @@ function picture_admin_settings() {
     );
   }
 
-  $form['picture_js_scope'] = array(
+  $form['js_scope'] = array(
     '#title' => t('Picture JavaScript scope'),
     '#description' => t("For performance reasons, JS should be loaded in the footer. However, you can move the Picture module's JS to the header so that it loads before JS from other modules like Views Slideshow."),
     '#type' => 'radios',
@@ -184,10 +184,10 @@ function picture_admin_settings() {
       'header' => t('Header'),
       'footer' => t('Footer'),
     ),
-    '#default_value' => $config->get('picture_js_scope'),
+    '#default_value' => $config->get('js_scope'),
   );
 
-  $form['picture_polyfill_version'] = array(
+  $form['polyfill_version'] = array(
     '#title' => t('Picture polyfill to use'),
     '#description' => t('For performance reasons, use the minified version.'),
     '#type' => 'radios',
@@ -196,10 +196,10 @@ function picture_admin_settings() {
       'dev' => t('Development polyfill'),
       'own' => t('Use custom polyfill'),
     ),
-    '#default_value' => $config->get('picture_polyfill_version'),
+    '#default_value' => $config->get('polyfill_version'),
   );
 
-  $form['picture_fallback_method'] = array(
+  $form['fallback_method'] = array(
     '#title' => t('Picture fallback method'),
     '#description' => t('Use the fallback method, the default is to use srcset since it avoids double downloads, but src is the right method and will also work if the browser does not support javascript.'),
     '#type' => 'radios',
@@ -207,10 +207,10 @@ function picture_admin_settings() {
       'src' => t('src fallback'),
       'srcset' => t('srcset fallback'),
     ),
-    '#default_value' => $config->get('picture_fallback_method'),
+    '#default_value' => $config->get('fallback_method'),
   );
 
-  $form['picture_img_sizes_output_method'] = array(
+  $form['img_sizes_output_method'] = array(
     '#title' => t('"Image with sizes" output method'),
     '#description' => t('"srcset on Image tag" creates the correct markup, however "picture element" will prevent duplicate downloads.'),
     '#type' => 'radios',
@@ -218,7 +218,7 @@ function picture_admin_settings() {
       'img_srcset' => t('srcset on Image tag'),
       'picture_element' => t('Picture element'),
     ),
-    '#default_value' => $config->get('picture_img_sizes_output_method'),
+    '#default_value' => $config->get('img_sizes_output_method'),
   );
 
   $form['submit'] = array(
@@ -252,6 +252,7 @@ function picture_admin_settings_validate($form, &$form_state) {
  * Submit handler, places chosen picture groups into the variables table.
  */
 function picture_admin_settings_submit($form, &$form_state) {
+  $config = config('picture.settings');
   $picture_mappings = picture_mapping_load_all();
   $ckeditor_mappings = array();
   if ($picture_mappings) {
@@ -266,15 +267,16 @@ function picture_admin_settings_submit($form, &$form_state) {
     }
 
     uasort($ckeditor_mappings, 'picture_compare_weights');
-    config_set('picture.settings', 'picture_ckeditor_mappings', $ckeditor_mappings);
-    config_set('picture.settings', 'picture_ckeditor_label', $form_state['values']['ckeditor_label']);
-    config_set('picture.settings', 'picture_ckeditor_default_mapping', $form_state['values']['ckeditor_default_mapping']);
+    $config->set('ckeditor_mappings', $ckeditor_mappings);
+    $config->set('ckeditor_label', $form_state['values']['ckeditor_label']);
+    $config->set('ckeditor_default_mapping', $form_state['values']['ckeditor_default_mapping']);
   }
 
-  config_set('picture.settings', 'picture_js_scope', $form_state['values']['picture_js_scope']);
-  config_set('picture.settings', 'picture_polyfill_version', $form_state['values']['picture_polyfill_version']);
-  config_set('picture.settings', 'picture_fallback_method', $form_state['values']['picture_fallback_method']);
-  config_set('picture.settings', 'picture_img_sizes_output_method', $form_state['values']['picture_img_sizes_output_method']);
+  $config->set('js_scope', $form_state['values']['js_scope']);
+  $config->set('polyfill_version', $form_state['values']['polyfill_version']);
+  $config->set('fallback_method', $form_state['values']['fallback_method']);
+  $config->set('img_sizes_output_method', $form_state['values']['img_sizes_output_method']);
+  $config->save();
   backdrop_set_message(t('Your settings have been saved'));
 }
 

@@ -1483,7 +1483,7 @@ function theme_picture(array $variables) {
       $attributes['data-aspectratio'] = '';
     }
 
-    if (config_get('picture.settings', 'picture_fallback_method') === 'src') {
+    if (config_get('picture.settings', 'fallback_method') === 'src') {
       $aspect_ratio = '';
       $uri = picture_image_uri($src);
       if (($image_info = image_get_info($uri)) !== FALSE) {
