@@ -1,13 +1,13 @@
 {
     "_config_name": "picture.settings",
-    "picture_js_scope": "footer",
-    "picture_polyfill_version": "min",
-    "picture_fallback_method": "src",
-    "picture_img_sizes_output_method": "picture_element",
-    "picture_ckeditor_mappings": {},
-    "picture_ckeditor_label": "Image size (required)",
-    "picture_ckeditor_default_mapping": "not_set",
-    "picture_ckeditor_groups": {},
-    "picture_use_sizes_in_wysiwyg": "FALSE",
-    "picture_ckeditor_required": "TRUE"
+    "js_scope": "footer",
+    "polyfill_version": "min",
+    "fallback_method": "src",
+    "img_sizes_output_method": "picture_element",
+    "ckeditor_mappings": {},
+    "ckeditor_label": "Image size (required)",
+    "ckeditor_default_mapping": "not_set",
+    "ckeditor_groups": {},
+    "use_sizes_in_wysiwyg": "FALSE",
+    "ckeditor_required": "TRUE"
 }
