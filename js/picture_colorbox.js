@@ -1,7 +1,7 @@
 (function ($) {
   Backdrop.behaviors.pictureLazyloadPictures = {
     attach: function (context, settings) {
-      $(context).bind('cbox_load', function () {
+      $(context).on('cbox_load', function () {
         var href = $.colorbox.element()[0].hash;
 
         if (href.search('#picture-colorbox-') === 0) {
@@ -14,7 +14,7 @@
           picture = picture.replace(/<span/ig, '<picture');
           picture = picture.replace(/<\/span>/ig, '</picture>');
           picture = picture.replace(/ data-srcset="/ig, ' srcset="');
-          $('img', picture).load(function() {
+          $('img', picture).on('load', function() {
             // Ensure there's no max-width / max-height otherwise we won't get
             // the proper values. We could use naturalWeight / naturalHeight
             // but that's not supported by <IE9 and Opera.
@@ -31,7 +31,7 @@
 
           return $(picture).attr('lazyload', null);
         });
-      }).bind('cbox_complete', function () {
+      }).on('cbox_complete', function () {
         $.colorbox.resize();
       });
     }

@@ -22,7 +22,7 @@ if (typeof Backdrop !== 'undefined' && typeof jQuery !== 'undefined') {
           $.colorbox.resize();
           // Make sure the colorbox resizes always when the image is changed.
           $('img', context).once('colorbox-lazy-load', function(){
-            $(this).load(function(){
+            $(this).on('load', function(){
               // Ensure there's no max-width / max-height otherwise we won't get
               // the proper values. We could use naturalWeight / naturalHeight
               // but that's not supported by <IE9 and Opera.
